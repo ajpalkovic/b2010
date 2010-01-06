@@ -1,0 +1,57 @@
+1) Install cygwin - while installing, select the git and openssh packages
+2) Install the jdk and netbeans or eclipse
+3) Open a cygwin prompt
+4) run: ssh-keygen
+5) You should probably just press enter for every question they ask (the rsa format is ok, and you do NOT want a passowrd)
+6) Create a github account
+7) Upload the key that you created to github, it will be in ~/.ssh/id_rsa.pub
+8) Send aj your github username
+9) Open a new cygwin prompt and run:
+	git config --global user.name "AJ Palkovic"
+	git config --global user.email "aj.palkovic@gmail.com"
+10) Wait for AJ to add you to the repository.
+11) Change to some directory on your computer where you would like to keep the battlecode code:
+	IE: cd Desktop
+12) Run:
+	git clone git@github.com:ajpalkovic/b2010.git battlecode
+	cd battlecode
+	This will create a directory called battlecode which contains all of the code.
+13) Download the installer from the battlecode website: http://battlecode.mit.edu/2010/contestants/downloads
+14) Run the installer (you should be able to double click it).
+	When the installer is running, the only option you need to change is the folder into which it will install the files.
+	You need to select the battlecode folder that was created in step 12.
+15) Open the project:
+	Netbeans: Start netbeans, choose open existing project, and browse to and double click the battlecode folder
+	Eclipse: Go to the battlecode website and read the docs n00bs.
+16) Run it.
+
+
+Git tips
+To see which files have changed:
+	git status
+
+To commit files in git, first you have to tell it which files to commit and then actually commit them and then send them to the server:
+	git add filename filename filename...
+	git commit -m "Some message explaing what was changed"
+	git push origin master
+
+There is a shortcut which will commit every changed file, but will NOT commit any new files:
+	git commit -am "message"
+	git push origin master
+	
+To grab any changes that have been made since you last updated:
+	git pull origin master
+You should run this command frquently.
+
+IMPORTANT:
+	Never ever run the pull command if you have files which have been changed but not committed.
+	You should run "git status" before you pull and make sure it says that there are no changes, that everything is up to date.
+	If not, commit the files first.
+	A good rule of thumb is whenever you are done working for the day or for the hour, commit everything.
+	
+Last note:
+	Please do not add the battlecode installer to git cuz it is huge.
+	Please do not add any of the battlecode installer files (like dlls or docs).  If you see something like that, let AJ now.
+	
+Final last note:
+	If you have a conflict, ask AJ for help.
