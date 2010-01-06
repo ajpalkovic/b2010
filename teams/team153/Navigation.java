@@ -21,7 +21,7 @@ public class Navigation extends Base {
      * are initialized to the min/max integer values so that they this will work even
      * if the boundaries haven't been discovered yet.
      */
-    public boolean checkWalls(MapData square) {
+    public boolean checkWalls(NovaMapData square) {
         return checkWalls(square.toMapLocation());
     }
 
@@ -66,7 +66,7 @@ public class Navigation extends Base {
      * The robot will then wait until it's movement is idle and proceed to turn to that direction.
      */
     public int faceLocation(MapLocation location) {
-        Direction newDir = getDirection(new MapData(controller.getLocation()), new MapData(location));
+        Direction newDir = getDirection(new NovaMapData(controller.getLocation()), new NovaMapData(location));
         if(newDir == null) {
             return Status.fail;
         }
@@ -131,7 +131,7 @@ public class Navigation extends Base {
      * For instance, if the robot moved up, it will only consider the 3 squares at the top,
      * there is no need to consider if the robot should move backwards.
      */
-    public LinkedList<MapData> findPath(MapData start, MapData end) {
+    public LinkedList<NovaMapData> findPath(NovaMapData start, NovaMapData end) {
         //p(start.toString()+"  "+end.toString());
         LinkedList<PathLocation> states = new LinkedList<PathLocation>();
         ArrayList<PathLocation> newStates = new ArrayList<PathLocation>();
@@ -147,9 +147,9 @@ public class Navigation extends Base {
             while(!states.isEmpty()) {
                 current = states.removeFirst();
                 //p("  Current: "+current.toString3());
-                MapData[] squares = map.getForwardSquares(current.location.x, current.location.y, current.xDelta, current.yDelta, current.diagonal);
+                NovaMapData[] squares = map.getForwardSquares(current.location.x, current.location.y, current.xDelta, current.yDelta, current.diagonal);
                 //p("  Squares: "+squares[0].toString()+" "+squares[1].toString()+" "+squares[2].toString());
-                for(MapData square : squares) {
+                for(NovaMapData square : squares) {
                     // ensure this step is not out of bounds
                     if(checkWalls(square)) {
                         continue;
@@ -176,7 +176,7 @@ public class Navigation extends Base {
                     // check for the goal state
                     if(square.equals(end)) {
                         end.pathCost = current.cost + player.calculateMovementDelay(true);
-                        LinkedList<MapData> ret = new LinkedList<MapData>();
+                        LinkedList<NovaMapData> ret = new LinkedList<NovaMapData>();
                         ret.addFirst(end);
                         // reverse the path pointed to by current.previous and remove the start location
                         while(current.previous != null) {
@@ -230,7 +230,7 @@ public class Navigation extends Base {
     /**
      * Returns the direction object needed to move a robot from the start square to the end square.
      */
-    public Direction getDirection(MapData start, MapData end) {
+    public Direction getDirection(NovaMapData start, NovaMapData end) {
         int x = end.x - start.x;
         int y = end.y - start.y;
         return getDirection(x, y);
@@ -396,12 +396,12 @@ public class Navigation extends Base {
      * that location, the 2 next to that, and so on.  The last location is the tile directly
      * behind the robot.
      */
-    public MapData[] getOrderedMapLocations() {
+    public NovaMapData[] getOrderedMapLocations() {
         Direction cur = controller.getDirection(), left, right;
         MapLocation start = controller.getLocation();
 
 
-        MapData[] ret = new MapData[8];
+        NovaMapData[] ret = new NovaMapData[8];
         ret[0] = map.getNotNull(start.add(cur));
         ret[7] = map.getNotNull(start.subtract(cur));
 
@@ -436,8 +436,8 @@ public class Navigation extends Base {
         } while(pauseCount >= 0);
     }
 
-    public int goByBugging(MapData end) {
-        MapData previous = null;
+    public int goByBugging(NovaMapData end) {
+        NovaMapData previous = null;
         Direction previousDir = null, dir = controller.getDirection();
         int count = 0;
         int oppositeCount = 0;
@@ -545,18 +545,18 @@ public class Navigation extends Base {
      * TODO: validate we are at the goal
      * TODO: repair path
      */
-    public int go(MapData end) {
+    public int go(NovaMapData end) {
         return go(end, 0);
     }
 
-    public int go(MapData end, int depth) {
+    public int go(NovaMapData end, int depth) {
         if(depth > 5) {
             return Status.fail;
         }
 
-        MapData previous = map.getNotNull(controller.getLocation());
+        NovaMapData previous = map.getNotNull(controller.getLocation());
         //p("get path");
-        LinkedList<MapData> path = findPath(previous, end);
+        LinkedList<NovaMapData> path = findPath(previous, end);
         //p("got path");
         if(path == null) {
             return Status.fail;
@@ -571,9 +571,9 @@ public class Navigation extends Base {
         while(!path.isEmpty()) {
             yieldMoving();
 
-            MapData step = path.removeFirst();
+            NovaMapData step = path.removeFirst();
             if(controller.canSenseSquare(step.toMapLocation())) {
-                MapData updatedStep = sensing.senseTile(step.toMapLocation());
+                NovaMapData updatedStep = sensing.senseTile(step.toMapLocation());
                 step = updatedStep;
 
                 if((player.isAirRobot && step.airRobot != null) || (!player.isAirRobot && step.groundRobot != null)) {
@@ -702,13 +702,13 @@ public class Navigation extends Base {
 
     class PathLocation {
 
-        public MapData location;
+        public NovaMapData location;
         public PathLocation previous;
         public int cost, estimate, total, xDelta, yDelta;
         public boolean diagonal;
         public Integer intCost;
 
-        public PathLocation(MapData location, PathLocation previous, MapData goal) {
+        public PathLocation(NovaMapData location, PathLocation previous, NovaMapData goal) {
             this.location = location;
             this.previous = previous;
             if(previous != null) {
@@ -739,7 +739,7 @@ public class Navigation extends Base {
          * Currently, this calculates the straight line distance to the goal and returns the number of turns to traverse that number of squares.
          * TODO: Consider the difference in height between the current location and the goal.
          */
-        public int calculateEstimate(MapData goal) {
+        public int calculateEstimate(NovaMapData goal) {
             int x = Math.abs(goal.x - location.x), y = Math.abs(goal.y - location.y);
             int diagonalSquares = (int) Math.sqrt(x * x + y * y);
             return diagonalSquares * player.moveDiagonalDelay;

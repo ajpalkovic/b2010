@@ -3,7 +3,7 @@ package team153;
 import java.util.*;
 import battlecode.common.*;
 
-public class MapData {
+public class NovaMapData {
 
     public int x, y;
     public int lastUpdate = -1;
@@ -34,26 +34,26 @@ public class MapData {
     }
 
     public boolean equals(Object other) {
-        MapData data = (MapData) other;
+        NovaMapData data = (NovaMapData) other;
         return data.x == x && data.y == y;
     }
 
-    public MapData(MapLocation location) {
+    public NovaMapData(MapLocation location) {
         this.x = location.getX();
         this.y = location.getY();
     }
 
-    public MapData(int x, int y) {
+    public NovaMapData(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
-    public MapData(int x, int y, int height) {
+    public NovaMapData(int x, int y, int height) {
         this.x = x;
         this.y = y;
     }
 
-    public MapData(int x, int y, int terrainHeight, int blockHeight, boolean isFluxDeposit) {
+    public NovaMapData(int x, int y, int terrainHeight, int blockHeight, boolean isFluxDeposit) {
         this.x = x;
         this.y = y;
     }

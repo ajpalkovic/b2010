@@ -4,9 +4,9 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 import java.util.*;
 
-public class CannonPlayer extends AttackPlayer {
+public class TurretPlayer extends AttackPlayer {
 
-    public CannonPlayer(RobotController controller) {
+    public TurretPlayer(RobotController controller) {
         super(controller);
 
     }

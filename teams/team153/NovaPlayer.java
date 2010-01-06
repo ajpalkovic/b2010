@@ -147,7 +147,7 @@ public class NovaPlayer extends Base {
             followRequest(i, senderID);
         } else if(recipientID == robot.getID() && currentGoal != Goal.followingArchon) {
             setGoal(Goal.followingArchon);
-            navigation.go(new MapData(location));
+            navigation.go(new NovaMapData(location));
             followingArchonNumber = senderID;
         }
     }
@@ -156,7 +156,7 @@ public class NovaPlayer extends Base {
      * Callback right before the moveForward method is called so a robot can check
      * if the tile is free to reevaluate its goals.
      */
-    public boolean beforeMovementCallback(MapData location) {
+    public boolean beforeMovementCallback(NovaMapData location) {
         return true;
     }
 
@@ -172,7 +172,7 @@ public class NovaPlayer extends Base {
      * The MapData object contains the robots.
      * Return false to return from the calling method.
      */
-    public boolean enemyInSightCallback(MapData location) {
+    public boolean enemyInSightCallback(NovaMapData location) {
         return true;
     }
 
@@ -181,7 +181,7 @@ public class NovaPlayer extends Base {
      * for exaple, make sure it has enough energon to get back to the archon.
      * If the callback returns false, the go method returns.
      */
-    public boolean pathCalculatedCallback(LinkedList<MapData> path) {
+    public boolean pathCalculatedCallback(LinkedList<NovaMapData> path) {
         return true;
     }
 
@@ -198,7 +198,7 @@ public class NovaPlayer extends Base {
     /**
      * Callback for when a tile is sensed.  Return false to stop sensing.
      */
-    public boolean tileSensedCallback(MapData tile) {
+    public boolean tileSensedCallback(NovaMapData tile) {
         return true;
     }
 

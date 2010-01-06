@@ -215,8 +215,8 @@ public abstract class AttackPlayer extends NovaPlayer {
      * Returns ArrayList of MapData where this unit can attack this location from.
      */
 
-    public ArrayList<MapData> getAttackLocations(MapData enemyLocation) {
-        ArrayList<MapData> ableSpots = new ArrayList<MapData>();
+    public ArrayList<NovaMapData> getAttackLocations(NovaMapData enemyLocation) {
+        ArrayList<NovaMapData> ableSpots = new ArrayList<NovaMapData>();
         RobotType type = controller.getRobotType();
         //
         int x, y;
@@ -230,7 +230,7 @@ public abstract class AttackPlayer extends NovaPlayer {
             } else {
                 for(int j = y - maxDistance; j < y + maxDistance; j++) {
                     if(j <= y - minDistance && j >= y + minDistance) {
-                        ableSpots.add(new MapData(new MapLocation(i, j)));
+                        ableSpots.add(new NovaMapData(new MapLocation(i, j)));
                     }
                 }
             }
@@ -261,7 +261,7 @@ public abstract class AttackPlayer extends NovaPlayer {
         public void initiate() {
             MapLocation destination = findBestLocation(enemyLocation);
             //initiate the attack!
-            navigation.go(new MapData(destination));
+            navigation.go(new NovaMapData(destination));
         }
     }
     //notes: we have a method for go-iing.  need one for go thing to go

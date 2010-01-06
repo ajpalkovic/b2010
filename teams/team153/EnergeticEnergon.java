@@ -40,8 +40,8 @@ public class EnergeticEnergon extends Base {
      */
     public void autoTransferEnergon() {
         //p("auto transfer energon");
-        MapData[] data = sensing.senseSurroundingSquares();
-        for(MapData location : data) {
+        NovaMapData[] data = sensing.senseSurroundingSquares();
+        for(NovaMapData location : data) {
             if(location != null) {
                 //p(location.toStringFull());
                 if(location.airRobot != null && !player.isArchon(location.airRobotInfo.type) && location.airRobotInfo.team == player.team) {
@@ -70,9 +70,9 @@ public class EnergeticEnergon extends Base {
             return;
         }
         if(!(player.isChainer || player.isTurret)) {
-            MapData squares[] = sensing.senseSurroundingSquares();
+            NovaMapData squares[] = sensing.senseSurroundingSquares();
             RobotInfo min = null, cur = null;
-            for(MapData square : squares) {
+            for(NovaMapData square : squares) {
                 if(square == null) {
                     return;
                 }

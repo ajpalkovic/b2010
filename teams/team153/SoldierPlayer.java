@@ -68,12 +68,12 @@ public class SoldierPlayer extends AttackPlayer {
         Direction dir = navigation.getDirection(controller.getLocation(), enemyLocation);
         x = enemyLocation.getX();
         y = enemyLocation.getY();
-        ArrayList<MapData> locations = getAttackLocations(new MapData(x, y));
+        ArrayList<NovaMapData> locations = getAttackLocations(new NovaMapData(x, y));
 
         MapLocation returnData = enemyLocation;
         int minDistance = Integer.MAX_VALUE;
         int distance;
-        for(MapData m : locations) {
+        for(NovaMapData m : locations) {
             distance = m.toMapLocation().distanceSquaredTo(m.toMapLocation());
             if(distance < minDistance) {
                 distance = minDistance;
@@ -98,7 +98,7 @@ public class SoldierPlayer extends AttackPlayer {
             }
             if(!controller.getLocation().isAdjacentTo(closestArchon)) {
                 //           if (controller.getLocation().distanceSquaredTo(closestArchon) > ARCHON_DISTANCE) {
-                navigation.goByBugging(new MapData(closestArchon));
+                navigation.goByBugging(new NovaMapData(closestArchon));
                 //                System.out.println("returning");
                 //            }
             }

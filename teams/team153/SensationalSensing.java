@@ -43,7 +43,7 @@ public class SensationalSensing extends Base {
         return tiles;
     }
 
-    public boolean runSensorCallbacks(MapData data) {
+    public boolean runSensorCallbacks(NovaMapData data) {
         boolean ret = true;
         if(data != null) {
             ret = player.tileSensedCallback(data);
@@ -147,12 +147,12 @@ public class SensationalSensing extends Base {
     /**
      * Sense the 8 tiles around the robot.
      */
-    public MapData[] senseSurroundingSquares() {
+    public NovaMapData[] senseSurroundingSquares() {
         return senseSurroundingSquares(controller.getLocation());
     }
 
-    public MapData[] senseSurroundingSquares(MapLocation location) {
-        MapData[] ret = new MapData[9];
+    public NovaMapData[] senseSurroundingSquares(MapLocation location) {
+        NovaMapData[] ret = new NovaMapData[9];
         int x = location.getX(), y = location.getY();
 
         ret[0] = senseTile(new MapLocation(x - 1, y - 1));
@@ -175,7 +175,7 @@ public class SensationalSensing extends Base {
      * If the location is offmap, a MapData object will still be returned, but it will not be saved in the
      * mapstore object.  Walls will be automatically updated to reflect the new locations.
      */
-    public MapData senseTile(MapLocation location) {
+    public NovaMapData senseTile(MapLocation location) {
         TerrainTile tile = null;
 
         if(!controller.canSenseSquare(location)) {
@@ -190,7 +190,7 @@ public class SensationalSensing extends Base {
 
         // if the tile is off map, we do not want to store it in the database, cuz it will cause problems
         if(tile == null || tile.getType() == TerrainTile.TerrainType.OFF_MAP) {
-            MapData data = new MapData(location);
+            NovaMapData data = new NovaMapData(location);
             data.tile = tile;
             updateWalls(data);
             return data;
@@ -198,7 +198,7 @@ public class SensationalSensing extends Base {
 
         //grab the tile from the map store or create it if it doesn't exist because this tile is on the map
         try {
-            MapData data = map.getOrCreate(location.getX(), location.getY());
+            NovaMapData data = map.getOrCreate(location.getX(), location.getY());
 
             if(data.lastUpdate >= Clock.getRoundNum()) {
                 return data;
@@ -260,7 +260,7 @@ public class SensationalSensing extends Base {
      * that there can't be a wall there because it already saw an on map tile further to the
      * right of it.
      */
-    public void updateWalls(MapData data) {
+    public void updateWalls(NovaMapData data) {
         if(data.tile == null) {
             return;
         }

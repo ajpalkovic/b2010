@@ -5,47 +5,47 @@ import battlecode.common.*;
 
 public class MapStore {
 
-    public MapData[][] map;
+    public NovaMapData[][] map;
 
     public MapStore() {
-        map = new MapData[60][60];
+        map = new NovaMapData[60][60];
     }
 
-    public MapData get(int x, int y) {
+    public NovaMapData get(int x, int y) {
         return map[x % 60][y % 60];
     }
 
-    public MapData getOrCreate(int x, int y) {
-        MapData ret = get(x, y);
+    public NovaMapData getOrCreate(int x, int y) {
+        NovaMapData ret = get(x, y);
         if(ret == null) {
-            ret = new MapData(x, y);
+            ret = new NovaMapData(x, y);
             map[x % 60][y % 60] = ret;
         }
         return ret;
     }
 
-    public MapData getOrCreate(MapLocation location) {
+    public NovaMapData getOrCreate(MapLocation location) {
         return getOrCreate(location.getX(), location.getY());
     }
 
-    public MapData getNotNull(int x, int y) {
-        MapData ret = get(x, y);
+    public NovaMapData getNotNull(int x, int y) {
+        NovaMapData ret = get(x, y);
         if(ret == null) {
-            ret = new MapData(x, y);
+            ret = new NovaMapData(x, y);
         }
         return ret;
     }
 
-    public MapData getNotNull(MapLocation location) {
+    public NovaMapData getNotNull(MapLocation location) {
         return getNotNull(location.getX(), location.getY());
     }
 
-    public MapData get(MapLocation location) {
+    public NovaMapData get(MapLocation location) {
         return get(location.getX(), location.getY());
     }
 
-    public void set(int x, int y, MapData data) {
-        MapData cur = get(x, y);
+    public void set(int x, int y, NovaMapData data) {
+        NovaMapData cur = get(x, y);
         if(cur == null) {
             map[x % 60][y % 60] = data;
         } else {
@@ -53,18 +53,18 @@ public class MapStore {
 
     }
 
-    public void set(MapData data) {
+    public void set(NovaMapData data) {
         set(data.x, data.y, data);
     }
 
-    public void setAll(MapData[] datas) {
-        for(MapData data : datas) {
+    public void setAll(NovaMapData[] datas) {
+        for(NovaMapData data : datas) {
             set(data);
         }
     }
 
-    public MapData[] getSurroundingSquares(int x, int y) {
-        MapData[] squares = new MapData[8];
+    public NovaMapData[] getSurroundingSquares(int x, int y) {
+        NovaMapData[] squares = new NovaMapData[8];
         squares[0] = get(x - 1, y - 1);
         squares[1] = get(x, y - 1);
         squares[2] = get(x + 1, y - 1);
@@ -77,13 +77,13 @@ public class MapStore {
         squares[7] = get(x + 1, y + 1);
 
         int count = 0;
-        for(MapData square : squares) {
+        for(NovaMapData square : squares) {
             if(square != null) {
                 count++;
             }
         }
 
-        MapData[] ret = new MapData[count];
+        NovaMapData[] ret = new NovaMapData[count];
         int index = 0;
         for(int c = 0; c < 8; c++) {
             if(squares[c] != null) {
@@ -95,39 +95,39 @@ public class MapStore {
         return ret;
     }
 
-    public MapData[] getForwardSquares(int x, int y, int previousXDelta, int previousYDelta, boolean diagonal) {
-        MapData[] squares;
+    public NovaMapData[] getForwardSquares(int x, int y, int previousXDelta, int previousYDelta, boolean diagonal) {
+        NovaMapData[] squares;
         if(diagonal) {
             if(previousXDelta == -1) {
                 if(previousYDelta == -1) //top left
                 {
-                    squares = new MapData[] {getNotNull(x - 1, y - 1), getNotNull(x, y - 1), getNotNull(x - 1, y)};
+                    squares = new NovaMapData[] {getNotNull(x - 1, y - 1), getNotNull(x, y - 1), getNotNull(x - 1, y)};
                 } else //bottom left
                 {
-                    squares = new MapData[] {getNotNull(x + 1, y + 1), getNotNull(x - 1, y), getNotNull(x, y + 1)};
+                    squares = new NovaMapData[] {getNotNull(x + 1, y + 1), getNotNull(x - 1, y), getNotNull(x, y + 1)};
                 }
             } else if(previousYDelta == -1) //top right
             {
-                squares = new MapData[] {getNotNull(x + 1, y - 1), getNotNull(x, y - 1), getNotNull(x + 1, y)};
+                squares = new NovaMapData[] {getNotNull(x + 1, y - 1), getNotNull(x, y - 1), getNotNull(x + 1, y)};
             } else //bottom right
             {
-                squares = new MapData[] {getNotNull(x + 1, y + 1), getNotNull(x + 1, y), getNotNull(x, y + 1)};
+                squares = new NovaMapData[] {getNotNull(x + 1, y + 1), getNotNull(x + 1, y), getNotNull(x, y + 1)};
             }
         } else if(previousXDelta == -1) // left
         {
-            squares = new MapData[] {getNotNull(x - 1, y), getNotNull(x - 1, y - 1), getNotNull(x - 1, y + 1)};
+            squares = new NovaMapData[] {getNotNull(x - 1, y), getNotNull(x - 1, y - 1), getNotNull(x - 1, y + 1)};
         } else if(previousXDelta == 1) //right
         {
-            squares = new MapData[] {getNotNull(x + 1, y), getNotNull(x + 1, y - 1), getNotNull(x + 1, y + 1)};
+            squares = new NovaMapData[] {getNotNull(x + 1, y), getNotNull(x + 1, y - 1), getNotNull(x + 1, y + 1)};
         } else if(previousYDelta == -1) //top
         {
-            squares = new MapData[] {getNotNull(x, y - 1), getNotNull(x - 1, y - 1), getNotNull(x + 1, y - 1)};
+            squares = new NovaMapData[] {getNotNull(x, y - 1), getNotNull(x - 1, y - 1), getNotNull(x + 1, y - 1)};
         } else if(previousYDelta == 1) //bottom
         {
-            squares = new MapData[] {getNotNull(x, y + 1), getNotNull(x - 1, y + 1), getNotNull(x + 1, y + 1)};
+            squares = new NovaMapData[] {getNotNull(x, y + 1), getNotNull(x - 1, y + 1), getNotNull(x + 1, y + 1)};
         } else // first square
         {
-            squares = new MapData[] {getNotNull(x - 1, y - 1), getNotNull(x, y - 1), getNotNull(x + 1, y - 1), getNotNull(x - 1, y), getNotNull(x + 1, y), getNotNull(x - 1, y + 1), getNotNull(x, y + 1), getNotNull(x + 1, y + 1)};
+            squares = new NovaMapData[] {getNotNull(x - 1, y - 1), getNotNull(x, y - 1), getNotNull(x + 1, y - 1), getNotNull(x - 1, y), getNotNull(x + 1, y), getNotNull(x - 1, y + 1), getNotNull(x, y + 1), getNotNull(x + 1, y + 1)};
         }
 
         return squares;

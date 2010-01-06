@@ -35,7 +35,7 @@ public class ArchonPlayer extends NovaPlayer {
                     for(Robot r : controller.senseNearbyAirRobots()) {
                         if(r.getID() == followingArchonNumber) {
                             try {
-                                MapData loc = map.getNotNull(controller.senseRobotInfo(r).location);
+                                NovaMapData loc = map.getNotNull(controller.senseRobotInfo(r).location);
                                 navigation.goByBugging(loc);
 
 
@@ -167,7 +167,7 @@ public class ArchonPlayer extends NovaPlayer {
         int x = controller.getLocation().getX() + delta[0] * 10;
         int y = controller.getLocation().getY() + delta[1] * 10;
         MapLocation destination = new MapLocation(x, y);
-        navigation.go(new MapData(destination));
+        navigation.go(new NovaMapData(destination));
     }
 
     /**
