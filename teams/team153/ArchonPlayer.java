@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import battlecode.common.TerrainTile.TerrainType;
@@ -13,7 +13,6 @@ public class ArchonPlayer extends NovaPlayer {
     public int archonNumber = 0;
     public int archonGroup = -1;
     public Party scoutParty = new Party(3);
-    public MapData spottedFlux = null;
     public Direction exploreDirection;
     public SporadicSpawning spawning;
 
@@ -47,31 +46,6 @@ public class ArchonPlayer extends NovaPlayer {
                     }
 
                     break;
-                case Goal.goingTowardsFlux:
-                    goTowardsFlux();
-                    break;
-                case Goal.exploringForFlux:
-                    explore();
-                    break;
-                case Goal.goingDirectlyToFlux:
-                    navigation.goByBugging(spottedFlux);
-                    if(!updateFluxGoal(controller.getLocation())) {
-                        spawnParty();
-                        setGoal(Goal.scouting);
-                    }
-                    break;
-                case Goal.collectingFlux:
-                    spottedFlux = null;
-                    messaging.sendMessageForEnemyRobots();
-                    spawning.spawnFluxUnits();
-                    break;
-                case Goal.gettingCloseToFlux:
-                    getCloseToFlux();
-                    break;
-                case Goal.supporttingFluxDeposit:
-                    messaging.sendMessageForEnemyRobots();
-                    spawning.spawnFluxUnits();
-                    break;
                 case Goal.idle:
                     // reevaluate the goal
                     ;
@@ -83,7 +57,7 @@ public class ArchonPlayer extends NovaPlayer {
                     trackingCount %= 10;
                     scoutParty.partyUp();
                     if(trackingCount == 0) {
-                        explore();
+                        //explore();
                     }
                     scout();
 
@@ -103,27 +77,6 @@ public class ArchonPlayer extends NovaPlayer {
         navigation.moveOnce(exploreDirection);
     }
 
-    public void goTowardsFlux() {
-        Direction dir = controller.senseDirectionToUnownedFluxDeposit();
-        if(!controller.canMove(dir)) {
-            Direction leftTemp = dir, rightTemp = dir;
-            for(int c = 0; c < 4; c++) {
-                leftTemp = leftTemp.rotateLeft();
-                if(controller.canMove(leftTemp)) {
-                    dir = leftTemp;
-                    break;
-                }
-
-                rightTemp = rightTemp.rotateRight();
-                if(controller.canMove(rightTemp)) {
-                    dir = rightTemp;
-                    break;
-                }
-            }
-        }
-        navigation.moveOnce(dir);
-    }
-
     public void boot() {
         team = controller.getTeam();
         senseArchonNumber();
@@ -136,11 +89,9 @@ public class ArchonPlayer extends NovaPlayer {
         } else if(archonNumber < 5) {
             setGoal(Goal.exploringForFlux);
             archonGroup = 2;
-            exploreDirection = controller.senseDirectionToUnownedFluxDeposit().rotateLeft();
         } else {
             setGoal(Goal.exploringForFlux);
             archonGroup = 2;
-            exploreDirection = controller.senseDirectionToUnownedFluxDeposit().rotateRight();
         }
         if(archonNumber % 2 == 0) {
             //message to other archon
@@ -160,18 +111,18 @@ public class ArchonPlayer extends NovaPlayer {
             controller.yield();
         }
 
-        if(spawning.canSupportUnit(RobotType.CANNON) && scoutParty.partySize < 2) {
-            scoutParty.waitForNewUnit(RobotType.CANNON);
-            spawning.spawnRobot(RobotType.CANNON);
+        if(spawning.canSupportUnit(RobotType.TURRET) && scoutParty.partySize < 2) {
+            scoutParty.waitForNewUnit(RobotType.TURRET);
+            spawning.spawnRobot(RobotType.TURRET);
         } else if(controller.getEnergonLevel() / controller.getMaxEnergonLevel() > .5) {
             ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
             if(enemies.size() <= 3) {
                 goDirection(controller.getLocation().directionTo(enemies.get(0)));
             }
-            if(enemies.size() == 0) {
+            /*if(enemies.size() == 0) {
                 setGoal(Goal.scouting);
                 explore();
-            }
+            }*/
         } else {
             ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
             if(enemies.size() > 0) {
@@ -198,155 +149,7 @@ public class ArchonPlayer extends NovaPlayer {
                 }
             }
         }
-        if(RobotType.valueOf(robotType).equals(RobotType.WORKER) && (currentGoal == Goal.supporttingFluxDeposit || currentGoal == Goal.collectingFlux)) {
-            messaging.sendFindBlocks(currentGoal == Goal.supporttingFluxDeposit ? spottedFlux.location : controller.getLocation(), findStepDirection(), robotID);
-        }
 
-    }
-
-    public Direction findStepDirection() {
-        int[] numLocations = {0, 0, 0, 0};
-        int[] avgChangeHeight = {0, 0, 0, 0};
-        Direction retDirection;
-        MapLocation fluxDeposit = ((currentGoal == Goal.supporttingFluxDeposit) ? spottedFlux.location : controller.getLocation());
-
-        retDirection = Direction.NORTH;
-        MapData checkLoc;
-        int prevHeight, currHeight;
-        for(int j = 0; j < 4; j++) {
-            checkLoc = map.getNotNull(fluxDeposit);
-            currHeight = checkLoc.height;
-            for(int i = 0; i <= 6; i++) {
-                prevHeight = currHeight;
-                checkLoc = map.getNotNull(checkLoc.toMapLocation().add(retDirection));
-                currHeight = checkLoc.height;
-                prevHeight -= currHeight;
-                if(prevHeight < -2 || prevHeight > 2) {
-                    break;
-                }
-                if(checkLoc.tile != null && checkLoc.tile.getType() == TerrainType.LAND) {
-                    numLocations[j]++;
-                } else {
-                    break;
-                }
-            }
-            retDirection = retDirection.rotateRight().rotateRight();
-
-        }
-        int maxIndex = -1, maxNum = -1, currNum;
-
-        for(int i = 0; i < 4; i++) {
-            if((currNum = numLocations[i]) > maxNum) {
-                maxIndex = i;
-                maxNum = currNum;
-            }
-        }
-
-        retDirection = Direction.NORTH;
-        for(int i = 0; i < maxIndex; i++) {
-            retDirection = retDirection.rotateRight().rotateRight();
-        }
-
-        return retDirection;
-    }
-
-    public boolean updateFluxGoal(MapLocation location) {
-        MapData updatedData = sensing.senseTile(spottedFlux.toMapLocation());
-
-        if(updatedData.toMapLocation().equals(controller.getLocation())) {
-            controller.setIndicatorString(1, "collecting flux");
-            scoutParty.setPartyGoal(Goal.supporttingFluxDeposit);
-            setGoal(Goal.collectingFlux);
-            return true;
-        }
-
-        if(updatedData.airRobot == null) {
-            return true;
-        }
-
-        if(updatedData.airRobotInfo.team != team) {
-            //uhoh, its the enemy
-            setGoal(Goal.scouting);
-            return false;
-        } else {
-            // a robot is there already, let's help them out
-            // get to within 2 tiles of it first though
-            setGoal(Goal.scouting);
-            return true;
-        }
-        //return true;
-    }
-
-    public void getCloseToFlux() {
-
-        if(true) {
-            return;
-        }
-
-        while(true) {
-            MapData updatedData = sensing.senseTile(spottedFlux.toMapLocation());
-            int distance = Math.abs(updatedData.x - controller.getLocation().getX()) + Math.abs(updatedData.y - controller.getLocation().getY());
-            p("Distance to flux: " + distance);
-            if(distance <= 2) {
-                break;
-            }
-
-            MapData[] fluxSquares = sensing.senseSurroundingSquares(spottedFlux.toMapLocation());
-            MapData goal = null;
-            int count = 0, offset = archonNumber % 3;
-            if(fluxSquares == null) {
-                return;
-            }
-            for(MapData square : fluxSquares) {
-                if(square.airRobot == null) {
-                    goal = square;
-                    if(count >= offset) {
-                        break;
-                    }
-                    count++;
-                } else {
-                    count++;
-                }
-            }
-
-            navigation.go(goal);
-        }
-        setGoal(Goal.supporttingFluxDeposit);
-        trackingCount = 0;
-    }
-
-    public boolean beforeMovementCallback(MapData data) {
-        switch(currentGoal) {
-            case Goal.goingDirectlyToFlux:
-                return updateFluxGoal(data.toMapLocation());
-        }
-        return true;
-    }
-
-    public boolean fluxDepositInSightCallback(MapData data) {
-        p("flux spotted");
-        if(currentGoal == Goal.exploringForFlux || currentGoal == Goal.goingTowardsFlux) {
-            setGoal(Goal.goingDirectlyToFlux);
-            spottedFlux = data;
-        } else if(currentGoal == Goal.scouting) {
-            boolean good = true;
-            for(MapLocation m : controller.senseAlliedArchons()) {
-                if(m.equals(data.location)) {
-                    good = false;
-                    break;
-                }
-            }
-            ArrayList<RobotInfo> enemies;
-            if((enemies = sensing.senseEnemyRobotInfoInSensorRange()).size() > 0) {
-                spawnParty();
-                setGoal(Goal.fight);//FIGHT!
-            } else if(good) {
-                setGoal(Goal.goingDirectlyToFlux);
-                spottedFlux = data;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -356,25 +159,6 @@ public class ArchonPlayer extends NovaPlayer {
         if(archonNumber % 2 == 1 && this.archonNumber == archonNumber + 1) {
             setGoal(Goal.followingArchon);
             followingArchonNumber = id;
-        }
-    }
-
-    /**
-     * Will cause the archon to explore the map in one direction and broadcast a
-     * message with its location and next direction each time.
-     */
-    public void explore() {
-        setGoal(Goal.scouting);
-        //MapLocation[] archonLocations = controller.senseAlliedArchons();
-        //Direction dir = controller.senseDirectionToUnownedFluxDeposit();
-    	/*for (MapLocation archon: archonLocations)
-        if (controller.getLocation().directionTo(archon) == dir) {
-        exploreDirection = dir.opposite();
-        return;
-        }*/
-
-        if(exploreDirection != null && !controller.canMove(exploreDirection)) {
-            exploreDirection = controller.senseDirectionToUnownedFluxDeposit();
         }
     }
 
@@ -408,10 +192,6 @@ public class ArchonPlayer extends NovaPlayer {
             System.out.println("----Caught Exception in senseArchonNumber.  Exception: " + e.toString());
         }
         System.out.println("Number: " + min);
-    }
-
-    public int calculateMovementDelay(int heightFrom, int heightTo, boolean diagonal) {
-        return diagonal ? moveDiagonalDelay : moveStraightDelay;
     }
 
     public void senseNewTiles() {
@@ -480,7 +260,8 @@ public class ArchonPlayer extends NovaPlayer {
                         messaging.sendFollowRequest(controller.getLocation(), archonNumber, robot.getID());
                     }
                     break;
-                case Goal.supporttingFluxDeposit:
+                default:
+                    //TODO: this used to be Goal.supportingFluxDeposit
 
                     messaging.sendFollowRequest(controller.getLocation(), -1, -1);
                     break;

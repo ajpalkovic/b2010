@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -18,14 +18,8 @@ public class RobotPlayer implements Runnable {
             player = new ArchonPlayer(controller);
         } else if(controller.getRobotType().equals(RobotType.SOLDIER)) {
             player = new SoldierPlayer(controller);
-        } else if(controller.getRobotType().equals(RobotType.SCOUT)) {
-            player = new ScoutPlayer(controller);
-        } else if(controller.getRobotType().equals(RobotType.CANNON)) {
-            player = new CannonPlayer(controller);
-        } else if(controller.getRobotType().equals(RobotType.CHANNELER)) {
-            player = new ChannelerPlayer(controller);
         } else {
-            player = new WorkerPlayer(controller);
+            player = null;
         }
 
         while(true) {

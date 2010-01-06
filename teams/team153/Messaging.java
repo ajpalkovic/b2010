@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -100,20 +100,11 @@ public class Messaging extends Base {
                         //this will broadcast the unit's location (locations[0]) and the enemy's location(locations[1])
                         //
                         break;
-                    case BroadcastMessage.FLUX_IN_SIGHT:
-                        ;//theres some flux!
-                        //locations[0] is the unit's location, locations[1] is the flux's location
-                        break;
                     case BroadcastMessage.MAP_INFO:
                         ;//update of mapinfo can be very many locations[]
                         break;
                     case BroadcastMessage.NEW_UNIT:
                         player.newUnit(senderID, message.locations[0], message.strings[0]);//theres a new unit! I should send my map info!
-                        break;
-                    case BroadcastMessage.SCOUT_ALLIED_UNIT_RELAY:
-                        if(player.isScout) {
-                            player.setGoal(Goal.alliedUnitRelay);
-                        }
                         break;
                     case BroadcastMessage.LOW_ALLIED_UNITS:
                         int count = message.ints[i + 2];
@@ -140,27 +131,6 @@ public class Messaging extends Base {
                         //make sure the message is intended for me
                         player.lowEnergonMessageCallback(message.locations[locationIndex], message.locations[locationIndex + 1], message.ints[i + 3], message.ints[i + 2]);
                         break;
-                    case BroadcastMessage.FIND_BLOCKS:
-                        locationIndex++;
-                        if(message.ints[i + 1] == controller.getRobot().getID()) {
-                            Direction dir = Direction.NONE;
-                            switch(message.ints[i + 2]) {
-                                case 0:
-                                    dir = Direction.NORTH;
-                                    break;
-                                case 1:
-                                    dir = Direction.EAST;
-                                    break;
-                                case 2:
-                                    dir = Direction.SOUTH;
-                                    break;
-                                case 3:
-                                    dir = Direction.WEST;
-                                    break;
-                            }
-                            player.findBlocks(message.locations[locationIndex - 1], dir);
-                        }
-                        break;
                     case BroadcastMessage.MOVE:
                         locationIndex++;
 
@@ -172,9 +142,6 @@ public class Messaging extends Base {
                             switch(message.ints[i]) {
                                 case BroadcastMessage.ENEMY_IN_SIGHT:
                                     //this unit has seen an enemy in the past 100 turns
-                                    break;
-                                case BroadcastMessage.FLUX_IN_SIGHT:
-                                    //this unit can see flux
                                     break;
                                 case BroadcastMessage.UNDER_ATTACK:
                                     //this unit has been recently attacked
@@ -220,8 +187,6 @@ public class Messaging extends Base {
         switch(messageID) {
             case BroadcastMessage.ENEMY_IN_SIGHT:
                 return 3;
-            case BroadcastMessage.FLUX_IN_SIGHT:
-                return 2;
             case BroadcastMessage.LOW_ENERGON:
                 return 4;
             case BroadcastMessage.NEW_UNIT:
@@ -234,8 +199,6 @@ public class Messaging extends Base {
                 return 2;
             case BroadcastMessage.LOW_ALLIED_UNITS:
                 return 0;
-            case BroadcastMessage.SCOUT_ALLIED_UNIT_RELAY:
-                return 2;
         }
         return -1;
     }
@@ -245,46 +208,11 @@ public class Messaging extends Base {
      */
     public void sendMessageForEnemyRobots() {
         ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
-        //System.out.println(enemies.toString());
-        //int id;
-        //RobotInfo info;
-        //MapLocation oldLocation;
         for(RobotInfo robot : enemies) {
             int[] data = {(int) robot.energonLevel, -1};
             String robotType = robot.type.toString();
 
-            //System.out.println("Sending message: "+robot.toString()+" "+robot.location.toString());
             sendEnemyInSight(robot.location, data, robotType);
-            /*id = robot.getID();
-            try
-            {
-            info = controller.senseRobotInfo(robot);
-            }
-            catch (GameActionException ex)
-            {
-            //p("------------------------------Cannot sense Robot Info in scout method");
-            info = null;
-            continue;
-            }
-
-            if (!oldEnemies.contains(id))
-            {
-            oldEnemies.add(id);
-            oldLocations.add(info.location);
-            int[] data = {(int)info.energonLevel, id};
-            String robotType = info.type.toString();
-            sendEnemyInSight(info.location, data, robotType);
-            }
-            else
-            {
-            oldLocation = oldLocations.get(oldEnemies.indexOf(id));
-            if (oldLocation.getX() != info.location.getX() || oldLocation.getY() != info.location.getY())
-            {
-            int[] data = {(int)info.energonLevel, id};
-            String robotType = info.type.toString();
-            sendEnemyInSight(info.location, data, robotType);
-            }
-            }*/
         }
         if(enemies.size() > 0) {
             sendMessage();
@@ -325,20 +253,6 @@ public class Messaging extends Base {
         messageInts.clear();
         messageStrings.clear();
         messageLocations.clear();
-    }
-
-    public boolean sendScoutAlliedUnitRelay() {
-        return addMessage(new int[] {BroadcastMessage.SCOUT_ALLIED_UNIT_RELAY, -1}, null, null);
-    }
-
-    public boolean sendFluxInSight(MapLocation location) {
-        int[] ints = new int[2];
-        ints[0] = BroadcastMessage.FLUX_IN_SIGHT;
-        MapLocation[] locations = new MapLocation[2];
-        locations[0] = controller.getLocation();
-        locations[1] = location;
-        String[] strings = null;
-        return addMessage(ints, strings, locations);
     }
 
     public boolean sendMove(MapLocation location) {
@@ -388,17 +302,6 @@ public class Messaging extends Base {
         MapLocation[] locations = new MapLocation[1];
         locations[0] = controller.getLocation();
         String[] strings = {controller.getRobotType().toString()};
-        return addMessage(ints, strings, locations);
-    }
-
-    public boolean sendFindBlocks(MapLocation fluxLocation, Direction stepDirection, int recepientID) {
-        int[] ints = new int[3];
-        ints[0] = BroadcastMessage.FIND_BLOCKS;
-        ints[1] = recepientID;
-        ints[2] = 3;
-        MapLocation[] locations = new MapLocation[1];
-        locations[0] = fluxLocation;
-        String[] strings = null;
         return addMessage(ints, strings, locations);
     }
     //follow request archon only

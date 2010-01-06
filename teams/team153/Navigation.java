@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -175,7 +175,7 @@ public class Navigation extends Base {
 
                     // check for the goal state
                     if(square.equals(end)) {
-                        end.pathCost = current.cost + player.calculateMovementDelay(current.height, map.getHeight(end), true);
+                        end.pathCost = current.cost + player.calculateMovementDelay(true);
                         LinkedList<MapData> ret = new LinkedList<MapData>();
                         ret.addFirst(end);
                         // reverse the path pointed to by current.previous and remove the start location
@@ -467,11 +467,7 @@ public class Navigation extends Base {
             }
 
             previous = map.getNotNull(controller.getLocation());
-            if(player.isWorker) {
-                dir = getMoveableWorkerDirection(getDirection(previous, end));
-            } else {
-                dir = getMoveableDirection(getDirection(previous, end));
-            }
+            dir = getMoveableDirection(getDirection(previous, end));
 
             if(dir == null) {
                 System.out.println("null direction");
@@ -708,20 +704,19 @@ public class Navigation extends Base {
 
         public MapData location;
         public PathLocation previous;
-        public int cost, estimate, height, total, xDelta, yDelta;
+        public int cost, estimate, total, xDelta, yDelta;
         public boolean diagonal;
         public Integer intCost;
 
         public PathLocation(MapData location, PathLocation previous, MapData goal) {
             this.location = location;
             this.previous = previous;
-            height = map.getHeight(location);
             if(previous != null) {
                 //non diagonal squares will have an x or y coordinate which is the same in both the current location and the next one
                 diagonal = !(location.x == previous.location.x || location.y == previous.location.y);
                 xDelta = location.x - previous.location.x;
                 yDelta = location.y - previous.location.y;
-                cost = player.calculateMovementDelay(height, previous.height, diagonal) + previous.cost;
+                cost = player.calculateMovementDelay(diagonal) + previous.cost;
                 //if we have to change direction
                 if(xDelta != previous.xDelta || yDelta != previous.yDelta) {
                     cost++;

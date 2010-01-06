@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -25,7 +25,7 @@ public class NovaPlayer extends Base {
     public Team team;
 
     public boolean isAirRobot;
-    public boolean isArchon, isWorker, isScout, isCannon, isSoldier, isChanneler;
+    public boolean isArchon, isSoldier, isChainer, isTurret, isWout, isAuraTower, isCommTower, isTeleporterTower, isTower, isRobot;
 
     public NovaPlayer(RobotController controller) {
         super(controller);
@@ -34,7 +34,7 @@ public class NovaPlayer extends Base {
         moveDiagonalDelay = controller.getRobotType().moveDelayDiagonal();
         oldEnemies = new ArrayList<Integer>();
         oldLocations = new ArrayList<MapLocation>();
-        isAirRobot = controller.getRobotType() == RobotType.ARCHON || controller.getRobotType() == RobotType.SCOUT;
+        isAirRobot = controller.getRobotType() == RobotType.ARCHON;
 
         messaging = new Messaging(this);
         navigation = new Navigation(this);
@@ -45,35 +45,41 @@ public class NovaPlayer extends Base {
         navigation.sensing = sensing;
 
         isArchon = isArchon(controller.getRobotType());
-        isWorker = isWorker(controller.getRobotType());
-        isScout = isScout(controller.getRobotType());
-        isCannon = isCannon(controller.getRobotType());
         isSoldier = isSoldier(controller.getRobotType());
-        isChanneler = isChanneler(controller.getRobotType());
+        isChainer = isChainer(controller.getRobotType());
+        isTurret = isTurret(controller.getRobotType());
+        isWout = isWout(controller.getRobotType());
+        isAuraTower = isAuraTower(controller.getRobotType());
+        isCommTower = isCommTower(controller.getRobotType());
+        isTeleporterTower = isTeleporterTower(controller.getRobotType());
+
+        isTower = isAuraTower || isCommTower || isTeleporterTower;
+        isRobot = !isTower;
     }
 
     public boolean isArchon(RobotType type) {
         return type == RobotType.ARCHON;
     }
-
-    public boolean isWorker(RobotType type) {
-        return type == RobotType.WORKER;
-    }
-
-    public boolean isScout(RobotType type) {
-        return type == RobotType.SCOUT;
-    }
-
-    public boolean isCannon(RobotType type) {
-        return type == RobotType.CANNON;
-    }
-
     public boolean isSoldier(RobotType type) {
         return type == RobotType.SOLDIER;
     }
-
-    public boolean isChanneler(RobotType type) {
-        return type == RobotType.CHANNELER;
+    public boolean isAuraTower(RobotType type) {
+        return type == RobotType.AURA;
+    }
+    public boolean isChainer(RobotType type) {
+        return type == RobotType.CHAINER;
+    }
+    public boolean isCommTower(RobotType type) {
+        return type == RobotType.COMM;
+    }
+    public boolean isTurret(RobotType type) {
+        return type == RobotType.TURRET;
+    }
+    public boolean isTeleporterTower(RobotType type) {
+        return type == RobotType.TELEPORTER;
+    }
+    public boolean isWout(RobotType type) {
+        return type == RobotType.WOUT;
     }
 
     public void run() throws Exception {
@@ -99,17 +105,8 @@ public class NovaPlayer extends Base {
      * For ground units, this takes into consideration the difference in tile heights.
      * For air units, this is overriden in their classes to only return the base movement delay.
      */
-    public int calculateMovementDelay(int heightFrom, int heightTo, boolean diagonal) {
-        int cost = diagonal ? player.moveDiagonalDelay : player.moveStraightDelay;
-        int delta = heightFrom - heightTo;
-        if(Math.abs(delta) <= 1) {
-            return cost;
-        }
-        if(delta > 0) {
-            return cost + GameConstants.FALLING_PENALTY_RATE * delta;
-        } else {
-            return cost + GameConstants.CLIMBING_PENALTY_RATE * delta * delta;
-        }
+    public int calculateMovementDelay(boolean diagonal) {
+        return diagonal ? player.moveDiagonalDelay : player.moveStraightDelay;
     }
 
     /**
@@ -180,13 +177,6 @@ public class NovaPlayer extends Base {
     }
 
     /**
-     * Callback for when a flux deposit is spotted.
-     */
-    public boolean fluxDepositInSightCallback(MapData location) {
-        return true;
-    }
-
-    /**
      * Callback in the go method when a path is calculated.  The robot can override this to,
      * for exaple, make sure it has enough energon to get back to the archon.
      * If the callback returns false, the go method returns.
@@ -226,12 +216,6 @@ public class NovaPlayer extends Base {
      *  is called when received a newUnit message - to be overloaded;
      */
     public void newUnit(int senderID, MapLocation location, String robotType) {
-    }
-
-    /**
-     *  is called when Find Blocks message is receive to be overloaded;
-     */
-    public void findBlocks(MapLocation fluxLocation, Direction d) {
     }
 
     /**

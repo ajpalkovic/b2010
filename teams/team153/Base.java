@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -45,7 +45,6 @@ public class Base {
         static final int FIND_BLOCKS = 10;
         static final int MOVE = 11; //MOVE BITCH GET OUT DA WAY
         static final int LOW_ALLIED_UNITS = 12;
-        static final int SCOUT_ALLIED_UNIT_RELAY = 13;
         static final int SUPPORT = 14;
     }
 
@@ -60,10 +59,8 @@ public class Base {
     static class Goal {
 
         public static final int exploringForFlux = 2, goingTowardsFlux = 3, goingDirectlyToFlux = 4, gettingCloseToFlux = 5;
-        public static final int supporttingFluxDeposit = 10, collectingFlux = 11;
-        public static final int idle = 20;
-        public static final int scouting = 30, followingArchon = 31, alliedUnitRelay = 32, fight = 33;
-        public static final int findBlock = 40, foundBlock = 41, goingToSteps = 42;
+        public static final int idle = 20, scouting = 21;
+        public static final int followingArchon = 31, alliedUnitRelay = 32, fight = 33;
 
         public static String toString(int goal) {
             switch(goal) {
@@ -75,22 +72,10 @@ public class Base {
                     return "Going directly to Flux";
                 case gettingCloseToFlux:
                     return "Getting closer to a flux depsoit";
-                case supporttingFluxDeposit:
-                    return "Supporting Flux Deposit";
-                case collectingFlux:
-                    return "Collecting Flux";
                 case idle:
                     return "Idle";
-                case scouting:
-                    return "Scouting";
                 case followingArchon:
                     return "Following Archon";
-                case findBlock:
-                    return "Finding Block";
-                case foundBlock:
-                    return "Found Block";
-                case goingToSteps:
-                    return "Going to steps";
                 case alliedUnitRelay:
                     return "Relaying Allied Unit Locations";
                 case fight:

@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -11,8 +11,7 @@ public class SporadicSpawning extends Base {
     public Navigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
-    public double goalChannelers = -0.2, goalCannons = .6, goalSoldiers = -0.2, goalWorkers = .4, goalScouts = .1;
-    public int maxWorkers = 2;
+    public double goalChainers = -0.2, goalTurrets = .6, goalSoldiers = -0.2, goalWouts = .4;
     public int unitSpawned = 0;
 
     public SporadicSpawning(NovaPlayer player) {
@@ -59,63 +58,54 @@ public class SporadicSpawning extends Base {
      * Returns the type of robot that should be spawned next.
      */
     public RobotType getNextRobotSpawnType() {
-        ArrayList<RobotInfo> robots = sensing.robotCache.getGroundRobotInfo(), robots2 = sensing.robotCache.getAirRobotInfo();
-        ArrayList<RobotInfo> channelers = new ArrayList<RobotInfo>(), cannons = new ArrayList<RobotInfo>(), soldiers = new ArrayList<RobotInfo>(),
-                workers = new ArrayList<RobotInfo>(), scouts = new ArrayList<RobotInfo>();
+        ArrayList<RobotInfo> robots = sensing.robotCache.getGroundRobotInfo();
+        ArrayList<RobotInfo> chainers = new ArrayList<RobotInfo>(),
+                turrets = new ArrayList<RobotInfo>(),
+                soldiers = new ArrayList<RobotInfo>(),
+                wouts = new ArrayList<RobotInfo>();
+
         for(RobotInfo robot : robots) {
             if(robot.team == player.team) {
-                if(robot.type == RobotType.CANNON) {
-                    cannons.add(robot);
-                } else if(robot.type == RobotType.CHANNELER) {
-                    channelers.add(robot);
+                if(robot.type == RobotType.WOUT) {
+                    wouts.add(robot);
+                } else if(robot.type == RobotType.CHAINER) {
+                    chainers.add(robot);
                 } else if(robot.type == RobotType.SOLDIER) {
                     soldiers.add(robot);
-                } else if(robot.type == RobotType.WORKER) {
-                    workers.add(robot);
-                }
-            }
-        }
-        for(RobotInfo robot : robots2) {
-            if(robot.team == player.team) {
-                if(robot.type == RobotType.SCOUT) {
-                    scouts.add(robot);
+                } else if(robot.type == RobotType.TURRET) {
+                    turrets.add(robot);
                 }
             }
         }
 
-        int total = cannons.size() + soldiers.size() + workers.size() + channelers.size() + scouts.size();
+        int total = chainers.size() + soldiers.size() + wouts.size() + turrets.size();
         if(total == 0) {
-            return RobotType.WORKER;
+            return RobotType.WOUT;
         }
 
-        double workerPercent = (double) workers.size() / total;
-        double cannonPercent = (double) cannons.size() / total;
-        double channelerPercent = (double) channelers.size() / total;
+        double woutPercent = (double) wouts.size() / total;
+        double turretPercent = (double) turrets.size() / total;
+        double chainerPercent = (double) chainers.size() / total;
         double soldierPercent = (double) soldiers.size() / total;
-        double scoutPercent = (double) scouts.size() / total;
 
-        double workerDifference = goalWorkers - workerPercent;
-        double cannonDifference = goalCannons - cannonPercent;
-        double channelerDifference = goalChannelers - channelerPercent;
+        double workerDifference = goalWouts - woutPercent;
+        double cannonDifference = goalTurrets - turretPercent;
+        double channelerDifference = goalChainers - chainerPercent;
         double soldierDifference = goalSoldiers - soldierPercent;
-        double scoutDifference = goalScouts - scoutPercent;
 
         for(double minDiff = 0.; minDiff >= -.2; minDiff -= .1) {
             for(double diff = .3; diff >= -.1; diff -= .1) {
-                if(workers.size() < maxWorkers && workerDifference > diff && workerDifference > minDiff && workers.size() < 2 && player.currentGoal == Goal.collectingFlux) {
-                    return RobotType.WORKER;
+                if(workerDifference > diff && workerDifference > minDiff && wouts.size() < 2) {
+                    return RobotType.WOUT;
                 }
                 if(cannonDifference > diff && cannonDifference > minDiff) {
-                    return RobotType.CANNON;
+                    return RobotType.TURRET;
                 }
                 if(soldierDifference > diff && soldierDifference > minDiff) {
                     return RobotType.SOLDIER;
                 }
                 if(channelerDifference > diff && channelerDifference > minDiff) {
-                    return RobotType.CHANNELER;
-                }
-                if(scoutDifference > diff && scoutDifference > minDiff) {
-                    return RobotType.SCOUT;
+                    return RobotType.CHAINER;
                 }
 
             }
@@ -127,14 +117,6 @@ public class SporadicSpawning extends Base {
      * Returns the first MapLocation of the 8 around an Archon which does not have a unit at that location.
      */
     public MapData getSpawnLocation(boolean isAirUnit) {
-        MapData flux = null;
-        try {
-            FluxDeposit[] f = controller.senseNearbyFluxDeposits();
-            if(f.length > 0) {
-                flux = map.get(controller.senseFluxDepositInfo(f[0]).location);
-            }
-        } catch(Exception e) {
-        }
 
         ArrayList<MapData> locations = new ArrayList<MapData>();
         MapData[] orderedLocations = navigation.getOrderedMapLocations();
@@ -143,38 +125,8 @@ public class SporadicSpawning extends Base {
                 locations.add(location);
             }
         }
-
-        if(flux != null && controller.getLocation().equals(flux.toMapLocation())) {
-            // i am on the flux deposit, spawn a unit around me
-            // maybe try to balance an equal number of units on each side, but take care of walls too
-            if(locations.size() > 0) {
-                return locations.get(0);
-            }
-        } else if(player.currentGoal == Goal.supporttingFluxDeposit) {
-            if(flux == null) {
-                if(locations.size() > 0) {
-                    return locations.get(0);
-                } else {
-                    return null;
-                }
-            }
-
-            // spawn units away from the flux deposit
-            MapData ret = null;
-            int distance = Integer.MIN_VALUE;
-            for(MapData location : locations) {
-                int d = location.toMapLocation().distanceSquaredTo(flux.toMapLocation());
-                if(d > distance) {
-                    distance = d;
-                    ret = location;
-                }
-            }
-
-            return ret;
-        } else {
-            if(locations.size() > 0) {
-                return locations.get(0);
-            }
+        if(locations.size() > 0) {
+            return locations.get(0);
         }
 
         return null;
@@ -194,7 +146,7 @@ public class SporadicSpawning extends Base {
         }
 
         //type - true = ground, false = air
-        boolean isAirUnit = (robot == RobotType.SCOUT || robot == RobotType.ARCHON);
+        boolean isAirUnit = robot == RobotType.ARCHON;
         MapData spawnLocation = getSpawnLocation(isAirUnit);
 
         if(spawnLocation == null) {
@@ -209,9 +161,6 @@ public class SporadicSpawning extends Base {
                 controller.spawn(robot);
                 unitSpawned++;
                 controller.yield();
-                if(robot == RobotType.SCOUT) {
-                    messaging.sendScoutAlliedUnitRelay();
-                }
                 // send data
             } else {
                 return spawnRobot(robot);

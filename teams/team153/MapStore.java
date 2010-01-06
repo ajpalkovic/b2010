@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import java.util.*;
 import battlecode.common.*;
@@ -6,7 +6,6 @@ import battlecode.common.*;
 public class MapStore {
 
     public MapData[][] map;
-    private int averageHeight, count;
 
     public MapStore() {
         map = new MapData[60][60];
@@ -50,20 +49,6 @@ public class MapStore {
         if(cur == null) {
             map[x % 60][y % 60] = data;
         } else {
-            cur.isFluxDeposit = data.isFluxDeposit || cur.isFluxDeposit;
-            if(data.height > 0) {
-                cur.height = data.height;
-            }
-            if(data.blockHeight >= 0) {
-                cur.blockHeight = data.blockHeight;
-            }
-            if(data.terrainHeight >= 0) {
-                cur.terrainHeight = data.terrainHeight;
-            }
-        }
-        if(data.height > 0) {
-            averageHeight += data.height;
-            count++;
         }
 
     }
@@ -76,13 +61,6 @@ public class MapStore {
         for(MapData data : datas) {
             set(data);
         }
-    }
-
-    public int getAverageHeight() {
-        if(count > 0) {
-            return averageHeight / count;
-        }
-        return 1;
     }
 
     public MapData[] getSurroundingSquares(int x, int y) {
@@ -153,26 +131,5 @@ public class MapStore {
         }
 
         return squares;
-    }
-
-    public int getHeight(MapData data) {
-        if(data.height > 0) {
-            return data.height;
-        }
-
-        /*MapData[] squares = getSurroundingSquares(data.x, data.y);
-
-        if(squares.length == 0)*/
-        return getAverageHeight() + 1;
-        /*
-        int sum = 0;
-        for(int c = 0; c < squares.length; c++)
-        sum += squares[c].height;
-
-        return (sum / count) + 1;*/
-    }
-
-    public int getHeight(int x, int y) {
-        return getHeight(get(x, y));
     }
 }

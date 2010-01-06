@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -69,7 +69,7 @@ public class EnergeticEnergon extends Base {
         if(controller.getEnergonLevel() < controller.getRobotType().maxEnergon() / 2) {
             return;
         }
-        if(!(player.isCannon || player.isChanneler)) {
+        if(!(player.isChainer || player.isTurret)) {
             MapData squares[] = sensing.senseSurroundingSquares();
             RobotInfo min = null, cur = null;
             for(MapData square : squares) {
@@ -282,7 +282,7 @@ public class EnergeticEnergon extends Base {
                     (!isAirUnit && controller.senseGroundRobotAtLocation(location) == null))) {
                 return Status.fail;
             }
-            controller.transferEnergon(amount, location, level);
+            controller.transferUnitEnergon(amount, location, level);
         } catch(Exception e) {
             //System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
             //        " location: "+location.toString()+" isAirUnit: "+isAirUnit+" level: "+

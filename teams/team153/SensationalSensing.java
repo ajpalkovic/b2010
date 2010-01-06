@@ -1,4 +1,4 @@
-package team298;
+package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -49,9 +49,6 @@ public class SensationalSensing extends Base {
             ret = player.tileSensedCallback(data);
             if(data.airRobot != null || data.groundRobot != null) {
                 ret = player.enemyInSightCallback(data) && ret;
-            }
-            if(data.deposit != null) {
-                ret = player.fluxDepositInSightCallback(data) && ret;
             }
         }
         return ret;
@@ -208,39 +205,18 @@ public class SensationalSensing extends Base {
             }
 
             boolean updateWalls = data.tile == null;
-            int terrainHeight = tile.getHeight();
-            int blockHeight = controller.senseNumBlocksAtLocation(location);
-
-            data.tile = tile;
-            if(terrainHeight != data.terrainHeight || blockHeight != data.blockHeight) {
-                //the block has changed so update the heights and wall locations
-                data.terrainHeight = terrainHeight;
-                data.blockHeight = blockHeight;
-                data.height = terrainHeight + blockHeight;
-            }
 
             data.airRobot = controller.senseAirRobotAtLocation(location);
             data.groundRobot = controller.senseGroundRobotAtLocation(location);
 
-            if(!data.isFluxDeposit) {
-                data.deposit = controller.senseFluxDepositAtLocation(location);
-                if(data.deposit != null) {
-                    data.isFluxDeposit = true;
-                }
-            }
-
             data.airRobotInfo = null;
             data.groundRobotInfo = null;
-            data.depositInfo = null;
 
             if(data.airRobot != null) {
                 data.airRobotInfo = controller.senseRobotInfo(data.airRobot);
             }
             if(data.groundRobot != null) {
                 data.groundRobotInfo = controller.senseRobotInfo(data.groundRobot);
-            }
-            if(data.isFluxDeposit) {
-                data.depositInfo = controller.senseFluxDepositInfo(data.deposit);
             }
 
             if(updateWalls) {
