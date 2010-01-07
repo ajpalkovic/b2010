@@ -354,7 +354,7 @@ public class Navigation extends Base {
     }
 
     public Direction getMoveableWorkerDirection(Direction dir) {
-        p("in get moveable worker direction");
+        pr("in get moveable worker direction");
         if(dir == null) {
             return null;
         }
@@ -378,7 +378,7 @@ public class Navigation extends Base {
             }
 
             if(!messageSent) {
-                p("sending message");
+                pr("sending message");
                 messageSent = true;
                 messaging.sendMove(controller.getLocation().add(dir));
             }
@@ -386,7 +386,7 @@ public class Navigation extends Base {
             controller.yield();
         } while(pauseTurns >= 0);
 
-        p("returning getMoveableDirection");
+        pr("returning getMoveableDirection");
         return getMoveableDirection(dir);
     }
 
@@ -477,7 +477,7 @@ public class Navigation extends Base {
 
             Direction opposite = dir.opposite();
             if(opposite.equals(previousDir) || opposite.rotateLeft().equals(previousDir) || opposite.rotateRight().equals(previousDir)) {
-                p("not gonna go that way");
+                pr("not gonna go that way");
                 oppositeCount++;
                 if(oppositeCount > 5) {
                     return Status.fail;
@@ -488,7 +488,7 @@ public class Navigation extends Base {
             oppositeCount = 0;
 
             if(faceDirection(dir) != Status.success) {
-                p("couldnt face that way");
+                pr("couldnt face that way");
                 controller.yield();
                 continue;
             }
@@ -513,7 +513,7 @@ public class Navigation extends Base {
                         count = 0;
                         break;
                     }
-                    p("yielding");
+                    pr("yielding");
                     controller.yield();
                 }
                 if(!good) {

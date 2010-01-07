@@ -25,6 +25,7 @@
 	Eclipse: Go to the battlecode website and read the docs n00bs.
 16) Run it.
 
+For reference, the github site is here: http://github.com/ajpalkovic/b2010
 
 Git tips
 To see which files have changed:
@@ -39,6 +40,11 @@ There is a shortcut which will commit every changed file, but will NOT commit an
 	git commit -am "message"
 	git push origin master
 	
+You do not need to push every time you make a commit.  In fact, you shouldnt.  Instead, every time you reach a mini-milestone, it's a good idea to commit.
+For instance, if you have a larger goal, like refactor the messaging code.  You may break that up into 10 smaller steps, like refactoring one method at a time.
+You can make a commit after each of the smaller steps.  If/when stuff gets messed up and you need to undo, more commits is better and less painful.
+When you are all done, then run the push command.
+
 To grab any changes that have been made since you last updated:
 	git pull origin master
 You should run this command frquently.

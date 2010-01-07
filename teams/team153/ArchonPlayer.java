@@ -40,7 +40,7 @@ public class ArchonPlayer extends NovaPlayer {
 
 
                             } catch(Exception e) {
-                                p("----------------cannot sense robot info in following archon");
+                                pr("----------------cannot sense robot info in following archon");
                             }
                         }
                     }
@@ -48,7 +48,6 @@ public class ArchonPlayer extends NovaPlayer {
                     break;
                 case Goal.idle:
                     // reevaluate the goal
-                    ;
                     break;
                 case Goal.scouting:
                     //
@@ -144,7 +143,7 @@ public class ArchonPlayer extends NovaPlayer {
                     try {
                         scoutParty.addPartyMember(r, controller.senseRobotInfo(r));
                     } catch(Exception e) {
-                        p("------------Cannot Sense Robot Info in newUnit in ArchonPlayer");
+                        pr("------------Cannot Sense Robot Info in newUnit in ArchonPlayer");
                     }
                 }
             }

@@ -97,7 +97,7 @@ public class NovaPlayer extends Base {
     public void setGoal(int goal) {
         currentGoal = goal;
         controller.setIndicatorString(1, Goal.toString(goal));
-        p("Changin goal to: " + Goal.toString(goal));
+        pr("Changin goal to: " + Goal.toString(goal));
     }
 
     /**

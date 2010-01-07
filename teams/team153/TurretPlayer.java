@@ -60,7 +60,7 @@ public class TurretPlayer extends AttackPlayer {
                             try {
                                 navigation.goByBugging(map.getNotNull(controller.senseRobotInfo(r).location));
                             } catch(Exception e) {
-                                p("----------------cannot sense robot info in following archon");
+                                pr("----------------cannot sense robot info in following archon");
                             }
                         }
                     }

@@ -51,7 +51,7 @@ public class Messaging extends Base {
             good = true;
         } catch(Exception e) {
             e.printStackTrace();
-            p("----Caught Exception in sendMessage.  message: " + message.toString() + " Exception: " + e.toString());
+            pr("----Caught Exception in sendMessage.  message: " + message.toString() + " Exception: " + e.toString());
             good = false;
         }
         return good;
@@ -262,7 +262,7 @@ public class Messaging extends Base {
         MapLocation[] locations = new MapLocation[1];
         locations[0] = location;
         String[] strings = null;
-        p("Sent Move");
+        pr("Sent Move");
         return addMessage(ints, strings, locations);
     }
 

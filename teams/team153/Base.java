@@ -21,7 +21,7 @@ public class Base {
         robot = controller.getRobot();
     }
 
-    public void p(String s) {
+    public void pr(String s) {
         if(false) {
             return;
         }
@@ -29,6 +29,10 @@ public class Base {
         if(controller.getRobot().getID() == 109) {
             System.out.println(s);
         }
+    }
+
+    public void p(String s) {
+        System.out.println(s);
     }
 
     class BroadcastMessage {
