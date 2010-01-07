@@ -40,23 +40,13 @@ public class EnergeticEnergon extends Base {
      */
     public void autoTransferEnergon() {
         //p("auto transfer energon");
-        for(NovaMapData location : player.sensedSurroundingSquares) {
-            if(location != null) {
-                //p(location.toStringFull());
-                if(location.airRobot != null && !player.isArchon(location.airRobotInfo.type) && location.airRobotInfo.team == player.team) {
-                    int amount = calculateEnergonRequestAmount(location.airRobotInfo);
-                    if(amount >= 1) {
-                        requests.add(new EnergonTransferRequest(location.toMapLocation(), true, amount));
-                        //p("adding request: "+requests.get(requests.size()-1).toString());
-                    }
-                }
-                if(location.groundRobot != null && location.groundRobotInfo.team == player.team) {
-                    int amount = calculateEnergonRequestAmount(location.groundRobotInfo);
-                    if(amount >= 1) {
-                        requests.add(new EnergonTransferRequest(location.toMapLocation(), false, amount));
-                        //p("adding request: "+requests.get(requests.size()-1).toString());
-                    }
-                }
+        ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
+        for(RobotInfo robot : robots) {
+            if(robot.location.distanceSquaredTo(controller.getLocation()) > 2) continue;
+            int amount = calculateEnergonRequestAmount(robot);
+            if(amount >= 1) {
+                requests.add(new EnergonTransferRequest(robot.location, false, amount));
+                //p("adding request: "+requests.get(requests.size()-1).toString());
             }
         }
     }
@@ -69,21 +59,20 @@ public class EnergeticEnergon extends Base {
             return;
         }
         if(!(player.isChainer || player.isTurret)) {
-            RobotInfo min = null, cur = null;
-            for(NovaMapData square : player.sensedSurroundingSquares) {
-                if(square == null) {
-                    return;
-                }
-                if(square.groundRobot != null) {
-                    cur = square.groundRobotInfo;
-                    if(min == null) {
-                        min = cur;
-                    } else {
-                        double percent = (cur.energonLevel + cur.energonReserve) / cur.type.maxEnergon();
-                        double minpercent = (min.energonLevel + min.energonReserve) / min.type.maxEnergon();
-                        if(percent < minpercent) {
-                            min = cur;
-                        }
+            pr("calculating energon transfer");
+            RobotInfo min = null;
+            ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
+            for(RobotInfo robot : robots) {
+                if(!robot.location.isAdjacentTo(controller.getLocation())) continue;
+                pr("LEVEL: "+robot.energonLevel+" RESERVE: "+robot.energonReserve+" MAX: "+robot.maxEnergon);
+                if(min == null) {
+                    min = robot;
+                } else {
+                    double percent = (robot.energonLevel + robot.energonReserve) / robot.type.maxEnergon();
+                    double minpercent = (min.energonLevel + min.energonReserve) / min.type.maxEnergon();
+                    pr(percent+" "+minpercent);
+                    if(percent < minpercent) {
+                        min = robot;
                     }
                 }
             }
@@ -91,6 +80,7 @@ public class EnergeticEnergon extends Base {
                 return;
             }
             double amount = calculateEnergonRequestAmount(min);
+            p("amount: "+amount);
             if(amount < 2) {
                 return;
             }
@@ -197,6 +187,9 @@ public class EnergeticEnergon extends Base {
      * of the requested energon so the archon is not killed.
      */
     public void processEnergonTransferRequests() {
+        double amount = controller.getEnergonLevel();
+        if(amount < 5) return;
+
         if(player.isArchon) {
             autoTransferEnergon();
         }
@@ -210,14 +203,15 @@ public class EnergeticEnergon extends Base {
             }
 
             double percent = 1;
-            double amount = controller.getEnergonLevel();
             if(amount - 5 < sum) {
-                percent = (sum) / amount - 5;
+                percent = (sum) / (amount - 5);
             }
+
+            p("percent"+percent);
 
             //p("sum: "+sum+" percent: "+percent+" amount: "+amount);
             for(EnergonTransferRequest request : requests) {
-                //(request.toString());
+                p(request.toString());
                 int result = transferEnergon(request.amount * percent, request.location, request.isAirUnit);
             }
 
@@ -241,10 +235,14 @@ public class EnergeticEnergon extends Base {
         }
 
         int tries = 3;
-        MapLocation closest = navigation.findNearestArchon();
-        while(closest != null && closest.distanceSquaredTo(controller.getLocation()) <= 2) {
-            int result = navigation.moveOnceTowardsLocation(closest);
-        }
+        MapLocation closest;
+        do {
+            closest = navigation.findNearestArchon();
+            if(closest == null)
+                break;
+            navigation.moveOnceTowardsLocation(closest);
+            tries--;
+        } while(tries > 0 && closest.distanceSquaredTo(controller.getLocation()) > 2);
 
         if(closest == null || closest.distanceSquaredTo(controller.getLocation()) > 2) {
             return Status.fail;
@@ -280,11 +278,12 @@ public class EnergeticEnergon extends Base {
                     (!isAirUnit && controller.senseGroundRobotAtLocation(location) == null))) {
                 return Status.fail;
             }
+            p("TRANSFER");
             controller.transferUnitEnergon(amount, location, level);
         } catch(Exception e) {
-            //System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
-            //        " location: "+location.toString()+" isAirUnit: "+isAirUnit+" level: "+
-            //        level.toString()+" Exception: "+e.toString());
+            System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
+                    " location: "+location.toString()+" isAirUnit: "+isAirUnit+" level: "+
+                    level.toString()+" Exception: "+e.toString());
             return Status.fail;
         }
         return Status.success;

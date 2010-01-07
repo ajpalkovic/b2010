@@ -17,19 +17,6 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
-     * Returns true if the map coordinate is out of bounds of the map.  Map boundaries
-     * are initialized to the min/max integer values so that they this will work even
-     * if the boundaries haven't been discovered yet.
-     */
-    public boolean checkWalls(NovaMapData square) {
-        return checkWalls(square.toMapLocation());
-    }
-
-    public boolean checkWalls(MapLocation square) {
-        return square.getX() <= player.leftWall || square.getX() >= player.rightWall || square.getY() <= player.topWall || square.getY() >= player.bottomWall;
-    }
-
-    /**
      * Causes the robot to the face the specified direction if necessary.
      */
     public int faceDirection(Direction dir) {
@@ -67,29 +54,7 @@ public class NaughtyNavigation extends Base {
      */
     public int faceLocation(MapLocation location) {
         Direction newDir = getDirection(new NovaMapData(controller.getLocation()), new NovaMapData(location));
-        if(newDir == null) {
-            return Status.fail;
-        }
-        if(newDir == controller.getDirection()) {
-            return Status.success;
-        }
-
-        if(controller.hasActionSet()) {
-            controller.yield();
-        }
-
-        while(controller.getRoundsUntilMovementIdle() != 0) {
-            controller.yield();
-        }
-
-        try {
-            controller.setDirection(newDir);
-            controller.yield();
-        } catch(Exception e) {
-            System.out.println("----Caught exception in faceLocation with MapLocation: " + location.toString() + " Exception: " + e.toString());
-            return Status.fail;
-        }
-        return Status.success;
+        return faceDirection(newDir);
     }
 
     /**
@@ -151,7 +116,7 @@ public class NaughtyNavigation extends Base {
                 //p("  Squares: "+squares[0].toString()+" "+squares[1].toString()+" "+squares[2].toString());
                 for(NovaMapData square : squares) {
                     // ensure this step is not out of bounds
-                    if(checkWalls(square)) {
+                    if(!square.onMap()) {
                         continue;
                     }
 
@@ -353,43 +318,6 @@ public class NaughtyNavigation extends Base {
         return null;
     }
 
-    public Direction getMoveableWorkerDirection(Direction dir) {
-        pr("in get moveable worker direction");
-        if(dir == null) {
-            return null;
-        }
-        boolean messageSent = false;
-        int pauseTurns = 5;
-        do {
-            if(controller.canMove(dir)) {
-                return dir;
-            }
-            if(controller.canMove(dir.rotateLeft())) {
-                return dir.rotateLeft();
-            }
-            if(controller.canMove(dir.rotateRight())) {
-                return dir.rotateRight();
-            }
-            if(controller.canMove(dir.rotateRight().rotateRight())) {
-                return dir.rotateRight().rotateRight();
-            }
-            if(controller.canMove(dir.rotateLeft().rotateLeft())) {
-                return dir.rotateLeft().rotateLeft();
-            }
-
-            if(!messageSent) {
-                pr("sending message");
-                messageSent = true;
-                messaging.sendMove(controller.getLocation().add(dir));
-            }
-            pauseTurns--;
-            controller.yield();
-        } while(pauseTurns >= 0);
-
-        pr("returning getMoveableDirection");
-        return getMoveableDirection(dir);
-    }
-
     /**
      * Returns an array of the 8 map locations around a robot.  These are sorted so
      * that the first location is the one the robot is facing, and then the 2 next to
@@ -402,16 +330,23 @@ public class NaughtyNavigation extends Base {
 
 
         NovaMapData[] ret = new NovaMapData[8];
-        ret[0] = map.getNotNull(start.add(cur));
-        ret[7] = map.getNotNull(start.subtract(cur));
+        ret[0] = map.get(start.add(cur));
+        ret[7] = map.get(start.subtract(cur));
 
-        for(int c = 1; c < 7; c++) {
-            left = cur.rotateLeft();
-            right = cur.rotateRight();
-            ret[c] = map.getNotNull(start.add(right));
-            c++;
-            ret[c] = map.getNotNull(start.add(left));
-        }
+        left = cur.rotateLeft();
+        right = cur.rotateRight();
+        ret[1] = map.get(start.add(right));
+        ret[2] = map.get(start.add(left));
+
+        left = cur.rotateLeft();
+        right = cur.rotateRight();
+        ret[3] = map.get(start.add(right));
+        ret[4] = map.get(start.add(left));
+
+        left = cur.rotateLeft();
+        right = cur.rotateRight();
+        ret[5] = map.get(start.add(right));
+        ret[6] = map.get(start.add(left));
 
         return ret;
     }
@@ -444,7 +379,7 @@ public class NaughtyNavigation extends Base {
         controller.setIndicatorString(2, "Goal: " + end.toMapLocation().toString());
         for(int c = 0; c < 100; c++) {
             controller.setIndicatorString(0, "Loc: " + controller.getLocation().toString());
-            previous = map.getNotNull(controller.getLocation());
+            previous = map.get(controller.getLocation());
             if(controller.getLocation().equals(end.toMapLocation())) {
                 return Status.success;
             }
@@ -466,7 +401,7 @@ public class NaughtyNavigation extends Base {
                 }
             }
 
-            previous = map.getNotNull(controller.getLocation());
+            previous = map.get(controller.getLocation());
             dir = getMoveableDirection(getDirection(previous, end));
 
             if(dir == null) {
@@ -501,7 +436,7 @@ public class NaughtyNavigation extends Base {
                 boolean good = false;
                 for(int d = 0; d < 2; d++) {
                     if(controller.canMove(dir)) {
-                        if(!player.beforeMovementCallback(map.getNotNull(controller.getLocation().add(dir)))) {
+                        if(!player.beforeMovementCallback(map.get(controller.getLocation().add(dir)))) {
                             return Status.success;
                         }
                         controller.moveForward();
@@ -554,7 +489,7 @@ public class NaughtyNavigation extends Base {
             return Status.fail;
         }
 
-        NovaMapData previous = map.getNotNull(controller.getLocation());
+        NovaMapData previous = map.get(controller.getLocation());
         //p("get path");
         LinkedList<NovaMapData> path = findPath(previous, end);
         //p("got path");
@@ -572,19 +507,15 @@ public class NaughtyNavigation extends Base {
             yieldMoving();
 
             NovaMapData step = path.removeFirst();
-            if(controller.canSenseSquare(step.toMapLocation())) {
-                NovaMapData updatedStep = sensing.senseTile(step.toMapLocation());
-                step = updatedStep;
-
-                if((player.isAirRobot && step.airRobot != null) || (!player.isAirRobot && step.groundRobot != null)) {
-                    // the path is blocked
-                    if(path.isEmpty()) {
-                        // the goal is blocked
-                        return Status.goalBlocked;
-                    }
-                    return go(end, depth + 1);
+            if(!isLocationFree(step.toMapLocation(), player.isAirRobot)) {
+                // the path is blocked
+                if(path.isEmpty()) {
+                    // the goal is blocked
+                    return Status.goalBlocked;
                 }
+                return go(end, depth + 1);
             }
+            
             //find if we need to change direction
             Direction newDirection = getDirection(previous, step);
             faceDirection(newDirection);
@@ -628,15 +559,18 @@ public class NaughtyNavigation extends Base {
      */
     public boolean isLocationFree(MapLocation location, boolean isAirUnit) {
         try {
-            if(checkWalls(location)) {
+            NovaMapData data = map.get(location);
+            if(!data.onMap()) {
                 return false;
             }
-            pr("walls ok");
 
-            if(!controller.senseTerrainTile(location).isTraversableAtHeight((isAirUnit ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND))) {
+            if(!controller.canSenseSquare(location)) {
+                return true;
+            }
+
+            if(!data.tile.isTraversableAtHeight((isAirUnit ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND))) {
                 return false;
             }
-            pr("traversible ok");
 
             if(isAirUnit) {
                 return controller.senseAirRobotAtLocation(location) == null;
@@ -651,15 +585,21 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
-     * Moves the robot one step forward if possible.
+     * Makes the robot face a certain direction and then moves forawrd.
      */
-    public int moveOnce(Direction dir) {
+    public int moveOnceInDirection(Direction dir) {
         if(faceDirection(dir) != Status.success) {
             return Status.fail;
         }
+        return moveOnce();
+    }
 
+    /*
+     * Moves the robot one step forward if possible.
+     */
+    public int moveOnce() {
+        Direction dir = controller.getDirection();
         yieldMoving();
-
         try {
             for(int c = 0; c < 2; c++) {
                 if(controller.canMove(dir)) {
@@ -690,7 +630,22 @@ public class NaughtyNavigation extends Base {
             return Status.success;
         }
 
-        return moveOnce(dir);
+        return moveOnceInDirection(dir);
+    }
+
+    public int moveOnceTowardsArchon() {
+        MapLocation archonLocation = findNearestArchon();
+        if(isAdjacent(archonLocation, controller.getLocation())) {
+            return Status.success;
+        }
+        return moveOnceTowardsLocation(archonLocation);
+    }
+
+    /**
+     * Returns true if the two squares are next to each other or are equal.
+     */
+    public boolean isAdjacent(MapLocation start, MapLocation end) {
+        return start.distanceSquaredTo(end) < 3;
     }
 
     public void yieldMoving() {

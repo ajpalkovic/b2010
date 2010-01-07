@@ -47,25 +47,13 @@ public class SensationalSensing extends Base {
         boolean ret = true;
         if(data != null) {
             ret = player.tileSensedCallback(data);
-            if(data.airRobot != null || data.groundRobot != null) {
+            /*
+             TODO:: This breaks AttackPlayer badly.
+             if(data.airRobot != null || data.groundRobot != null) {
                 ret = player.enemyInSightCallback(data) && ret;
-            }
+            }*/
         }
         return ret;
-    }
-
-    /**
-     * Returns true if the unit can sense an enemy at the given location
-     */
-    public boolean canSenseEnemy(MapLocation enemyLocation) {
-        ArrayList<MapLocation> locations = senseEnemyRobotLocations();
-        System.out.println("Can sense enemy!");
-        for(MapLocation l : locations) {
-            if(l.getX() == enemyLocation.getX() && l.getX() == enemyLocation.getY()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -116,32 +104,15 @@ public class SensationalSensing extends Base {
     }
 
     public ArrayList<RobotInfo> senseEnemyRobotInfoInSensorRange() {
-        ArrayList<RobotInfo> ret = new ArrayList<RobotInfo>();
-        ArrayList<RobotInfo> ground = robotCache.getGroundRobotInfo(), air = robotCache.getAirRobotInfo();
+        return robotCache.senseEnemyRobotInfoInSensorRange();
+    }
 
-        for(RobotInfo robot : ground) {
-            if(!robot.team.equals(player.team)) {
-                ret.add(robot);
-            }
-        }
-
-        for(RobotInfo robot : air) {
-            if(!robot.team.equals(player.team)) {
-                ret.add(robot);
-            }
-        }
-
-        return ret;
+    public ArrayList<RobotInfo> senseAlliedRobotInfoInSensorRange() {
+        return robotCache.senseAlliedRobotInfoInSensorRange();
     }
 
     public ArrayList<MapLocation> senseEnemyRobotLocations() {
-        ArrayList<RobotInfo> enemyRobots = senseEnemyRobotInfoInSensorRange();
-        ArrayList<MapLocation> returnList;
-        returnList = new ArrayList<MapLocation>();
-        for(RobotInfo r : enemyRobots) {
-            returnList.add(r.location);
-        }
-        return returnList;
+        return robotCache.senseEnemyRobotLocations();
     }
 
     /**
@@ -171,64 +142,27 @@ public class SensationalSensing extends Base {
         return ret;
     }
 
+    public NovaMapData senseTileType(MapLocation location) {
+        NovaMapData data = map.get(location);
+        if(data.tile != null) return data;
+        if(controller.canSenseSquare(location)) {
+            data.tile = controller.senseTerrainTile(location);
+        }
+        return data;
+    }
+
     /**
      * Sense the terrain and block height of a tile, and whether the tile has a robot or flux deposit on it.
      * If the location is offmap, a MapData object will still be returned, but it will not be saved in the
      * mapstore object.  Walls will be automatically updated to reflect the new locations.
      */
     public NovaMapData senseTile(MapLocation location) {
-        TerrainTile tile = null;
-
         if(!controller.canSenseSquare(location)) {
             return null;
         }
 
-        try {
-            tile = controller.senseTerrainTile(location);
-        } catch(Exception e) {
-            pa("----Caught exception in senseTile1 tile: " + location.toString() + " Exception: " + e.toString());
-        }
-
-        // if the tile is off map, we do not want to store it in the database, cuz it will cause problems
-        if(tile == null || tile.getType() == TerrainTile.TerrainType.OFF_MAP) {
-            NovaMapData data = new NovaMapData(location);
-            data.tile = tile;
-            updateWalls(data);
-            return data;
-        }
-
-        //grab the tile from the map store or create it if it doesn't exist because this tile is on the map
-        try {
-            NovaMapData data = map.getOrCreate(location.getX(), location.getY());
-            data.tile = tile;
-
-            if(data.lastUpdate >= Clock.getRoundNum()) {
-                return data;
-            }
-
-            data.flux = controller.senseFluxAtLocation(location);
-
-            data.airRobot = controller.senseAirRobotAtLocation(location);
-            data.groundRobot = controller.senseGroundRobotAtLocation(location);
-
-            data.airRobotInfo = null;
-            data.groundRobotInfo = null;
-
-            if(data.airRobot != null) {
-                data.airRobotInfo = controller.senseRobotInfo(data.airRobot);
-            }
-            if(data.groundRobot != null) {
-                data.groundRobotInfo = controller.senseRobotInfo(data.groundRobot);
-            }
-
-            updateWalls(data);
-
-            data.lastUpdate = Clock.getRoundNum();
-            return data;
-        } catch(Exception e) {
-            pa("----Caught exception in senseTile2 tile: " + location.toString() + " Exception: " + e.toString());
-        }
-        return null;
+        NovaMapData data = senseTileType(location);
+        return data;
     }
 
     /**
@@ -247,76 +181,72 @@ public class SensationalSensing extends Base {
         }
     }
 
-    /**
-     * Updates the wall and wallBounds location with the new data.
-     *
-     * The walls represent the first location that is off map, not the last location this is on
-     * the map.
-     *
-     * The bounds variables represent the last location that we have seen on the map.  This
-     * preveents two walls from changing when only one is off map.  For instance, if the player
-     * is at the bottom of the map and senses a tile below the map, without the bounds variables
-     * it would change both the right and botto walls.  With the bounds variables, it recognizes
-     * that there can't be a wall there because it already saw an on map tile further to the
-     * right of it.
-     */
-    public void updateWalls(NovaMapData data) {
-        if(data.tile == null) {
-            return;
-        }
-
-        if(data.tile.getType() == TerrainTile.TerrainType.OFF_MAP) {
-            if(data.x > player.rightWallBounds && data.x < player.rightWall) {
-                player.rightWall = data.x;
-            }
-            if(data.x < player.leftWallBounds && data.x > player.leftWall) {
-                player.leftWall = data.x;
-            }
-
-            if(data.y < player.topWallBounds && data.y > player.topWall) {
-                player.topWall = data.y;
-            }
-            if(data.y > player.bottomWallBounds && data.y < player.bottomWall) {
-                player.bottomWall = data.y;
-            }
-        } else if(data.tile.getType() == TerrainTile.TerrainType.LAND) {
-            if(data.x > player.rightWallBounds) {
-                player.rightWallBounds = data.x;
-                if(player.rightWall <= player.rightWallBounds) {
-                    player.rightWall = player.rightWallBounds + 1;
-                }
-            }
-            if(data.x < player.leftWallBounds) {
-                player.leftWallBounds = data.x;
-                if(player.leftWall >= player.leftWallBounds) {
-                    player.leftWall = player.leftWallBounds - 1;
-                }
-            }
-
-            if(data.y > player.bottomWallBounds) {
-                player.bottomWallBounds = data.y;
-                if(player.bottomWall <= player.bottomWallBounds) {
-                    player.bottomWall = player.bottomWallBounds + 1;
-                }
-            }
-            if(data.y < player.topWallBounds) {
-                player.topWallBounds = data.y;
-                if(player.topWall >= player.topWallBounds) {
-                    player.topWall = player.topWallBounds - 1;
-                }
-            }
-        }
-    }
-
     class RobotCache {
 
         public int airSensed = Integer.MIN_VALUE, groundSensed = Integer.MIN_VALUE,
-                airInfoSensed = Integer.MIN_VALUE, groundInfoSensed = Integer.MIN_VALUE;
+                airInfoSensed = Integer.MIN_VALUE, groundInfoSensed = Integer.MIN_VALUE,
+                enemyInfoSensed = Integer.MIN_VALUE, alliedInfoSensed = Integer.MIN_VALUE, enemyLocationSensed = Integer.MIN_VALUE;
         public Robot[] air, ground;
-        public ArrayList<RobotInfo> airInfo, groundInfo;
+        public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots;
+        public ArrayList<MapLocation> enemyLocations;
         public int oldDataTolerance = 1;
 
         public RobotCache() {
+        }
+
+        public ArrayList<RobotInfo> senseEnemyRobotInfoInSensorRange() {
+            if(enemyInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
+                return enemyRobots;
+            }
+
+            enemyRobots = new ArrayList<RobotInfo>();
+            robotCache.getGroundRobotInfo();
+            robotCache.getAirRobotInfo();
+
+            for(RobotInfo robot : groundInfo) {
+                if(!robot.team.equals(player.team)) {
+                    enemyRobots.add(robot);
+                }
+            }
+
+            for(RobotInfo robot : airInfo) {
+                if(!robot.team.equals(player.team)) {
+                    enemyRobots.add(robot);
+                }
+            }
+
+            return enemyRobots;
+        }
+
+        public ArrayList<RobotInfo> senseAlliedRobotInfoInSensorRange() {
+            if(alliedInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
+                return alliedRobots;
+            }
+
+            alliedRobots = new ArrayList<RobotInfo>();
+            robotCache.getGroundRobotInfo();
+
+            for(RobotInfo robot : groundInfo) {
+                if(robot.team.equals(player.team)) {
+                    alliedRobots.add(robot);
+                }
+            }
+
+            return alliedRobots;
+        }
+
+        public ArrayList<MapLocation> senseEnemyRobotLocations() {
+            if(enemyLocationSensed >= Clock.getRoundNum() - oldDataTolerance) {
+                return enemyLocations;
+            }
+
+            senseEnemyRobotInfoInSensorRange();
+            enemyLocations = new ArrayList<MapLocation>();
+            for(RobotInfo r : enemyRobots) {
+                enemyLocations.add(r.location);
+            }
+            
+            return enemyLocations;
         }
 
         public Robot[] getAirRobots() {

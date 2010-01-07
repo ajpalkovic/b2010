@@ -56,7 +56,7 @@ public class TurretPlayer extends AttackPlayer {
                 for(Robot r : controller.senseNearbyAirRobots()) {
                     if(r.getID() == followingArchonNumber) {
                         try {
-                            navigation.goByBugging(map.getNotNull(controller.senseRobotInfo(r).location));
+                            navigation.goByBugging(map.get(controller.senseRobotInfo(r).location));
                         } catch(Exception e) {
                             pr("----------------cannot sense robot info in following archon");
                         }

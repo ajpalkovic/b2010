@@ -11,31 +11,24 @@ public class WoutPlayer extends NovaPlayer {
     }
     
     public void step() {
+        pr("step");
         if(energon.isEnergonLow()) {
             while(!energon.isEnergonFull()) {
+                pr("in loop");
                 energon.requestEnergonTransfer();
                 controller.yield();
             }
         }
+        pr("out of loop");
 
         NovaMapData square = findSquareWithFlux();
-
-        pr("begin sense");
-        sensing.senseAllTiles();
-        pr("end sense");
-
-        for(NovaMapData s : sensedSurroundingSquares) {
-            pr(s.toStringFull());
-        }
     }
 
     public boolean tileSensedCallback(NovaMapData data) {
-        pr(data.toStringFull());
-        return true;
+        return super.tileSensedCallback(data);
     }
 
     public NovaMapData findSquareWithFlux() {
-        p(""+sensedSurroundingSquares[8].flux);
         return null;
     }
 }

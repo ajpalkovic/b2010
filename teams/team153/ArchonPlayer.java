@@ -23,7 +23,7 @@ public class ArchonPlayer extends NovaPlayer {
 
     public void step() {
         // reevaluate goal here?
-        sensing.senseAllTiles();
+        //sensing.senseAllTiles();
         switch(currentGoal) {
             case Goal.collectingFlux:
                 if(spawning.canSupportUnit(RobotType.WOUT)) {
@@ -35,7 +35,7 @@ public class ArchonPlayer extends NovaPlayer {
                 for(Robot r : controller.senseNearbyAirRobots()) {
                     if(r.getID() == followingArchonNumber) {
                         try {
-                            NovaMapData loc = map.getNotNull(controller.senseRobotInfo(r).location);
+                            NovaMapData loc = map.get(controller.senseRobotInfo(r).location);
                             navigation.goByBugging(loc);
 
 
@@ -68,7 +68,7 @@ public class ArchonPlayer extends NovaPlayer {
     }
 
     public void scout() {
-        navigation.moveOnce(exploreDirection);
+        navigation.moveOnceInDirection(exploreDirection);
     }
 
     public void boot() {
@@ -151,8 +151,7 @@ public class ArchonPlayer extends NovaPlayer {
         int[] delta = navigation.getDirectionDelta(d);
         int x = controller.getLocation().getX() + delta[0] * 10;
         int y = controller.getLocation().getY() + delta[1] * 10;
-        MapLocation destination = new MapLocation(x, y);
-        navigation.go(new NovaMapData(destination));
+        navigation.go(map.get(x, y));
     }
 
     /**

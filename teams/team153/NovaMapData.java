@@ -6,32 +6,26 @@ import battlecode.common.*;
 public class NovaMapData {
 
     public int x, y;
-    public int lastUpdate = -1;
     public MapLocation location = null;
-    public Robot groundRobot = null, airRobot = null;
-    public RobotInfo groundRobotInfo = null, airRobotInfo = null;
     public TerrainTile tile = null;
-    public int pathCost, flux;
+    public int pathCost;
     
     public String toString() {
         return "(" + x + " " + y + ")";
     }
 
-    public String toStringFull() {
+    public String debug_toStringFull() {
         String ret = "(" + x + " " + y + ")";
-        ret += " flux: "+flux;
-        if(groundRobot != null) {
-            ret += " groundRobot: " + groundRobot;
-        }
-        if(airRobot != null) {
-            ret += " airRobot: " + airRobot;
-        }
+        //ret += " flux: "+flux;
         if(tile != null) {
             ret += " tile: " + tile;
         }
-        ret += " lastUpdate: " + lastUpdate;
 
         return ret;
+    }
+
+    public boolean onMap() {
+        return tile != TerrainTile.OFF_MAP;
     }
 
     public boolean equals(Object other) {

@@ -8,9 +8,6 @@ public class NovaPlayer extends Base {
 
     public MapStore map;
     public int moveStraightDelay, moveDiagonalDelay;
-    public int leftWall = Integer.MIN_VALUE, rightWall = Integer.MAX_VALUE, topWall = Integer.MIN_VALUE, bottomWall = Integer.MAX_VALUE;
-    public int leftWallBounds = Integer.MAX_VALUE, rightWallBounds = Integer.MIN_VALUE,
-            topWallBounds = Integer.MAX_VALUE, bottomWallBounds = Integer.MIN_VALUE;
     public ArrayList<Integer> oldEnemies;
     public ArrayList<MapLocation> oldLocations;
     public int trackingCount = 0;
@@ -149,7 +146,7 @@ public class NovaPlayer extends Base {
      **************************************************************************/
     public void moveMessageCallback(MapLocation location) {
         if(!controller.getRobotType().isAirborne() && controller.getLocation().equals(location)) {
-            navigation.moveOnce(navigation.getMoveableDirection(Direction.NORTH));
+            navigation.moveOnceInDirection(navigation.getMoveableDirection(Direction.NORTH));
         }
     }
 

@@ -31,12 +31,10 @@ public class SporadicSpawning extends Base {
             return false;
         }
 
-        ArrayList<RobotInfo> air = sensing.robotCache.getAirRobotInfo(), ground = sensing.robotCache.getGroundRobotInfo();
+        ArrayList<RobotInfo> air = sensing.robotCache.getAirRobotInfo(), ground = sensing.senseAlliedRobotInfoInSensorRange();
         double energonCost = 0;
         for(RobotInfo robot : ground) {
-            if(robot.team.equals(player.team)) {
-                energonCost += robot.type.energonUpkeep();
-            }
+            energonCost += robot.type.energonUpkeep();
         }
 
         double energonProduction = 1;
@@ -116,7 +114,7 @@ public class SporadicSpawning extends Base {
         ArrayList<NovaMapData> locations = new ArrayList<NovaMapData>();
         NovaMapData[] orderedLocations = navigation.getOrderedMapLocations();
         for(NovaMapData location : orderedLocations) {
-            if(location != null && navigation.isLocationFree(location.toMapLocation(), isAirUnit)) {
+            if(navigation.isLocationFree(location.toMapLocation(), isAirUnit)) {
                 locations.add(location);
             }
         }
