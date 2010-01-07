@@ -24,8 +24,6 @@ public class ArchonPlayer extends NovaPlayer {
     public void step() {
         // reevaluate goal here?
         sensing.senseAllTiles();
-        pr("("+this.leftWall+", "+this.topWall+") - ("+this.rightWall+", "+this.bottomWall+")");
-        pr("("+this.leftWallBounds+", "+this.topWallBounds+") - ("+this.rightWallBounds+", "+this.bottomWallBounds+")");
         switch(currentGoal) {
             case Goal.collectingFlux:
                 if(spawning.canSupportUnit(RobotType.WOUT)) {

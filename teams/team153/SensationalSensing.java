@@ -153,6 +153,7 @@ public class SensationalSensing extends Base {
 
     public NovaMapData[] senseSurroundingSquares(MapLocation location) {
         NovaMapData[] ret = new NovaMapData[9];
+        pr("senseSurroundingSquares");
         int x = location.getX(), y = location.getY();
 
         ret[0] = senseTile(new MapLocation(x - 1, y - 1));

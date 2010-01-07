@@ -11,7 +11,6 @@ public class WoutPlayer extends NovaPlayer {
     }
     
     public void step() {
-        sensing.senseSurroundingSquares();
         if(energon.isEnergonLow()) {
             while(!energon.isEnergonFull()) {
                 energon.requestEnergonTransfer();
@@ -19,6 +18,24 @@ public class WoutPlayer extends NovaPlayer {
             }
         }
 
+        NovaMapData square = findSquareWithFlux();
 
+        pr("begin sense");
+        sensing.senseAllTiles();
+        pr("end sense");
+
+        for(NovaMapData s : sensedSurroundingSquares) {
+            pr(s.toStringFull());
+        }
+    }
+
+    public boolean tileSensedCallback(NovaMapData data) {
+        pr(data.toStringFull());
+        return true;
+    }
+
+    public NovaMapData findSquareWithFlux() {
+        p(""+sensedSurroundingSquares[8].flux);
+        return null;
     }
 }

@@ -147,7 +147,6 @@ public class SporadicSpawning extends Base {
         if(spawnLocation == null) {
             return Status.fail;
         }
-        p(spawnLocation.toStringFull());
 
         navigation.faceLocation(spawnLocation.toMapLocation());
 
