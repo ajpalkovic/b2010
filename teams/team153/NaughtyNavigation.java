@@ -7,7 +7,7 @@ import java.util.*;
 public class NaughtyNavigation extends Base {
 
     public MapStore map;
-    public MilkyMessaging messaging;
+    public MexicanMessaging messaging;
     public SensationalSensing sensing;
 
     public NaughtyNavigation(NovaPlayer player) {

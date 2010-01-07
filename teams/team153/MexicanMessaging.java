@@ -4,7 +4,7 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 import java.util.*;
 
-public class MilkyMessaging extends Base {
+public class MexicanMessaging extends Base {
 
     public final int KEY1 = 1234567;
     public final int KEY2 = 7654321;
@@ -13,7 +13,7 @@ public class MilkyMessaging extends Base {
     public ArrayList<MapLocation> messageLocations = new ArrayList<MapLocation>();
     public SensationalSensing sensing;
 
-    public MilkyMessaging(NovaPlayer player) {
+    public MexicanMessaging(NovaPlayer player) {
         super(player);
     }
 

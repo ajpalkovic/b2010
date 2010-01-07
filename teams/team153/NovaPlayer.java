@@ -17,7 +17,7 @@ public class NovaPlayer extends Base {
     public int currentGoal = 0;
     public int followingArchonNumber = -1;
 
-    public MilkyMessaging messaging;
+    public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
@@ -36,7 +36,7 @@ public class NovaPlayer extends Base {
         oldLocations = new ArrayList<MapLocation>();
         isAirRobot = controller.getRobotType() == RobotType.ARCHON;
 
-        messaging = new MilkyMessaging(this);
+        messaging = new MexicanMessaging(this);
         navigation = new NaughtyNavigation(this);
         sensing = new SensationalSensing(this);
         energon = new EnergeticEnergon(this);

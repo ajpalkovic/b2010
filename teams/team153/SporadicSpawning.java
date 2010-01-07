@@ -7,7 +7,7 @@ import java.util.*;
 public class SporadicSpawning extends Base {
 
     public MapStore map;
-    public MilkyMessaging messaging;
+    public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;

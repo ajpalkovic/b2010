@@ -7,7 +7,7 @@ import java.util.*;
 public class EnergeticEnergon extends Base {
 
     public MapStore map;
-    public MilkyMessaging messaging;
+    public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public ArrayList<EnergonTransferRequest> requests;
