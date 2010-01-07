@@ -7,8 +7,8 @@ import java.util.*;
 public class SporadicSpawning extends Base {
 
     public MapStore map;
-    public Messaging messaging;
-    public Navigation navigation;
+    public MilkyMessaging messaging;
+    public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
     public double goalChainers = -0.2, goalTurrets = .6, goalSoldiers = -0.2, goalWouts = .4;

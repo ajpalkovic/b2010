@@ -4,13 +4,13 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 import java.util.*;
 
-public class Navigation extends Base {
+public class NaughtyNavigation extends Base {
 
     public MapStore map;
-    public Messaging messaging;
+    public MilkyMessaging messaging;
     public SensationalSensing sensing;
 
-    public Navigation(NovaPlayer player) {
+    public NaughtyNavigation(NovaPlayer player) {
         super(player);
         map = player.map;
         messaging = player.messaging;

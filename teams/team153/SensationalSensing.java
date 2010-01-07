@@ -7,8 +7,8 @@ import java.util.*;
 public class SensationalSensing extends Base {
 
     public MapStore map;
-    public Messaging messaging;
-    public Navigation navigation;
+    public MilkyMessaging messaging;
+    public NaughtyNavigation navigation;
     public RobotCache robotCache;
 
     public SensationalSensing(NovaPlayer player) {
