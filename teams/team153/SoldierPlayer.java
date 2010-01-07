@@ -13,48 +13,36 @@ public class SoldierPlayer extends AttackPlayer {
         maxDistanceAway = 10;
     }
 
-    public void run() {
-        team = controller.getTeam();
-        messaging.sendNewUnit();
-        while(true) {
-            int startTurn = Clock.getRoundNum();
-            //autoTransferEnergonBetweenUnits();
-            controller.setIndicatorString(0, controller.getLocation().toString());
-            processEnemies();
-            messaging.parseMessages();
-            if(energon.isEnergonLow()) {
-                energon.requestEnergonTransfer();
-                controller.yield();
-                continue;
-            }
+    public void step() {
+        processEnemies();
+        if(energon.isEnergonLow()) {
+            energon.requestEnergonTransfer();
+            controller.yield();
+            return;
+        }
 
-            sortEnemies();
-            EnemyInfo enemy = selectEnemy();
-            if(enemy != null) {
-                // attack
-                if(!controller.canAttackSquare(enemy.location)) {
-                    navigation.faceLocation(enemy.location);
-                    processEnemies();
-                }
-                executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+        sortEnemies();
+        EnemyInfo enemy = selectEnemy();
+        if(enemy != null) {
+            // attack
+            if(!controller.canAttackSquare(enemy.location)) {
+                navigation.faceLocation(enemy.location);
                 processEnemies();
-                attackLocation = enemy.location;
-            } else {
-                if(outOfRangeEnemies.size() > 0) {
-                    // only move if we can do it in 1 turn or less
-                    if(controller.getRoundsUntilMovementIdle() < 2) {
-                        moveToAttack();
-                    }
-                } else {
-                    MapLocation archon = navigation.findNearestArchon();
-                    if(!controller.getLocation().isAdjacentTo(archon) && controller.getRoundsUntilMovementIdle() < 2) {
-                        navigation.moveOnceTowardsLocation(archon);
-                    }
-                }
             }
-
-            if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
-                controller.yield();
+            executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+            processEnemies();
+            attackLocation = enemy.location;
+        } else {
+            if(outOfRangeEnemies.size() > 0) {
+                // only move if we can do it in 1 turn or less
+                if(controller.getRoundsUntilMovementIdle() < 2) {
+                    moveToAttack();
+                }
+            } else {
+                MapLocation archon = navigation.findNearestArchon();
+                if(!controller.getLocation().isAdjacentTo(archon) && controller.getRoundsUntilMovementIdle() < 2) {
+                    navigation.moveOnceTowardsLocation(archon);
+                }
             }
         }
     }

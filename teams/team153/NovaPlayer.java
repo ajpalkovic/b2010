@@ -84,11 +84,35 @@ public class NovaPlayer extends Base {
 
     public void run() throws Exception {
         team = controller.getTeam();
+        boot();
         while(true) {
-            if(energon.isEnergonLow()) {
-                energon.requestEnergonTransfer();
+            int startTurn = Clock.getRoundNum();
+            controller.setIndicatorString(0, controller.getLocation().toString());
+            messaging.parseMessages();
+
+            if(isArchon) {
+                energon.processEnergonTransferRequests();
+            } else {
+                energon.autoTransferEnergonBetweenUnits();
+            }
+            step();
+
+            if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
+                controller.yield();
             }
         }
+    }
+
+    /**
+     * Called once each round.
+     */
+    public void step() { }
+
+    /**
+     * Called once when the robot object is created.
+     */
+    public void boot() {
+        messaging.sendNewUnit();
     }
 
     /**

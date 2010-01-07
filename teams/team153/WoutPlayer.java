@@ -8,28 +8,15 @@ public class WoutPlayer extends NovaPlayer {
 
     public WoutPlayer(RobotController controller) {
         super(controller);
-
     }
-
-    public void run() {
-        team = controller.getTeam();
-        messaging.sendNewUnit();
-        while(true) {
-            int startTurn = Clock.getRoundNum();
-            energon.autoTransferEnergonBetweenUnits();
-            controller.setIndicatorString(0, controller.getLocation().toString());
-
-            if(energon.isEnergonLow()) {
-                while(!energon.isEnergonFull()) {
-                    energon.requestEnergonTransfer();
-                    controller.yield();
-                }
-                continue;
-            }
-
-            if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
+    
+    public void step() {
+        if(energon.isEnergonLow()) {
+            while(!energon.isEnergonFull()) {
+                energon.requestEnergonTransfer();
                 controller.yield();
             }
+            return;
         }
     }
 }

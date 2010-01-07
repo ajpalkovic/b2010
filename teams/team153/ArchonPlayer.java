@@ -21,54 +21,43 @@ public class ArchonPlayer extends NovaPlayer {
         spawning = new SporadicSpawning(this);
     }
 
-    public void run() {
-        boot();
-        while(true) {
-            int startTurn = Clock.getRoundNum();
-            messaging.parseMessages();
-            energon.processEnergonTransferRequests();
-
-            // reevaluate goal here?
-            switch(currentGoal) {
-                case Goal.followingArchon:
-                    messaging.sendMessageForEnemyRobots();
-                    for(Robot r : controller.senseNearbyAirRobots()) {
-                        if(r.getID() == followingArchonNumber) {
-                            try {
-                                NovaMapData loc = map.getNotNull(controller.senseRobotInfo(r).location);
-                                navigation.goByBugging(loc);
+    public void step() {
+        // reevaluate goal here?
+        switch(currentGoal) {
+            case Goal.followingArchon:
+                messaging.sendMessageForEnemyRobots();
+                for(Robot r : controller.senseNearbyAirRobots()) {
+                    if(r.getID() == followingArchonNumber) {
+                        try {
+                            NovaMapData loc = map.getNotNull(controller.senseRobotInfo(r).location);
+                            navigation.goByBugging(loc);
 
 
-                            } catch(Exception e) {
-                                pr("----------------cannot sense robot info in following archon");
-                            }
+                        } catch(Exception e) {
+                            pr("----------------cannot sense robot info in following archon");
                         }
                     }
+                }
 
-                    break;
-                case Goal.idle:
-                    // reevaluate the goal
-                    break;
-                case Goal.scouting:
-                    //
-                    messaging.sendMessageForEnemyRobots();
-                    trackingCount++;
-                    trackingCount %= 10;
-                    scoutParty.partyUp();
-                    if(trackingCount == 0) {
-                        //explore();
-                    }
-                    scout();
+                break;
+            case Goal.idle:
+                // reevaluate the goal
+                break;
+            case Goal.scouting:
+                //
+                messaging.sendMessageForEnemyRobots();
+                trackingCount++;
+                trackingCount %= 10;
+                scoutParty.partyUp();
+                if(trackingCount == 0) {
+                    //explore();
+                }
+                scout();
 
-                    break;
-                case Goal.fight:
-                    spawnParty();
-                    break;
-            }
-
-            if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
-                controller.yield();
-            }
+                break;
+            case Goal.fight:
+                spawnParty();
+                break;
         }
     }
 
