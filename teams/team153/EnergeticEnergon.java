@@ -244,11 +244,11 @@ public class EnergeticEnergon extends Base {
 
         int tries = 3;
         MapLocation closest = navigation.findNearestArchon();
-        while(closest != null && !closest.isAdjacentTo(controller.getLocation())) {
+        while(closest != null && closest.distanceSquaredTo(controller.getLocation()) <= 2) {
             int result = navigation.moveOnceTowardsLocation(closest);
         }
 
-        if(closest == null || !closest.isAdjacentTo(controller.getLocation())) {
+        if(closest == null || closest.distanceSquaredTo(controller.getLocation()) > 2) {
             return Status.fail;
         }
 

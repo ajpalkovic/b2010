@@ -42,11 +42,7 @@ public class SporadicSpawning extends Base {
         double energonProduction = 1;
         for(RobotInfo robot : air) {
             if(robot.team.equals(player.team)) {
-                if(robot.type == RobotType.ARCHON) {
-                    energonProduction += 1;
-                } else {
-                    energonCost += robot.type.energonUpkeep();
-                }
+                energonProduction += 1;
             }
         }
 
@@ -117,7 +113,6 @@ public class SporadicSpawning extends Base {
      * Returns the first MapLocation of the 8 around an Archon which does not have a unit at that location.
      */
     public NovaMapData getSpawnLocation(boolean isAirUnit) {
-
         ArrayList<NovaMapData> locations = new ArrayList<NovaMapData>();
         NovaMapData[] orderedLocations = navigation.getOrderedMapLocations();
         for(NovaMapData location : orderedLocations) {
@@ -152,6 +147,7 @@ public class SporadicSpawning extends Base {
         if(spawnLocation == null) {
             return Status.fail;
         }
+        p(spawnLocation.toStringFull());
 
         navigation.faceLocation(spawnLocation.toMapLocation());
 
@@ -161,12 +157,13 @@ public class SporadicSpawning extends Base {
                 controller.spawn(robot);
                 unitSpawned++;
                 controller.yield();
+
                 // send data
             } else {
                 return spawnRobot(robot);
             }
         } catch(GameActionException e) {
-            System.out.println("----Caught Exception in spawnRobot.  robot: " + robot.toString() + " spawnLocation: " + spawnLocation.toString() + " Exception: " + e.toString());
+            pa("----Caught Exception in spawnRobot.  robot: " + robot.toString() + " spawnLocation: " + spawnLocation.toString() + " Exception: " + e.toString());
             return Status.fail;
         }
         return Status.success;

@@ -11,7 +11,7 @@ public class NovaMapData {
     public Robot groundRobot = null, airRobot = null;
     public RobotInfo groundRobotInfo = null, airRobotInfo = null;
     public TerrainTile tile = null;
-    public int pathCost;
+    public int pathCost, flux;
     
     public String toString() {
         return "(" + x + " " + y + ")";
@@ -19,6 +19,7 @@ public class NovaMapData {
 
     public String toStringFull() {
         String ret = "(" + x + " " + y + ")";
+        ret += " flux: "+flux;
         if(groundRobot != null) {
             ret += " groundRobot: " + groundRobot;
         }
@@ -44,16 +45,6 @@ public class NovaMapData {
     }
 
     public NovaMapData(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public NovaMapData(int x, int y, int height) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public NovaMapData(int x, int y, int terrainHeight, int blockHeight, boolean isFluxDeposit) {
         this.x = x;
         this.y = y;
     }

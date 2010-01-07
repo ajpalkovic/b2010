@@ -11,12 +11,14 @@ public class WoutPlayer extends NovaPlayer {
     }
     
     public void step() {
+        sensing.senseSurroundingSquares();
         if(energon.isEnergonLow()) {
             while(!energon.isEnergonFull()) {
                 energon.requestEnergonTransfer();
                 controller.yield();
             }
-            return;
         }
+
+
     }
 }

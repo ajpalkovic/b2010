@@ -23,7 +23,15 @@ public class ArchonPlayer extends NovaPlayer {
 
     public void step() {
         // reevaluate goal here?
+        sensing.senseAllTiles();
+        pr("("+this.leftWall+", "+this.topWall+") - ("+this.rightWall+", "+this.bottomWall+")");
+        pr("("+this.leftWallBounds+", "+this.topWallBounds+") - ("+this.rightWallBounds+", "+this.bottomWallBounds+")");
         switch(currentGoal) {
+            case Goal.collectingFlux:
+                if(spawning.canSupportUnit(RobotType.WOUT)) {
+                    spawning.spawnRobot(RobotType.WOUT);
+                }
+                break;
             case Goal.followingArchon:
                 messaging.sendMessageForEnemyRobots();
                 for(Robot r : controller.senseNearbyAirRobots()) {
@@ -68,18 +76,9 @@ public class ArchonPlayer extends NovaPlayer {
     public void boot() {
         team = controller.getTeam();
         senseArchonNumber();
-        sensing.senseAllTiles();
-        if(archonNumber < 3) {
-            setGoal(Goal.goingTowardsFlux);
+        if(archonNumber < 5) {
+            setGoal(Goal.collectingFlux);
             archonGroup = 1;
-            sensing.senseAllTiles();
-
-        } else if(archonNumber < 5) {
-            setGoal(Goal.exploringForFlux);
-            archonGroup = 2;
-        } else {
-            setGoal(Goal.exploringForFlux);
-            archonGroup = 2;
         }
         if(archonNumber % 2 == 0) {
             //message to other archon

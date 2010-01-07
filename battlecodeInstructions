@@ -11,7 +11,7 @@
 	git config --global user.email "aj.palkovic@gmail.com"
 10) Wait for AJ to add you to the repository.
 11) Change to some directory on your computer where you would like to keep the battlecode code:
-	IE: cd Desktop
+	eg: cd Desktop
 12) Run:
 	git clone git@github.com:ajpalkovic/b2010.git battlecode
 	cd battlecode

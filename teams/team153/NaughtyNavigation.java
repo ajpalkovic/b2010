@@ -631,10 +631,12 @@ public class NaughtyNavigation extends Base {
             if(checkWalls(location)) {
                 return false;
             }
+            pr("walls ok");
 
             if(!controller.senseTerrainTile(location).isTraversableAtHeight((isAirUnit ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND))) {
                 return false;
             }
+            pr("traversible ok");
 
             if(isAirUnit) {
                 return controller.senseAirRobotAtLocation(location) == null;
@@ -642,7 +644,7 @@ public class NaughtyNavigation extends Base {
                 return controller.senseGroundRobotAtLocation(location) == null;
             }
         } catch(Exception e) {
-            System.out.println("----Caught Exception in isLocationFree location: " + location.toString() + " isAirUnit: " +
+            pa("----Caught Exception in isLocationFree location: " + location.toString() + " isAirUnit: " +
                     isAirUnit + " Exception: " + e.toString());
             return false;
         }

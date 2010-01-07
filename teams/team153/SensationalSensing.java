@@ -185,7 +185,7 @@ public class SensationalSensing extends Base {
         try {
             tile = controller.senseTerrainTile(location);
         } catch(Exception e) {
-            System.out.println("----Caught exception in senseTile1 tile: " + location.toString() + " Exception: " + e.toString());
+            pa("----Caught exception in senseTile1 tile: " + location.toString() + " Exception: " + e.toString());
         }
 
         // if the tile is off map, we do not want to store it in the database, cuz it will cause problems
@@ -199,12 +199,13 @@ public class SensationalSensing extends Base {
         //grab the tile from the map store or create it if it doesn't exist because this tile is on the map
         try {
             NovaMapData data = map.getOrCreate(location.getX(), location.getY());
+            data.tile = tile;
 
             if(data.lastUpdate >= Clock.getRoundNum()) {
                 return data;
             }
 
-            boolean updateWalls = data.tile == null;
+            data.flux = controller.senseFluxAtLocation(location);
 
             data.airRobot = controller.senseAirRobotAtLocation(location);
             data.groundRobot = controller.senseGroundRobotAtLocation(location);
@@ -219,14 +220,12 @@ public class SensationalSensing extends Base {
                 data.groundRobotInfo = controller.senseRobotInfo(data.groundRobot);
             }
 
-            if(updateWalls) {
-                updateWalls(data);
-            }
+            updateWalls(data);
 
             data.lastUpdate = Clock.getRoundNum();
             return data;
         } catch(Exception e) {
-            System.out.println("----Caught exception in senseTile2 tile: " + location.toString() + " Exception: " + e.toString());
+            pa("----Caught exception in senseTile2 tile: " + location.toString() + " Exception: " + e.toString());
         }
         return null;
     }

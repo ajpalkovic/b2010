@@ -26,12 +26,23 @@ public class Base {
             return;
         }
 
-        if(controller.getRobot().getID() == 109) {
+        if(controller.getRobot().getID() == 6) {
             System.out.println(s);
         }
     }
 
+    /**
+     * This is the same as System.out.println
+     */
+    public void pa(String s) {
+        System.out.println(s);
+    }
+
+    /**
+     * Like SOP, but may be disabled.
+     */
     public void p(String s) {
+        if(false) return;
         System.out.println(s);
     }
 
@@ -62,20 +73,14 @@ public class Base {
 
     static class Goal {
 
-        public static final int exploringForFlux = 2, goingTowardsFlux = 3, goingDirectlyToFlux = 4, gettingCloseToFlux = 5;
+        public static final int collectingFlux = 2;
         public static final int idle = 20, scouting = 21;
         public static final int followingArchon = 31, alliedUnitRelay = 32, fight = 33;
 
         public static String toString(int goal) {
             switch(goal) {
-                case exploringForFlux:
-                    return "Exploring for Flux";
-                case goingTowardsFlux:
-                    return "Going towards Flux";
-                case goingDirectlyToFlux:
-                    return "Going directly to Flux";
-                case gettingCloseToFlux:
-                    return "Getting closer to a flux depsoit";
+                case collectingFlux:
+                    return "Collecting flux";
                 case idle:
                     return "Idle";
                 case followingArchon:
