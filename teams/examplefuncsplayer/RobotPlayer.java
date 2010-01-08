@@ -21,7 +21,7 @@ public class RobotPlayer implements Runnable {
                 }
 
                 if (myRC.canMove(myRC.getDirection())) {
-                    //System.out.println("about to move");
+                    System.out.println("about to move");
                     myRC.moveForward();
                 } else {
                     myRC.setDirection(myRC.getDirection().rotateRight());
@@ -30,8 +30,8 @@ public class RobotPlayer implements Runnable {
 
                 /*** end of main loop ***/
             } catch (Exception e) {
-                //System.out.println("caught exception:");
-                //e.printStackTrace();
+                System.out.println("caught exception:");
+                e.printStackTrace();
             }
         }
     }
