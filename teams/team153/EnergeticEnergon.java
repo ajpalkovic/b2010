@@ -207,11 +207,8 @@ public class EnergeticEnergon extends Base {
                 percent = (sum) / (amount - 5);
             }
 
-            p("percent"+percent);
-
             //p("sum: "+sum+" percent: "+percent+" amount: "+amount);
             for(EnergonTransferRequest request : requests) {
-                p(request.toString());
                 int result = transferEnergon(request.amount * percent, request.location, request.isAirUnit);
             }
 
