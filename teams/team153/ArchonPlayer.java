@@ -29,6 +29,8 @@ public class ArchonPlayer extends NovaPlayer {
                 if(spawning.canSupportUnit(RobotType.WOUT)) {
                     spawning.spawnRobot(RobotType.WOUT);
                 }
+                Direction dir = navigation.getMoveableDirection(controller.getDirection());
+                if(dir != null) navigation.moveOnceInDirection(dir);
                 break;
             case Goal.followingArchon:
                 messaging.sendMessageForEnemyRobots();

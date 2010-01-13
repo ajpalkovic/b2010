@@ -26,6 +26,24 @@ public class EnergeticEnergon extends Base {
         lowAllyRequests = new ArrayList<LowAllyRequest>();
         lowEnergonLevel = controller.getRobotType().maxEnergon() * .3;
     }
+
+    public void transferFlux(MapLocation location) {
+        try {
+            Robot robot = player.controller.senseAirRobotAtLocation(location);
+            if(robot == null) {
+                location = navigation.findNearestArchon();
+                if(location.distanceSquaredTo(player.controller.getLocation()) > 2) {
+                    return;
+                }
+            }
+            
+            double amount = player.controller.getFlux();
+            player.controller.transferFlux(amount, location, RobotLevel.IN_AIR);
+        } catch (Exception e) {
+            pa("---Caught exception in transferFlux");
+            e.printStackTrace();
+        }
+    }
     
     public void addRequest(MapLocation location, boolean isAirUnit, int amount) {
         requests.add(new EnergonTransferRequest(location, isAirUnit, amount));
@@ -59,18 +77,15 @@ public class EnergeticEnergon extends Base {
             return;
         }
         if(!(player.isChainer || player.isTurret)) {
-            pr("calculating energon transfer");
             RobotInfo min = null;
             ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
             for(RobotInfo robot : robots) {
                 if(!robot.location.isAdjacentTo(controller.getLocation())) continue;
-                pr("LEVEL: "+robot.energonLevel+" RESERVE: "+robot.energonReserve+" MAX: "+robot.maxEnergon);
                 if(min == null) {
                     min = robot;
                 } else {
                     double percent = (robot.energonLevel + robot.energonReserve) / robot.type.maxEnergon();
                     double minpercent = (min.energonLevel + min.energonReserve) / min.type.maxEnergon();
-                    pr(percent+" "+minpercent);
                     if(percent < minpercent) {
                         min = robot;
                     }
@@ -80,7 +95,6 @@ public class EnergeticEnergon extends Base {
                 return;
             }
             double amount = calculateEnergonRequestAmount(min);
-            p("amount: "+amount);
             if(amount < 2) {
                 return;
             }
@@ -275,7 +289,6 @@ public class EnergeticEnergon extends Base {
                     (!isAirUnit && controller.senseGroundRobotAtLocation(location) == null))) {
                 return Status.fail;
             }
-            p("TRANSFER");
             controller.transferUnitEnergon(amount, location, level);
         } catch(Exception e) {
             System.out.println("----Caught Exception in transferEnergon. amount: "+amount+

@@ -11,15 +11,24 @@ public class WoutPlayer extends NovaPlayer {
     }
     
     public void step() {
-        pr("step");
+        MapLocation location = navigation.findNearestArchon();
+        int distance = location.distanceSquaredTo(controller.getLocation());
         if(energon.isEnergonLow()) {
-            while(!energon.isEnergonFull()) {
-                pr("in loop");
+            if(distance < 3) {
+                energon.transferFlux(location);
                 energon.requestEnergonTransfer();
                 controller.yield();
+            } else {
+                navigation.moveOnceTowardsLocation(location);
+            }
+        } else {
+            if(distance > 20) {
+                navigation.moveOnceTowardsLocation(location);
+            } else {
+                Direction dir = navigation.getMoveableDirection(controller.getDirection());
+                navigation.moveOnceInDirection(dir);
             }
         }
-        pr("out of loop");
 
         NovaMapData square = findSquareWithFlux();
     }
