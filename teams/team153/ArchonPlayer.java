@@ -82,6 +82,7 @@ public class ArchonPlayer extends NovaPlayer {
     public void boot() {
         team = controller.getTeam();
         senseArchonNumber();
+            setGoal(Goal.collectingFlux);
         if(archonNumber < 5) {
             setGoal(Goal.collectingFlux);
             archonGroup = 1;
