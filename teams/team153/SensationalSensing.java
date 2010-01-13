@@ -15,6 +15,7 @@ public class SensationalSensing extends Base {
         super(player);
         map = player.map;
         messaging = player.messaging;
+        navigation = player.navigation;
         robotCache = new RobotCache();
     }
 

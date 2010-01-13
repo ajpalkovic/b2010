@@ -13,7 +13,7 @@ public class WoutPlayer extends NovaPlayer {
     public void step() {
         MapLocation location = navigation.findNearestArchon();
         int distance = location.distanceSquaredTo(controller.getLocation());
-        if(energon.isEnergonLow()) {
+        if(energon.isEnergonLow() || controller.getFlux() > 300) {
             if(distance < 3) {
                 energon.transferFlux(location);
                 energon.requestEnergonTransfer();
@@ -22,7 +22,7 @@ public class WoutPlayer extends NovaPlayer {
                 navigation.moveOnceTowardsLocation(location);
             }
         } else {
-            if(distance > 20) {
+            if(distance > 20 || controller.getFlux() > 300) {
                 navigation.moveOnceTowardsLocation(location);
             } else {
                 Direction dir = navigation.getMoveableDirection(controller.getDirection());
