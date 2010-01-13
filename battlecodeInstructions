@@ -1,17 +1,23 @@
-1) Install cygwin - while installing, select the git and openssh packages
+1) Install cygwin
+	When you get to the 'mirrors' stage, select the http://mirrors.dotsrc.org mirror
+	When you get to the big list of packages, hit the big button in the top right.  It will give you an alphabetical listing of the packages.
+	Then select the git and openssh packages.
 2) Install the jdk and netbeans or eclipse
+	You MUST, even if you are on a 64 bit machine, install the 32 bit jdk.  The 64 bit jdk will segfault.
+	I will be using netbeans.  I don't know how to setup eclipse properly, but there are instructions on how to do it.
 3) Open a cygwin prompt
 4) run: ssh-keygen
-5) You should probably just press enter for every question they ask (the rsa format is ok, and you do NOT want a passowrd)
+	It will ask you a lot of questions.  Just hit enter for every question
 6) Create a github account
-7) Upload the key that you created to github, it will be in ~/.ssh/id_rsa.pub
+7) Upload the key that you created to github, it will be in /home/username/.ssh/id_rsa.pub
 8) Send aj your github username
 9) Open a new cygwin prompt and run:
 	git config --global user.name "AJ Palkovic"
 	git config --global user.email "aj.palkovic@gmail.com"
 10) Wait for AJ to add you to the repository.
 11) Change to some directory on your computer where you would like to keep the battlecode code:
-	eg: cd Desktop
+	If you are in the cygwin prompt, I recommend this:
+		cd ../../Users/<username>/Desktop
 12) Run:
 	git clone git@github.com:ajpalkovic/b2010.git battlecode
 	cd battlecode
@@ -40,14 +46,14 @@ There is a shortcut which will commit every changed file, but will NOT commit an
 	git commit -am "message"
 	git push origin master
 	
-You do not need to push every time you make a commit.  In fact, you shouldnt.  Instead, every time you reach a mini-milestone, it's a good idea to commit.
+You do not need to push every time you make a commit.  In fact, you shouldn't.  Instead, every time you reach a mini-milestone, it's a good idea to commit.
 For instance, if you have a larger goal, like refactor the messaging code.  You may break that up into 10 smaller steps, like refactoring one method at a time.
 You can make a commit after each of the smaller steps.  If/when stuff gets messed up and you need to undo, more commits is better and less painful.
 When you are all done, then run the push command.
 
 To grab any changes that have been made since you last updated:
 	git pull origin master
-You should run this command frquently.
+You should run this command frequently.
 
 IMPORTANT:
 	Never ever run the pull command if you have files which have been changed but not committed.
@@ -61,3 +67,26 @@ Last note:
 	
 Final last note:
 	If you have a conflict, ask AJ for help.
+	
+Notes about our code:
+The main file is called BasePlayer.java
+NovaPlayer.java extends that.  It implements a few common methods, but not much more.
+Each of the different robot types has its own subclass like ArchonPlayer.java or WoutPlayer.java
+Each of these subclasses has two important methods:
+	boot() will be called once when the robot is created
+	step() will be called one time per turn.  All of the code should go in this method
+Code that does similar things has been separated into separate files to keep the codebase more manageable
+	We have separate file for:
+		Energon
+		Messaging
+		Sensing
+		Navigation
+		Spawning
+	The sole reason for doing this is to keep the file size down.
+	Try to avoid putting code in the wrong file if possible.
+Please put a 'javadoc' comment before every method.  It should just explain what the method does.  For reference those comments use the /** */ comment style.  (Note the two stars at the beginning)
+eg:
+ /**
+  * This method does blah
+  */
+  public void doSomething() {}
