@@ -1,13 +1,15 @@
-1) Install cygwin
+1) Register at battlecode.mit.edu
+2) Install cygwin
 	When you get to the 'mirrors' stage, select the http://mirrors.dotsrc.org mirror
-	When you get to the big list of packages, hit the big button in the top right.  It will give you an alphabetical listing of the packages.
+	When you get to the big list of packages, hit the big button in the top right.  
+	It will give you an alphabetical listing of the packages.
 	Then select the git and openssh packages.
-2) Install the jdk and netbeans or eclipse
+3) Install the jdk and netbeans or eclipse
 	You MUST, even if you are on a 64 bit machine, install the 32 bit jdk.  The 64 bit jdk will segfault.
 	I will be using netbeans.  I don't know how to setup eclipse properly, but there are instructions on how to do it.
-3) Open a cygwin prompt
-4) run: ssh-keygen
-	It will ask you a lot of questions.  Just hit enter for every question
+4) Open a cygwin prompt
+5) run: ssh-keygen
+	It will ask you a lot of questions.  Just hit enter for every question.
 6) Create a github account
 7) Upload the key that you created to github, it will be in /home/username/.ssh/id_rsa.pub
 8) Send aj your github username
@@ -37,33 +39,33 @@ Git tips
 To see which files have changed:
 	git status
 
+Each team will have its own 'branch' of the code for doing development.  The actual knowledge of what a branch is, is not critical.  I haven't entirely figured out how this will work just yet.  But I will soon.  In general, after creating the repository, you must run:
+	git checkout <team branch name>
+
 To commit files in git, first you have to tell it which files to commit and then actually commit them and then send them to the server:
 	git add filename filename filename...
 	git commit -m "Some message explaing what was changed"
-	git push origin master
+	git push origin <team branch name>
 
 There is a shortcut which will commit every changed file, but will NOT commit any new files:
 	git commit -am "message"
-	git push origin master
+	git push origin <team branch name>
 	
-You do not need to push every time you make a commit.  In fact, you shouldn't.  Instead, every time you reach a mini-milestone, it's a good idea to commit.
-For instance, if you have a larger goal, like refactor the messaging code.  You may break that up into 10 smaller steps, like refactoring one method at a time.
-You can make a commit after each of the smaller steps.  If/when stuff gets messed up and you need to undo, more commits is better and less painful.
-When you are all done, then run the push command.
+You do not need to push every time you make a commit.  In fact, you shouldn't.  Instead, every time you reach a mini-milestone, it's a good idea to commit.  For instance, if you have a larger goal, like refactor the messaging code.  You may break that up into 10 smaller steps, like refactoring one method at a time.  You can make a commit after each of the smaller steps.  If/when stuff gets messed up and you need to undo, more commits is better and less painful.  When you are all done, then run the push command.
 
 To grab any changes that have been made since you last updated:
-	git pull origin master
+	git pull origin <team branch name>
 You should run this command frequently.
 
 IMPORTANT:
 	Never ever run the pull command if you have files which have been changed but not committed.
-	You should run "git status" before you pull and make sure it says that there are no changes, that everything is up to date.
+	You should run "git status" before you pull and make sure it says that there are no changed files.
 	If not, commit the files first.
 	A good rule of thumb is whenever you are done working for the day or for the hour, commit everything.
 	
 Last note:
 	Please do not add the battlecode installer to git cuz it is huge.
-	Please do not add any of the battlecode installer files (like dlls or docs).  If you see something like that, let AJ now.
+	Please do not add the battlecode installer files (like dlls or docs).  If you see something like that, let AJ know.
 	
 Final last note:
 	If you have a conflict, ask AJ for help.
