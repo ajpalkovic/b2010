@@ -22,7 +22,7 @@ public class WoutPlayer extends NovaPlayer {
                 navigation.moveOnceTowardsLocation(location);
             }
         } else {
-            if(distance > 20 || controller.getFlux() > 300) {
+            if(distance > 50 || controller.getFlux() > 300) {
                 navigation.moveOnceTowardsLocation(location);
             } else {
                 Direction dir = navigation.getMoveableDirection(controller.getDirection());

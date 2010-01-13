@@ -15,10 +15,12 @@ public class ArchonPlayer extends NovaPlayer {
     public Party scoutParty = new Party(3);
     public Direction exploreDirection;
     public SporadicSpawning spawning;
+    public int minMoveTurns = 0, moveTurns = 0;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
+        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal()+2;
     }
 
     public void step() {
@@ -29,8 +31,12 @@ public class ArchonPlayer extends NovaPlayer {
                 if(spawning.canSupportUnit(RobotType.WOUT)) {
                     spawning.spawnRobot(RobotType.WOUT);
                 }
-                Direction dir = navigation.getMoveableDirection(controller.getDirection());
-                if(dir != null) navigation.moveOnceInDirection(dir);
+                if(moveTurns >= minMoveTurns && !controller.isMovementActive()) {
+                    Direction dir = navigation.getMoveableDirection(controller.getDirection());
+                    if(dir != null) navigation.moveOnceInDirection(dir);
+                    moveTurns = 0;
+                }
+                moveTurns++;
                 break;
             case Goal.followingArchon:
                 messaging.sendMessageForEnemyRobots();
