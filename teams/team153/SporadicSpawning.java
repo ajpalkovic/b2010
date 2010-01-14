@@ -112,11 +112,11 @@ public class SporadicSpawning extends Base {
     /**
      * Returns the first MapLocation of the 8 around an Archon which does not have a unit at that location.
      */
-    public NovaMapData getSpawnLocation(boolean isAirUnit) {
-        ArrayList<NovaMapData> locations = new ArrayList<NovaMapData>();
-        NovaMapData[] orderedLocations = navigation.getOrderedMapLocations();
-        for(NovaMapData location : orderedLocations) {
-            if(navigation.isLocationFree(location.toMapLocation(), isAirUnit)) {
+    public MapLocation getSpawnLocation(boolean isAirUnit) {
+        ArrayList<MapLocation> locations = new ArrayList<MapLocation>();
+        MapLocation[] orderedLocations = navigation.getOrderedMapLocations();
+        for(MapLocation location : orderedLocations) {
+            if(navigation.isLocationFree(location, isAirUnit)) {
                 locations.add(location);
             }
         }
@@ -142,13 +142,13 @@ public class SporadicSpawning extends Base {
 
         //type - true = ground, false = air
         boolean isAirUnit = robot == RobotType.ARCHON;
-        NovaMapData spawnLocation = getSpawnLocation(isAirUnit);
+        MapLocation spawnLocation = getSpawnLocation(isAirUnit);
 
         if(spawnLocation == null) {
             return Status.fail;
         }
 
-        navigation.faceLocation(spawnLocation.toMapLocation());
+        navigation.faceLocation(spawnLocation);
 
         //check the 8 tiles around me for a spawn location
         try {

@@ -46,7 +46,7 @@ public class SensationalSensing extends Base {
         return tiles;
     }
 
-    public boolean runSensorCallbacks(NovaMapData data) {
+    public boolean runSensorCallbacks(MapLocation data) {
         boolean ret = true;
         if(data != null) {
             /*
@@ -101,7 +101,9 @@ public class SensationalSensing extends Base {
         for(int c = 0; c < deltas.length; c += 2) {
             x = currentX + deltas[c] * xDelta;
             y = currentY + deltas[c + 1] * yDelta;
-            runSensorCallbacks(senseTile(new MapLocation(x, y)));
+
+            senseTile(x, y);
+            runSensorCallbacks(new MapLocation(x, y));
         }
     }
 
@@ -120,36 +122,24 @@ public class SensationalSensing extends Base {
     /**
      * Sense the 8 tiles around the robot.
      */
-    public NovaMapData[] senseSurroundingSquares() {
-        return senseSurroundingSquares(controller.getLocation());
+    public void senseSurroundingSquares() {
+        senseSurroundingSquares(controller.getLocation());
     }
 
-    public NovaMapData[] senseSurroundingSquares(MapLocation location) {
-        NovaMapData[] ret = new NovaMapData[9];
+    public void senseSurroundingSquares(MapLocation location) {
         int x = location.getX(), y = location.getY();
 
-        ret[0] = senseTile(new MapLocation(x - 1, y - 1));
-        ret[4] = senseTile(new MapLocation(x, y - 1));
-        ret[1] = senseTile(new MapLocation(x + 1, y - 1));
+        senseTile(x - 1, y - 1);
+        senseTile(x, y - 1);
+        senseTile(x + 1, y - 1);
 
-        ret[5] = senseTile(new MapLocation(x - 1, y));
-        ret[8] = senseTile(new MapLocation(x, y));
-        ret[6] = senseTile(new MapLocation(x + 1, y));
+        senseTile(x - 1, y);
+        senseTile(x, y);
+        senseTile(x + 1, y);
 
-        ret[2] = senseTile(new MapLocation(x - 1, y + 1));
-        ret[7] = senseTile(new MapLocation(x, y + 1));
-        ret[3] = senseTile(new MapLocation(x + 1, y + 1));
-
-        return ret;
-    }
-
-    public NovaMapData senseTileType(MapLocation location) {
-        NovaMapData data = map.get(location);
-        if(data.tile != null) return data;
-        if(controller.canSenseSquare(location)) {
-            data.tile = controller.senseTerrainTile(location);
-        }
-        return data;
+        senseTile(x - 1, y + 1);
+        senseTile(x, y + 1);
+        senseTile(x + 1, y + 1);
     }
 
     /**
@@ -157,13 +147,16 @@ public class SensationalSensing extends Base {
      * If the location is offmap, a MapData object will still be returned, but it will not be saved in the
      * mapstore object.  Walls will be automatically updated to reflect the new locations.
      */
-    public NovaMapData senseTile(MapLocation location) {
-        if(!controller.canSenseSquare(location)) {
-            return null;
-        }
+    public void senseTile(MapLocation location) {
+        senseTile(location.getX(), location.getY());
+    }
 
-        NovaMapData data = senseTileType(location);
-        return data;
+    public void senseTile(int x, int y) {
+        MapLocation location = new MapLocation(x, y);
+
+        if(map.sensed(x, y)) return;
+        if(!controller.canSenseSquare(location)) return;
+        map.set(x, y, controller.senseTerrainTile(location));
     }
 
     /**
@@ -174,7 +167,8 @@ public class SensationalSensing extends Base {
         for(MapLocation[] row : tiles) {
             for(MapLocation tile : row) {
                 if(tile != null) {
-                    if(!runSensorCallbacks(senseTile(tile))) {
+                    senseTile(tile);
+                    if(!runSensorCallbacks(tile)) {
                         return;
                     }
                 }

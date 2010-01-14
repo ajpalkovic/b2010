@@ -24,8 +24,6 @@ public class NovaPlayer extends Base {
     public boolean isAirRobot;
     public boolean isArchon, isSoldier, isChainer, isTurret, isWout, isAuraTower, isCommTower, isTeleporterTower, isTower, isRobot;
 
-    public NovaMapData[] sensedSurroundingSquares;
-
     public NovaPlayer(RobotController controller) {
         super(controller);
         map = new MapStore();
@@ -88,8 +86,6 @@ public class NovaPlayer extends Base {
             int startTurn = Clock.getRoundNum();
             controller.setIndicatorString(0, controller.getLocation().toString());
             messaging.parseMessages();
-
-            sensedSurroundingSquares = sensing.senseSurroundingSquares();
 
             if(isArchon) {
                 energon.processEnergonTransferRequests();
@@ -179,7 +175,7 @@ public class NovaPlayer extends Base {
      * The MapData object contains the robots.
      * Return false to return from the calling method.
      */
-    public boolean enemyInSightCallback(NovaMapData location) {
+    public boolean enemyInSightCallback(MapLocation location) {
         return true;
     }
 

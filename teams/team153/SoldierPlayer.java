@@ -56,16 +56,16 @@ public class SoldierPlayer extends AttackPlayer {
         Direction dir = navigation.getDirection(controller.getLocation(), enemyLocation);
         x = enemyLocation.getX();
         y = enemyLocation.getY();
-        ArrayList<NovaMapData> locations = getAttackLocations(new NovaMapData(x, y));
+        ArrayList<MapLocation> locations = getAttackLocations(new MapLocation(x, y));
 
         MapLocation returnData = enemyLocation;
         int minDistance = Integer.MAX_VALUE;
         int distance;
-        for(NovaMapData m : locations) {
-            distance = m.toMapLocation().distanceSquaredTo(m.toMapLocation());
+        for(MapLocation m : locations) {
+            distance = m.distanceSquaredTo(m);
             if(distance < minDistance) {
                 distance = minDistance;
-                returnData = m.toMapLocation();
+                returnData = m;
             }
         }
         return returnData;

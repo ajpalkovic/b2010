@@ -215,13 +215,11 @@ public abstract class AttackPlayer extends NovaPlayer {
      * Returns ArrayList of MapData where this unit can attack this location from.
      */
 
-    public ArrayList<NovaMapData> getAttackLocations(NovaMapData enemyLocation) {
-        ArrayList<NovaMapData> ableSpots = new ArrayList<NovaMapData>();
+    public ArrayList<MapLocation> getAttackLocations(MapLocation enemyLocation) {
+        ArrayList<MapLocation> ableSpots = new ArrayList<MapLocation>();
         RobotType type = controller.getRobotType();
         //
-        int x, y;
-        x = enemyLocation.x;
-        y = enemyLocation.y;
+        int x = enemyLocation.getX(), y = enemyLocation.getY();
         int maxDistance = type.attackRadiusMaxSquared();
         int minDistance = type.attackRadiusMinSquared();
         for(int i = x - maxDistance; i <= x + maxDistance; i++) {
@@ -230,7 +228,7 @@ public abstract class AttackPlayer extends NovaPlayer {
             } else {
                 for(int j = y - maxDistance; j < y + maxDistance; j++) {
                     if(j <= y - minDistance && j >= y + minDistance) {
-                        ableSpots.add(new NovaMapData(new MapLocation(i, j)));
+                        ableSpots.add(new MapLocation(i, j));
                     }
                 }
             }

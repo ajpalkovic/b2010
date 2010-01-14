@@ -29,11 +29,5 @@ public class WoutPlayer extends NovaPlayer {
                 navigation.moveOnceInDirection(dir);
             }
         }
-        
-        NovaMapData square = findSquareWithFlux();
-    }
-
-    public NovaMapData findSquareWithFlux() {
-        return null;
     }
 }

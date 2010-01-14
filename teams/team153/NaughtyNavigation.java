@@ -53,7 +53,7 @@ public class NaughtyNavigation extends Base {
      * The robot will then wait until it's movement is idle and proceed to turn to that direction.
      */
     public int faceLocation(MapLocation location) {
-        Direction newDir = getDirection(new NovaMapData(controller.getLocation()), new NovaMapData(location));
+        Direction newDir = getDirection(controller.getLocation(), location);
         return faceDirection(newDir);
     }
 
@@ -81,12 +81,6 @@ public class NaughtyNavigation extends Base {
     /**
      * Returns the direction object needed to move a robot from the start square to the end square.
      */
-    public Direction getDirection(NovaMapData start, NovaMapData end) {
-        int x = end.x - start.x;
-        int y = end.y - start.y;
-        return getDirection(x, y);
-    }
-
     public Direction getDirection(MapLocation start, MapLocation end) {
         int x = end.getX() - start.getX();
         int y = end.getY() - start.getY();
@@ -210,29 +204,29 @@ public class NaughtyNavigation extends Base {
      * that location, the 2 next to that, and so on.  The last location is the tile directly
      * behind the robot.
      */
-    public NovaMapData[] getOrderedMapLocations() {
+    public MapLocation[] getOrderedMapLocations() {
         Direction cur = controller.getDirection(), left, right;
         MapLocation start = controller.getLocation();
 
 
-        NovaMapData[] ret = new NovaMapData[8];
-        ret[0] = map.get(start.add(cur));
-        ret[7] = map.get(start.subtract(cur));
+        MapLocation[] ret = new MapLocation[8];
+        ret[0] = start.add(cur);
+        ret[7] = start.subtract(cur);
 
         left = cur.rotateLeft();
         right = cur.rotateRight();
-        ret[1] = map.get(start.add(right));
-        ret[2] = map.get(start.add(left));
+        ret[1] = start.add(right);
+        ret[2] = start.add(left);
 
         left = cur.rotateLeft();
         right = cur.rotateRight();
-        ret[3] = map.get(start.add(right));
-        ret[4] = map.get(start.add(left));
+        ret[3] = start.add(right);
+        ret[4] = start.add(left);
 
         left = cur.rotateLeft();
         right = cur.rotateRight();
-        ret[5] = map.get(start.add(right));
-        ret[6] = map.get(start.add(left));
+        ret[5] = start.add(right);
+        ret[6] = start.add(left);
 
         return ret;
     }
@@ -264,8 +258,7 @@ public class NaughtyNavigation extends Base {
      */
     public boolean isLocationFree(MapLocation location, boolean isAirUnit) {
         try {
-            NovaMapData data = map.get(location);
-            if(!data.onMap()) {
+            if(!map.onMap(location)) {
                 return false;
             }
 
@@ -273,7 +266,8 @@ public class NaughtyNavigation extends Base {
                 return true;
             }
 
-            if(!data.tile.isTraversableAtHeight((isAirUnit ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND))) {
+            TerrainTile tile = map.get(location);
+            if(tile != null && !tile.isTraversableAtHeight((isAirUnit ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND))) {
                 return false;
             }
 
