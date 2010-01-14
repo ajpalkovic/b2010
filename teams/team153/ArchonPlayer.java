@@ -41,9 +41,9 @@ public class ArchonPlayer extends NovaPlayer {
                 moveTurns++;                
                 break;
             case Goal.placingTower:
-            	ArrayList<MapLocation> loc = sensing.robotCache.senseAlliedTeleporters();
+            	ArrayList<MapLocation> loc = sensing.senseAlliedTeleporters();
             	if (loc.isEmpty()){
-            		try {controller.spawn(RobotType.TELEPORTER);sensing.robotCache.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
+            		try {controller.spawn(RobotType.TELEPORTER);sensing.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
             		
             	} else {
             		MapLocation us = controller.getLocation();
@@ -61,7 +61,7 @@ public class ArchonPlayer extends NovaPlayer {
             			navigation.moveOnceInDirection(dir);
             			dist = navigation.getDistanceTo(close);
             			if (dist <= 5) {
-            				try {controller.spawn(RobotType.TELEPORTER);sensing.robotCache.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
+            				try {controller.spawn(RobotType.TELEPORTER);sensing.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
             			}
             		
             	}

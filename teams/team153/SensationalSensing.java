@@ -11,14 +11,21 @@ public class SensationalSensing extends Base {
     public MapStore map;
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
-    public RobotCache robotCache;
+
+    public int airSensed = Integer.MIN_VALUE, teleporterSensed = Integer.MIN_VALUE, groundSensed = Integer.MIN_VALUE,
+            airInfoSensed = Integer.MIN_VALUE, groundInfoSensed = Integer.MIN_VALUE,
+            enemyInfoSensed = Integer.MIN_VALUE, alliedInfoSensed = Integer.MIN_VALUE, enemyLocationSensed = Integer.MIN_VALUE;
+    public Robot[] air, ground;
+    public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots;
+    public ArrayList<MapLocation> enemyLocations;
+    public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();
+    public int oldDataTolerance = 1;
 
     public SensationalSensing(NovaPlayer player) {
         super(player);
         map = player.map;
         messaging = player.messaging;
         navigation = player.navigation;
-        robotCache = new RobotCache();
     }
 
     /**
@@ -107,18 +114,6 @@ public class SensationalSensing extends Base {
         }
     }
 
-    public ArrayList<RobotInfo> senseEnemyRobotInfoInSensorRange() {
-        return robotCache.senseEnemyRobotInfoInSensorRange();
-    }
-
-    public ArrayList<RobotInfo> senseAlliedRobotInfoInSensorRange() {
-        return robotCache.senseAlliedRobotInfoInSensorRange();
-    }
-
-    public ArrayList<MapLocation> senseEnemyRobotLocations() {
-        return robotCache.senseEnemyRobotLocations();
-    }
-
     /**
      * Sense the 8 tiles around the robot.
      */
@@ -176,152 +171,137 @@ public class SensationalSensing extends Base {
         }
     }
 
-    class RobotCache {
-
-        public int airSensed = Integer.MIN_VALUE, teleporterSensed = Integer.MIN_VALUE, groundSensed = Integer.MIN_VALUE,
-                airInfoSensed = Integer.MIN_VALUE, groundInfoSensed = Integer.MIN_VALUE,
-                enemyInfoSensed = Integer.MIN_VALUE, alliedInfoSensed = Integer.MIN_VALUE, enemyLocationSensed = Integer.MIN_VALUE;
-        public Robot[] air, ground;
-        public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots;
-        public ArrayList<MapLocation> enemyLocations;
-        public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();
-        public int oldDataTolerance = 1;
-
-        public RobotCache() {
-        }
-
-        public ArrayList<RobotInfo> senseEnemyRobotInfoInSensorRange() {
-            if(enemyInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
-                return enemyRobots;
-            }
-
-            enemyRobots = new ArrayList<RobotInfo>();
-            robotCache.getGroundRobotInfo();
-            robotCache.getAirRobotInfo();
-
-            for(RobotInfo robot : groundInfo) {
-                if(!robot.team.equals(player.team)) {
-                    enemyRobots.add(robot);
-                }
-            }
-
-            for(RobotInfo robot : airInfo) {
-                if(!robot.team.equals(player.team)) {
-                    enemyRobots.add(robot);
-                }
-            }
-
+    public ArrayList<RobotInfo> senseEnemyRobotInfoInSensorRange() {
+        if(enemyInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return enemyRobots;
         }
 
-        public ArrayList<RobotInfo> senseAlliedRobotInfoInSensorRange() {
-            if(alliedInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
-                return alliedRobots;
+        enemyRobots = new ArrayList<RobotInfo>();
+        getGroundRobotInfo();
+        getAirRobotInfo();
+
+        for(RobotInfo robot : groundInfo) {
+            if(!robot.team.equals(player.team)) {
+                enemyRobots.add(robot);
             }
+        }
 
-            alliedRobots = new ArrayList<RobotInfo>();
-            robotCache.getGroundRobotInfo();
-
-            for(RobotInfo robot : groundInfo) {
-                if(robot.team.equals(player.team)) {
-                    alliedRobots.add(robot);
-                }
+        for(RobotInfo robot : airInfo) {
+            if(!robot.team.equals(player.team)) {
+                enemyRobots.add(robot);
             }
+        }
 
+        return enemyRobots;
+    }
+
+    public ArrayList<RobotInfo> senseAlliedRobotInfoInSensorRange() {
+        if(alliedInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return alliedRobots;
         }
 
-        public ArrayList<MapLocation> senseEnemyRobotLocations() {
-            if(enemyLocationSensed >= Clock.getRoundNum() - oldDataTolerance) {
-                return enemyLocations;
-            }
+        alliedRobots = new ArrayList<RobotInfo>();
+        getGroundRobotInfo();
 
-            senseEnemyRobotInfoInSensorRange();
-            enemyLocations = new ArrayList<MapLocation>();
-            for(RobotInfo r : enemyRobots) {
-                enemyLocations.add(r.location);
+        for(RobotInfo robot : groundInfo) {
+            if(robot.team.equals(player.team)) {
+                alliedRobots.add(robot);
             }
-            
+        }
+
+        return alliedRobots;
+    }
+
+    public ArrayList<MapLocation> senseEnemyRobotLocations() {
+        if(enemyLocationSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return enemyLocations;
         }
 
-        public Robot[] getAirRobots() {
-            if(airSensed >= Clock.getRoundNum() - oldDataTolerance) {
-                return air;
-            }
+        senseEnemyRobotInfoInSensorRange();
+        enemyLocations = new ArrayList<MapLocation>();
+        for(RobotInfo r : enemyRobots) {
+            enemyLocations.add(r.location);
+        }
 
-            try {
-                air = controller.senseNearbyAirRobots();
-                airSensed = Clock.getRoundNum();
-            } catch(Exception e) {
-                System.out.println("----Caught Exception in getAirRobots.  Exception: " + e.toString());
-            }
+        return enemyLocations;
+    }
+
+    public Robot[] getAirRobots() {
+        if(airSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return air;
         }
 
-        public Robot[] getGroundRobots() {
-            if(groundSensed >= Clock.getRoundNum() - oldDataTolerance) {
-                return ground;
-            }
+        try {
+            air = controller.senseNearbyAirRobots();
+            airSensed = Clock.getRoundNum();
+        } catch(Exception e) {
+            System.out.println("----Caught Exception in getAirRobots.  Exception: " + e.toString());
+        }
+        return air;
+    }
 
-            try {
-                ground = controller.senseNearbyGroundRobots();
-                groundSensed = Clock.getRoundNum();
-            } catch(Exception e) {
-                System.out.println("----Caught Exception in getGroundRobots.  Exception: " + e.toString());
-            }
+    public Robot[] getGroundRobots() {
+        if(groundSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return ground;
         }
 
-        public ArrayList<RobotInfo> getAirRobotInfo() {
-            if(airInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
-                return airInfo;
-            }
+        try {
+            ground = controller.senseNearbyGroundRobots();
+            groundSensed = Clock.getRoundNum();
+        } catch(Exception e) {
+            System.out.println("----Caught Exception in getGroundRobots.  Exception: " + e.toString());
+        }
+        return ground;
+    }
 
-            getAirRobots();
-            airInfo = new ArrayList<RobotInfo>();
-            for(Robot robot : air) {
-                try {
-                    if(controller.canSenseObject(robot)) {
-                        airInfo.add(controller.senseRobotInfo(robot));
-                    }
-                } catch(Exception e) {
-                    System.out.println("----Caught Exception in getAirRobotInfo.  Exception: " + e.toString());
-                }
-            }
-            airInfoSensed = Clock.getRoundNum();
+    public ArrayList<RobotInfo> getAirRobotInfo() {
+        if(airInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return airInfo;
         }
 
-        public ArrayList<MapLocation> senseAlliedTeleporters() {
-        	if (teleporterSensed < Clock.getRoundNum() - oldDataTolerance){
-        		try {
-        		List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
-        		if (!loc.isEmpty())
-        		teleporterLocations.addAll(loc);
-        		}catch (Exception e) {      			
-        		}
-        	}
-    		return teleporterLocations;
-        }
-        public ArrayList<RobotInfo> getGroundRobotInfo() {
-            if(groundInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
-                return groundInfo;
-            }
-
-            getGroundRobots();
-            groundInfo = new ArrayList<RobotInfo>();
-            for(Robot robot : ground) {
-                try {
-                    if(controller.canSenseObject(robot)) {
-                        groundInfo.add(controller.senseRobotInfo(robot));
-                    }
-                } catch(Exception e) {
-                    System.out.println("----Caught Exception in getGroundRobotInfo.  Exception: " + e.toString());
+        getAirRobots();
+        airInfo = new ArrayList<RobotInfo>();
+        for(Robot robot : air) {
+            try {
+                if(controller.canSenseObject(robot)) {
+                    airInfo.add(controller.senseRobotInfo(robot));
                 }
+            } catch(Exception e) {
+                System.out.println("----Caught Exception in getAirRobotInfo.  Exception: " + e.toString());
             }
-            groundInfoSensed = Clock.getRoundNum();
+        }
+        airInfoSensed = Clock.getRoundNum();
+        return airInfo;
+    }
+
+    public ArrayList<MapLocation> senseAlliedTeleporters() {
+            if (teleporterSensed < Clock.getRoundNum() - oldDataTolerance){
+                    try {
+                    List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
+                    if (!loc.isEmpty())
+                    teleporterLocations.addAll(loc);
+                    }catch (Exception e) {
+                    }
+            }
+            return teleporterLocations;
+    }
+    public ArrayList<RobotInfo> getGroundRobotInfo() {
+        if(groundInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return groundInfo;
         }
+
+        getGroundRobots();
+        groundInfo = new ArrayList<RobotInfo>();
+        for(Robot robot : ground) {
+            try {
+                if(controller.canSenseObject(robot)) {
+                    groundInfo.add(controller.senseRobotInfo(robot));
+                }
+            } catch(Exception e) {
+                System.out.println("----Caught Exception in getGroundRobotInfo.  Exception: " + e.toString());
+            }
+        }
+        groundInfoSensed = Clock.getRoundNum();
+        return groundInfo;
     }
 }
