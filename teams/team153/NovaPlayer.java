@@ -167,24 +167,6 @@ public class NovaPlayer extends Base {
         energon.addLowAllyRequest(location, level, reserve, max);
     }
 
-    public void followRequestMessageCallback(MapLocation location, int i, int senderID, int recipientID) {
-        if(controller.getRobotType() == RobotType.ARCHON) {
-            followRequest(i, senderID);
-        } else if(recipientID == robot.getID() && currentGoal != Goal.followingArchon) {
-            setGoal(Goal.followingArchon);
-            navigation.go(new NovaMapData(location));
-            followingArchonNumber = senderID;
-        }
-    }
-
-    /**
-     * Callback right before the moveForward method is called so a robot can check
-     * if the tile is free to reevaluate its goals.
-     */
-    public boolean beforeMovementCallback(NovaMapData location) {
-        return true;
-    }
-
     /**
      * Called when the direction in moveOnceTowardsLocation is calculated.
      */
@@ -202,15 +184,6 @@ public class NovaPlayer extends Base {
     }
 
     /**
-     * Callback in the go method when a path is calculated.  The robot can override this to,
-     * for exaple, make sure it has enough energon to get back to the archon.
-     * If the callback returns false, the go method returns.
-     */
-    public boolean pathCalculatedCallback(LinkedList<NovaMapData> path) {
-        return true;
-    }
-
-    /**
      * Callback in the go method each time the robot takes a step.  One use would be to
      * check if an enemy is in sight, each time you move.
      * If the callback returns false, the go method returns.
@@ -218,16 +191,6 @@ public class NovaPlayer extends Base {
     public boolean pathStepTakenCallback() {
         senseNewTiles();
         return true;
-    }
-
-    /**
-     * Callback for when a tile is sensed.  Return false to stop sensing.
-     */
-    public boolean tileSensedCallback(NovaMapData tile) {
-        return true;
-    }
-
-    public void followRequest(int archonNum, int id) {
     }
 
     /**

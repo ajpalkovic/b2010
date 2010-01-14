@@ -33,10 +33,6 @@ public class WoutPlayer extends NovaPlayer {
         NovaMapData square = findSquareWithFlux();
     }
 
-    public boolean tileSensedCallback(NovaMapData data) {
-        return super.tileSensedCallback(data);
-    }
-
     public NovaMapData findSquareWithFlux() {
         return null;
     }

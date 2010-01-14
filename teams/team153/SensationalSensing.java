@@ -49,7 +49,6 @@ public class SensationalSensing extends Base {
     public boolean runSensorCallbacks(NovaMapData data) {
         boolean ret = true;
         if(data != null) {
-            ret = player.tileSensedCallback(data);
             /*
              TODO:: This breaks AttackPlayer badly.
              if(data.airRobot != null || data.groundRobot != null) {

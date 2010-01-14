@@ -151,14 +151,6 @@ public class MexicanMessaging extends Base {
                         ;//locations[0] is the location of the unit
                         //locations[i] corresponds to the location for the status
                         break;
-                    case BroadcastMessage.FOLLOW_REQUEST:
-                        player.followRequestMessageCallback(message.locations[locationIndex], message.ints[i + 2], senderID, recipientID);
-
-                        if(player.isArchon && recipientID == robot.getID() && player.currentGoal != Goal.followingArchon) {
-                            locationIndex++;
-                        }
-
-                        break;
                     case BroadcastMessage.SUPPORT:
 
                         break;
@@ -191,8 +183,6 @@ public class MexicanMessaging extends Base {
                 return 4;
             case BroadcastMessage.NEW_UNIT:
                 return 2;
-            case BroadcastMessage.FOLLOW_REQUEST:
-                return 3;
             case BroadcastMessage.FIND_BLOCKS:
                 return 3;
             case BroadcastMessage.MOVE:
@@ -302,18 +292,6 @@ public class MexicanMessaging extends Base {
         MapLocation[] locations = new MapLocation[1];
         locations[0] = controller.getLocation();
         String[] strings = {controller.getRobotType().toString()};
-        return addMessage(ints, strings, locations);
-    }
-    //follow request archon only
-
-    public boolean sendFollowRequest(MapLocation archonLocation, int archonNumber, int supportUnit) {
-        int[] ints = new int[3];
-        ints[0] = BroadcastMessage.FOLLOW_REQUEST;
-        ints[1] = supportUnit;
-        ints[2] = archonNumber;
-        MapLocation[] locations = new MapLocation[1];
-        locations[0] = archonLocation;
-        String[] strings = null;
         return addMessage(ints, strings, locations);
     }
 }

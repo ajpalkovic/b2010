@@ -8,7 +8,6 @@ public class NovaMapData {
     public int x, y;
     public MapLocation location = null;
     public TerrainTile tile = null;
-    public int pathCost;
     
     public String toString() {
         return "(" + x + " " + y + ")";
