@@ -291,14 +291,14 @@ public class EnergeticEnergon extends Base {
             }
             controller.transferUnitEnergon(amount, location, level);
         } catch(Exception e) {
-            System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
+            /*System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
                     " location: "+location.toString()+" isAirUnit: "+isAirUnit+" level: "+
-                    level.toString()+" Exception: "+e.toString());
+                    level.toString()+" Exception: "+e.toString());*/
             return Status.fail;
         }
         return Status.success;
     }
-
+    
     /**
      * Represents a pending energon request.
      */

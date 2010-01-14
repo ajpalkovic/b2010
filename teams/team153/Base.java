@@ -76,7 +76,7 @@ public class Base {
         public static final int collectingFlux = 2;
         public static final int idle = 20, scouting = 21;
         public static final int followingArchon = 31, alliedUnitRelay = 32, fight = 33;
-
+        public static final int placingTower = 34;
         public static String toString(int goal) {
             switch(goal) {
                 case collectingFlux:
@@ -89,7 +89,8 @@ public class Base {
                     return "Relaying Allied Unit Locations";
                 case fight:
                     return "FIGHT!";
-
+                case placingTower:
+                	return "Placing Tower";                	
             }
             return "?";
         }

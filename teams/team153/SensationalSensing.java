@@ -2,6 +2,8 @@ package team153;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
+
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class SensationalSensing extends Base {
@@ -183,12 +185,13 @@ public class SensationalSensing extends Base {
 
     class RobotCache {
 
-        public int airSensed = Integer.MIN_VALUE, groundSensed = Integer.MIN_VALUE,
+        public int airSensed = Integer.MIN_VALUE, teleporterSensed = Integer.MIN_VALUE, groundSensed = Integer.MIN_VALUE,
                 airInfoSensed = Integer.MIN_VALUE, groundInfoSensed = Integer.MIN_VALUE,
                 enemyInfoSensed = Integer.MIN_VALUE, alliedInfoSensed = Integer.MIN_VALUE, enemyLocationSensed = Integer.MIN_VALUE;
         public Robot[] air, ground;
         public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots;
         public ArrayList<MapLocation> enemyLocations;
+        public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();
         public int oldDataTolerance = 1;
 
         public RobotCache() {
@@ -297,6 +300,17 @@ public class SensationalSensing extends Base {
             return airInfo;
         }
 
+        public ArrayList<MapLocation> senseAlliedTeleporters() {
+        	if (teleporterSensed < Clock.getRoundNum() - oldDataTolerance){
+        		try {
+        		List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
+        		if (!loc.isEmpty())
+        		teleporterLocations.addAll(loc);
+        		}catch (Exception e) {      			
+        		}
+        	}
+    		return teleporterLocations;
+        }
         public ArrayList<RobotInfo> getGroundRobotInfo() {
             if(groundInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
                 return groundInfo;

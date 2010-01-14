@@ -16,7 +16,7 @@ public class ArchonPlayer extends NovaPlayer {
     public Direction exploreDirection;
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
-
+    
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
@@ -26,9 +26,9 @@ public class ArchonPlayer extends NovaPlayer {
     public void step() {
         // reevaluate goal here?
         //sensing.senseAllTiles();
-        switch(currentGoal) {
+    	switch(currentGoal) {
             case Goal.collectingFlux:
-                if(spawning.canSupportUnit(RobotType.WOUT)) {
+            	if(spawning.canSupportUnit(RobotType.WOUT)) {
                     spawning.spawnRobot(RobotType.WOUT);
                 }
                 if(moveTurns >= minMoveTurns && !controller.isMovementActive()) {
@@ -36,15 +36,45 @@ public class ArchonPlayer extends NovaPlayer {
                     if(dir != null) navigation.moveOnceInDirection(dir);
                     moveTurns = 0;
                 }
-                moveTurns++;
+                if (spawning.canSupportTower(RobotType.TELEPORTER)) {
+                	//System.out.println("Can support it");
+                	setGoal(Goal.placingTower);                	                	
+                }
+                moveTurns++;                
                 break;
+            case Goal.placingTower:
+            	ArrayList<MapLocation> loc = sensing.robotCache.senseAlliedTeleporters();
+            	if (loc.isEmpty()){
+            		try {controller.spawn(RobotType.TELEPORTER);sensing.robotCache.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
+            		
+            	} else {
+            		MapLocation us = controller.getLocation();
+            		int min = Integer.MAX_VALUE;
+            		MapLocation close = us;
+            		for (MapLocation l : loc){
+            			int dist = navigation.getDistanceTo(l);
+            			if (dist < min) {
+            				close = l;
+            				min = dist;
+            			}
+            		}
+            		int dist = navigation.getDistanceTo(close);
+            		Direction dir = navigation.getDirection(us, close);
+            			navigation.moveOnceInDirection(dir);
+            			dist = navigation.getDistanceTo(close);
+            			if (dist <= 5) {
+            				try {controller.spawn(RobotType.TELEPORTER);sensing.robotCache.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
+            			}
+            		
+            	}
+            	break;
             case Goal.followingArchon:
                 messaging.sendMessageForEnemyRobots();
                 for(Robot r : controller.senseNearbyAirRobots()) {
                     if(r.getID() == followingArchonNumber) {
                         try {
-                            NovaMapData loc = map.get(controller.senseRobotInfo(r).location);
-                            navigation.goByBugging(loc);
+                            NovaMapData loca = map.get(controller.senseRobotInfo(r).location);
+                            navigation.goByBugging(loca);
 
 
                         } catch(Exception e) {
@@ -96,7 +126,9 @@ public class ArchonPlayer extends NovaPlayer {
     public void enemyInSight() {
         //spawnParty();
     }
-
+    public boolean canSpawnTower() {
+    	return false;
+    }
     public void spawnParty() {
         int turnsToWait = new Random().nextInt(8) + Clock.getRoundNum() + 1;
         while(Clock.getRoundNum() < turnsToWait) {
@@ -155,7 +187,7 @@ public class ArchonPlayer extends NovaPlayer {
             followingArchonNumber = id;
         }
     }
-
+    
     public void goDirection(Direction d) {
         int[] delta = navigation.getDirectionDelta(d);
         int x = controller.getLocation().getX() + delta[0] * 10;

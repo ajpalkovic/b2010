@@ -22,7 +22,9 @@ public class SporadicSpawning extends Base {
         sensing = player.sensing;
         energon = player.energon;
     }
-
+    public boolean canSupportTower(RobotType tower) {
+    	return (player.controller.getFlux() >= tower.spawnFluxCost());
+    }
     /**
      * Returns true if this archon can support the unit's energon requirements.
      */
@@ -43,7 +45,7 @@ public class SporadicSpawning extends Base {
                 energonProduction += 1;
             }
         }
-
+        
         // each archon should keep .3 for itself?
         return energonProduction > energonCost + (energonProduction * .2);
     }

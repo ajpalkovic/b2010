@@ -21,7 +21,7 @@ public class RobotPlayer implements Runnable {
         } else if (controller.getRobotType().equals(RobotType.WOUT)) {
             player = new WoutPlayer(controller);
         } else {
-            player = null;
+            player = new NovaPlayer(controller);
         }
 
         while(true) {
