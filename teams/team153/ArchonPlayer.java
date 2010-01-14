@@ -28,6 +28,9 @@ public class ArchonPlayer extends NovaPlayer {
         //sensing.senseAllTiles();
     	switch(currentGoal) {
             case Goal.collectingFlux:
+                if (Clock.getRoundNum()%4 == 0) {
+            		sensing.robotCache.senseAlliedTeleporters();
+            	}
             	if(spawning.canSupportUnit(RobotType.WOUT)) {
                     spawning.spawnRobot(RobotType.WOUT);
                 }
