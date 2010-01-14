@@ -73,22 +73,12 @@ public class SoldierPlayer extends AttackPlayer {
 
     public void returnToArchon() {
         //SENSE ARCHONS, ITERATE TO FIND CLOSEST, GO TO THAT ONE
-        MapLocation archons[] = controller.senseAlliedArchons();
-        if(archons != null) {
-            int minDistance = controller.getLocation().distanceSquaredTo(archons[0]);
-            MapLocation closestArchon = archons[0];
-            for(int i = 0; i < archons.length; i++) {
-                int dist = controller.getLocation().distanceSquaredTo(archons[i]);
-                if(dist < minDistance) {
-                    minDistance = dist;
-                    closestArchon = archons[i];
-                }
-            }
-            if(!controller.getLocation().isAdjacentTo(closestArchon)) {
-                //           if (controller.getLocation().distanceSquaredTo(closestArchon) > ARCHON_DISTANCE) {
-                navigation.goByBugging(new NovaMapData(closestArchon));
-                //                System.out.println("returning");
-                //            }
+        while(true) {
+            MapLocation location = navigation.findNearestArchon();
+            if(location.distanceSquaredTo(controller.getLocation()) > 2) {
+                navigation.moveOnceTowardsLocation(location);
+            } else {
+                break;
             }
         }
     }

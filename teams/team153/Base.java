@@ -56,7 +56,6 @@ public class Base {
         static final int MAP_INFO = 6;//broadcasted
         static final int PING = 7;//broadcasted
         static final int PONG = 8;//broadcasted response to ping
-        static final int FOLLOW_REQUEST = 9;
         static final int FIND_BLOCKS = 10;
         static final int MOVE = 11; //MOVE BITCH GET OUT DA WAY
         static final int LOW_ALLIED_UNITS = 12;
@@ -75,7 +74,6 @@ public class Base {
 
         public static final int collectingFlux = 2;
         public static final int idle = 20, scouting = 21;
-        public static final int followingArchon = 31, alliedUnitRelay = 32, fight = 33;
 
         public static String toString(int goal) {
             switch(goal) {
@@ -83,12 +81,6 @@ public class Base {
                     return "Collecting flux";
                 case idle:
                     return "Idle";
-                case followingArchon:
-                    return "Following Archon";
-                case alliedUnitRelay:
-                    return "Relaying Allied Unit Locations";
-                case fight:
-                    return "FIGHT!";
 
             }
             return "?";

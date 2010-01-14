@@ -257,12 +257,6 @@ public abstract class AttackPlayer extends NovaPlayer {
             this.enemyLocation = enemyLocation;
             size = initSize;
         }
-
-        public void initiate() {
-            MapLocation destination = findBestLocation(enemyLocation);
-            //initiate the attack!
-            navigation.go(new NovaMapData(destination));
-        }
     }
     //notes: we have a method for go-iing.  need one for go thing to go
     //somewhere that attacks enemy en-route hostile move.
