@@ -9,7 +9,6 @@ public abstract class AttackPlayer extends NovaPlayer {
     public ArrayList<EnemyInfo> enemies, enemiesTemp;
     public ArrayList<EnemyInfo> inRangeEnemies, outOfRangeEnemies, archonEnemies, outOfRangeArchonEnemies;
     public int noEnemiesCount = 0, maxDistanceAway = 3;
-    public MapLocation startingLocation = null;
     public boolean movingToAttack = false;
     public MapLocation attackLocation;
 
@@ -18,6 +17,10 @@ public abstract class AttackPlayer extends NovaPlayer {
         enemies = new ArrayList<EnemyInfo>();
     }
 
+    /**
+     * This is called during moveOnceTowardsLocation.
+     * The idea is to keep the cannons from getting too far from the archons.
+     */
     public boolean directionCalculatedCallback(Direction dir) {
         if(!movingToAttack) {
             return true;
@@ -32,6 +35,10 @@ public abstract class AttackPlayer extends NovaPlayer {
         return false;
     }
 
+    /**
+     * This method creates a single enemies list and stores it in enemies.
+     * It simplifies caching enemy info for 10 turns, so that even if we do not see any new enemies for a bit, we might still try to attack there.
+     */
     public void processEnemies() {
         enemiesTemp = enemies;
         enemies = new ArrayList<EnemyInfo>();
@@ -59,15 +66,10 @@ public abstract class AttackPlayer extends NovaPlayer {
         }
     }
 
-    public void returnToStartingLocation() {
-        if(controller.getLocation().equals(startingLocation)) {
-            startingLocation = null;
-            return;
-        }
-
-        navigation.moveOnceTowardsLocation(startingLocation);
-    }
-
+    /**
+     * This method moves the robot one location towards the nearest enemy.
+     * It should only be called if there are no inrange enemies.
+     */
     public void moveToAttack() {
         movingToAttack = true;
         if(outOfRangeEnemies.size() > 0) {
@@ -78,6 +80,14 @@ public abstract class AttackPlayer extends NovaPlayer {
         movingToAttack = false;
     }
 
+    /**
+     * This method separates the enemies into four groups.
+     * It sorts them both by in-range vs. out-of-range.
+     * The idea is that if there is an in range enemy, attack immediately.
+     * Otherwise, it may be worthwhile to move a little in order to attack.
+     *
+     * The enemies are also sorted by archon vs. not-archon.  Sometimes archons are harder to kill.
+     */
     public void sortEnemies() {
         inRangeEnemies = new ArrayList<EnemyInfo>();
         outOfRangeEnemies = new ArrayList<EnemyInfo>();
@@ -103,6 +113,10 @@ public abstract class AttackPlayer extends NovaPlayer {
         }
     }
 
+    /**
+     * This method figures out which enemy to attack.
+     * It will first attack in range enemies, and then it will attack archons.
+     */
     public EnemyInfo selectEnemy() {
         if(enemies.size() == 0) {
             return null;
@@ -121,6 +135,11 @@ public abstract class AttackPlayer extends NovaPlayer {
         return null;
     }
 
+    /**
+     * EnemyInfo stores a heuristic in it.
+     * Currently the heuristic is energon level * distance.  The idea is to attack close and weak enemies first.
+     * This method selects the cheapest of those.
+     */
     public EnemyInfo getCheapestEnemy(ArrayList<EnemyInfo> enemyList) {
         EnemyInfo min = enemyList.get(0);
         for(int c = 1; c < enemyList.size(); c++) {
@@ -142,6 +161,10 @@ public abstract class AttackPlayer extends NovaPlayer {
         return min;
     }
 
+    /**
+     * Unused callback that creates a list of any enemy in sensor range.
+     * TODO: This 'logic' should be updated with the senseEnemyRobotInfo method instead.
+     */
     public void enemyInSight(MapLocation enemyLocation, int energonLevel, String enemyType) {
         enemies.add(new EnemyInfo(enemyLocation, energonLevel, enemyType));
     }
