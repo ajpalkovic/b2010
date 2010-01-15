@@ -6,3 +6,5 @@ Rewrite navigation:
 Rewrite messaging
 Update NovaMapData and sensing code to get all the latest data
 Remove unnecessary exception handling code
+
+have attack players send a message when they shoot, to update the energon level of robots to avoid overkill
