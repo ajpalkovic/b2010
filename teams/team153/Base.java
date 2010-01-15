@@ -72,6 +72,7 @@ public class Base {
         static final int MAP_INFO = 6;//broadcasted
         static final int PING = 7;//broadcasted
         static final int PONG = 8;//broadcasted response to ping
+        static final int FOLLOW_REQUEST = 9;
         static final int FIND_BLOCKS = 10;
         static final int MOVE = 11; //MOVE BITCH GET OUT DA WAY
         static final int LOW_ALLIED_UNITS = 12;

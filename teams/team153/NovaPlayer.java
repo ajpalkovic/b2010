@@ -140,6 +140,11 @@ public class NovaPlayer extends Base {
     /***************************************************************************
      * CALLBACKS
      **************************************************************************/
+    public void followRequestMessageCallback(MapLocation location, int i, int idOfSendingArchon, int recipientId) {
+        //recipientId is prolly equal to controller.getRobt().getID()
+        //i have no fluxing clue what i is.  ill let u know though
+    }
+
     public void moveMessageCallback(MapLocation location) {
         if(!controller.getRobotType().isAirborne() && controller.getLocation().equals(location)) {
             navigation.changeToDirectionGoal(navigation.getMoveableDirection(Direction.NORTH), false);
