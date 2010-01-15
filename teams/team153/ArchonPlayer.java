@@ -43,13 +43,8 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.placingTower:
                 navigation.changeToTowerGoal(true);
                 if(navigation.goal.done()) {
-                    try {
-                        controller.spawn(RobotType.TELEPORTER);
-                        sensing.teleporterLocations.add(controller.getLocation());
-                        setGoal(Goal.collectingFlux);
-                    } catch(Exception e) {
-                        pa("---Caught exception while spawning tower.");
-                    }
+                    spawning.spawnTower(RobotType.TELEPORTER);
+                    setGoal(Goal.collectingFlux);
                 } else {
                     navigation.moveOnce(false);
                 }
