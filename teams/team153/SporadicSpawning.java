@@ -11,8 +11,7 @@ public class SporadicSpawning extends Base {
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
-    public double goalChainers = -0.2, goalTurrets = .6, goalSoldiers = -0.2, goalWouts = .4;
-    public int unitSpawned = 0;
+    public SpawnMode mode;
 
     public SporadicSpawning(NovaPlayer player) {
         super(player);
@@ -21,10 +20,27 @@ public class SporadicSpawning extends Base {
         navigation = player.navigation;
         sensing = player.sensing;
         energon = player.energon;
+        mode = new CollectingFluxSpawnMode();
     }
+
+    /**
+     * Uses the spawning mode to get the next robot type to spawn and calls spawnRobot(type).
+     * In almost all cases, this method should be called instead of the other spawnRobot method.
+     */
+    public int spawnRobot() {
+        RobotType type = mode.getNextRobotSpawnType();
+        if(canSupportUnit(type))
+            return spawnRobot(type);
+        return Status.cannotSupportUnit;
+    }
+
+    /**
+     * Returns true if the robot has enough flux to make the tower.
+     */
     public boolean canSupportTower(RobotType tower) {
-    	return (player.controller.getFlux() >= tower.spawnFluxCost());
+        return (player.controller.getFlux() >= tower.spawnFluxCost());
     }
+
     /**
      * Returns true if this archon can support the unit's energon requirements.
      */
@@ -45,68 +61,9 @@ public class SporadicSpawning extends Base {
                 energonProduction += 1;
             }
         }
-        
+
         // each archon should keep .3 for itself?
         return energonProduction > energonCost + (energonProduction * .2);
-    }
-
-    /**
-     * Returns the type of robot that should be spawned next.
-     */
-    public RobotType getNextRobotSpawnType() {
-        ArrayList<RobotInfo> robots = sensing.getGroundRobotInfo();
-        ArrayList<RobotInfo> chainers = new ArrayList<RobotInfo>(),
-                turrets = new ArrayList<RobotInfo>(),
-                soldiers = new ArrayList<RobotInfo>(),
-                wouts = new ArrayList<RobotInfo>();
-
-        for(RobotInfo robot : robots) {
-            if(robot.team == player.team) {
-                if(robot.type == RobotType.WOUT) {
-                    wouts.add(robot);
-                } else if(robot.type == RobotType.CHAINER) {
-                    chainers.add(robot);
-                } else if(robot.type == RobotType.SOLDIER) {
-                    soldiers.add(robot);
-                } else if(robot.type == RobotType.TURRET) {
-                    turrets.add(robot);
-                }
-            }
-        }
-
-        int total = chainers.size() + soldiers.size() + wouts.size() + turrets.size();
-        if(total == 0) {
-            return RobotType.WOUT;
-        }
-
-        double woutPercent = (double) wouts.size() / total;
-        double turretPercent = (double) turrets.size() / total;
-        double chainerPercent = (double) chainers.size() / total;
-        double soldierPercent = (double) soldiers.size() / total;
-
-        double workerDifference = goalWouts - woutPercent;
-        double cannonDifference = goalTurrets - turretPercent;
-        double channelerDifference = goalChainers - chainerPercent;
-        double soldierDifference = goalSoldiers - soldierPercent;
-
-        for(double minDiff = 0.; minDiff >= -.2; minDiff -= .1) {
-            for(double diff = .3; diff >= -.1; diff -= .1) {
-                if(workerDifference > diff && workerDifference > minDiff && wouts.size() < 2) {
-                    return RobotType.WOUT;
-                }
-                if(cannonDifference > diff && cannonDifference > minDiff) {
-                    return RobotType.TURRET;
-                }
-                if(soldierDifference > diff && soldierDifference > minDiff) {
-                    return RobotType.SOLDIER;
-                }
-                if(channelerDifference > diff && channelerDifference > minDiff) {
-                    return RobotType.CHAINER;
-                }
-
-            }
-        }
-        return null;
     }
 
     /**
@@ -154,7 +111,6 @@ public class SporadicSpawning extends Base {
         try {
             if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), isAirUnit)) {
                 controller.spawn(robot);
-                unitSpawned++;
                 controller.yield();
 
                 // send data
@@ -169,32 +125,92 @@ public class SporadicSpawning extends Base {
     }
 
     /**
-     * If the Archon can support another unit, then it will spawn a unit in accordance with the unit percentages above.
+     * Updates the spawning mode to the corresponding type which is defined in SpawnModes.
      */
-    public void spawnFluxUnits() {
-        RobotType spawnType = getNextRobotSpawnType();
-        if(spawnType == null) {
-            return;
+    public void changeMode(int type) {
+        switch(type) {
+            case SpawnModes.old:
+                mode = new OldSpawnMode();
+                break;
+            case SpawnModes.collectingFlux:
+                mode = new CollectingFluxSpawnMode();
+                break;
         }
+    }
 
-        if(!canSupportUnit(spawnType)) {
-            return;
+    /**
+     * The purpose of this class is to provide a way to change the spawning mechanism throughout the game.
+     */
+    abstract class SpawnMode {
+        /**
+         * Returns the type of robot that should be spawned next.
+         */
+        public abstract RobotType getNextRobotSpawnType();
+    }
+
+    class CollectingFluxSpawnMode extends SpawnMode {
+        public RobotType getNextRobotSpawnType() {
+            return RobotType.WOUT;
         }
+    }
 
-        int turnsToWait = new Random().nextInt(4) + Clock.getRoundNum() + 1;
-        while(Clock.getRoundNum() < turnsToWait) {
-            messaging.parseMessages();
-            energon.processEnergonTransferRequests();
-            controller.yield();
-        }
+    class OldSpawnMode extends SpawnMode {
+        public double goalChainers = -0.2, goalTurrets = .6, goalSoldiers = -0.2, goalWouts = .4;
+        
+        public RobotType getNextRobotSpawnType() {
+            ArrayList<RobotInfo> robots = sensing.getGroundRobotInfo();
+            ArrayList<RobotInfo> chainers = new ArrayList<RobotInfo>(),
+                    turrets = new ArrayList<RobotInfo>(),
+                    soldiers = new ArrayList<RobotInfo>(),
+                    wouts = new ArrayList<RobotInfo>();
 
-        RobotType spawnType2 = getNextRobotSpawnType();
-        if(spawnType2 == null) {
-            return;
-        }
+            for(RobotInfo robot : robots) {
+                if(robot.team == player.team) {
+                    if(robot.type == RobotType.WOUT) {
+                        wouts.add(robot);
+                    } else if(robot.type == RobotType.CHAINER) {
+                        chainers.add(robot);
+                    } else if(robot.type == RobotType.SOLDIER) {
+                        soldiers.add(robot);
+                    } else if(robot.type == RobotType.TURRET) {
+                        turrets.add(robot);
+                    }
+                }
+            }
 
-        if(spawnType == spawnType2) {
-            spawnRobot(spawnType);
+            int total = chainers.size() + soldiers.size() + wouts.size() + turrets.size();
+            if(total == 0) {
+                return RobotType.WOUT;
+            }
+
+            double woutPercent = (double) wouts.size() / total;
+            double turretPercent = (double) turrets.size() / total;
+            double chainerPercent = (double) chainers.size() / total;
+            double soldierPercent = (double) soldiers.size() / total;
+
+            double woutDifference = goalWouts - woutPercent;
+            double cannonDifference = goalTurrets - turretPercent;
+            double channelerDifference = goalChainers - chainerPercent;
+            double soldierDifference = goalSoldiers - soldierPercent;
+
+            for(double minDiff = 0.; minDiff >= -.2; minDiff -= .1) {
+                for(double diff = .3; diff >= -.1; diff -= .1) {
+                    if(woutDifference > diff && woutDifference > minDiff) {
+                        return RobotType.WOUT;
+                    }
+                    if(cannonDifference > diff && cannonDifference > minDiff) {
+                        return RobotType.TURRET;
+                    }
+                    if(soldierDifference > diff && soldierDifference > minDiff) {
+                        return RobotType.SOLDIER;
+                    }
+                    if(channelerDifference > diff && channelerDifference > minDiff) {
+                        return RobotType.CHAINER;
+                    }
+
+                }
+            }
+            return null;
         }
     }
 }

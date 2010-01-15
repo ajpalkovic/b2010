@@ -46,6 +46,10 @@ public class Base {
         System.out.println(s);
     }
 
+    class SpawnModes {
+        public static final int old = 1, collectingFlux = 2;
+    }
+
     class BroadcastMessage {
 
         static final int LOW_ENERGON = 1;//LOW_ENERGON (has less than 25% energon) //status, sent when pinged
@@ -67,7 +71,7 @@ public class Base {
         public static final int success = 1, fail = 0;
         public static final int notEnoughEnergon = 2;
         public static final int cantMoveThere = 3, goalBlocked = 4;
-        public static final int outOfRange = 10, turnsNotIdle = 11;
+        public static final int outOfRange = 10, turnsNotIdle = 11, cannotSupportUnit = 12;
     }
 
     static class Goal {
