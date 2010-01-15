@@ -301,11 +301,11 @@ public class MexicanMessaging extends Base {
         return addMessage(ints, strings, locations);
     }
     
-    public boolean sendFollowRequest(MapLocation archonLocation, int archonNumber, int supportUnit) {
+    public boolean sendFollowRequest(MapLocation archonLocation, int archonId, int recipientRobotId) {
         int[] ints = new int[3];
         ints[0] = BroadcastMessage.FOLLOW_REQUEST;
-        ints[1] = supportUnit;
-        ints[2] = archonNumber;
+        ints[1] = recipientRobotId;
+        ints[2] = archonId;
         MapLocation[] locations = new MapLocation[1];
         locations[0] = archonLocation;
         String[] strings = null;
