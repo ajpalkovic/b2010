@@ -288,7 +288,7 @@ public class NaughtyNavigation extends Base {
      * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
     public int moveOnceInDirection(Direction dir, boolean block) {
-        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
         
         if(faceDirection(dir) != Status.success) {
             return Status.fail;
@@ -301,7 +301,7 @@ public class NaughtyNavigation extends Base {
      * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
     public int moveOnce(boolean block) {
-        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
         
         Direction dir = controller.getDirection();
         yieldMoving();
@@ -328,7 +328,7 @@ public class NaughtyNavigation extends Base {
      * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
     public int moveOnceTowardsLocation(MapLocation location, boolean block) {
-        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
         
         Direction dir = getDirection(controller.getLocation(), location);
         dir = getMoveableDirection(dir);
@@ -348,7 +348,7 @@ public class NaughtyNavigation extends Base {
      * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
     public int moveOnceTowardsArchon(boolean block) {
-        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
         
         MapLocation archonLocation = findNearestArchon();
         if(isAdjacent(archonLocation, controller.getLocation())) {

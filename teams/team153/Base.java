@@ -46,8 +46,20 @@ public class Base {
         System.out.println(s);
     }
 
-    class SpawnModes {
+    /**
+     * The purpose of this class is to provide a way to change the spawning mechanism throughout the game.
+     */
+    abstract class SpawnMode {
+        /**
+         * These identify the different spawning modes.
+         * They are needed because the modes are inner classes so they cant be accessed from outside.
+         */
         public static final int old = 1, collectingFlux = 2;
+
+        /**
+         * Returns the type of robot that should be spawned next.
+         */
+        public abstract RobotType getNextRobotSpawnType();
     }
 
     class BroadcastMessage {
