@@ -49,7 +49,7 @@ public class SporadicSpawning extends Base {
             return false;
         }
 
-        ArrayList<RobotInfo> air = sensing.getAirRobotInfo(), ground = sensing.senseAlliedRobotInfoInSensorRange();
+        ArrayList<RobotInfo> air = sensing.senseAirRobotInfo(), ground = sensing.senseAlliedRobotInfoInSensorRange();
         double energonCost = 0;
         for(RobotInfo robot : ground) {
             energonCost += robot.type.energonUpkeep();
@@ -148,7 +148,7 @@ public class SporadicSpawning extends Base {
         public double goalChainers = -0.2, goalTurrets = .6, goalSoldiers = -0.2, goalWouts = .4;
         
         public RobotType getNextRobotSpawnType() {
-            ArrayList<RobotInfo> robots = sensing.getGroundRobotInfo();
+            ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
             ArrayList<RobotInfo> chainers = new ArrayList<RobotInfo>(),
                     turrets = new ArrayList<RobotInfo>(),
                     soldiers = new ArrayList<RobotInfo>(),

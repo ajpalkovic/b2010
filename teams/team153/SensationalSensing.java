@@ -66,7 +66,8 @@ public class SensationalSensing extends Base {
     }
 
     /**
-     * Iteratres through each of the tiles in sensor range of the
+     * Iteratres through each of the tiles in sensor range of the robot.
+     * This probably isn't needed anymore though.
      */
     public void senseAllTiles() {
         senseTiles(getSensibleTiles());
@@ -121,6 +122,9 @@ public class SensationalSensing extends Base {
         senseSurroundingSquares(controller.getLocation());
     }
 
+    /**
+     * Sense the 8 tiles around the robot.
+     */
     public void senseSurroundingSquares(MapLocation location) {
         int x = location.getX(), y = location.getY();
 
@@ -138,9 +142,8 @@ public class SensationalSensing extends Base {
     }
 
     /**
-     * Sense the terrain and block height of a tile, and whether the tile has a robot or flux deposit on it.
-     * If the location is offmap, a MapData object will still be returned, but it will not be saved in the
-     * mapstore object.  Walls will be automatically updated to reflect the new locations.
+     * This senses the terrain tile of an object, which only indicates the height of the tile
+     * and if the tile is on the map or now.
      */
     public void senseTile(MapLocation location) {
         senseTile(location.getX(), location.getY());
@@ -171,14 +174,38 @@ public class SensationalSensing extends Base {
         }
     }
 
+
+    /**
+     * Returns an ArrayList of MapLocation objects for every allied teleporter tower.
+     * The robot must be in range of one teleporter for this to work.
+     * It will return a list of all teleporters regardless of sensor range.
+     * The results are cached for two turns to save bytecodes.
+     */
+    public ArrayList<MapLocation> senseAlliedTeleporters() {
+        if(teleporterSensed < Clock.getRoundNum() - oldDataTolerance) {
+            try {
+                List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
+                if(!loc.isEmpty()) {
+                    teleporterLocations.addAll(loc);
+                }
+            } catch(Exception e) {
+            }
+        }
+        return teleporterLocations;
+    }
+
+    /**
+     * Returns an ArrayList of RobotInfo objects for each enemy in sensor range.
+     * The results are cached for two turns to save bytecodes.
+     */
     public ArrayList<RobotInfo> senseEnemyRobotInfoInSensorRange() {
         if(enemyInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return enemyRobots;
         }
 
         enemyRobots = new ArrayList<RobotInfo>();
-        getGroundRobotInfo();
-        getAirRobotInfo();
+        senseGroundRobotInfo();
+        senseAirRobotInfo();
 
         for(RobotInfo robot : groundInfo) {
             if(!robot.team.equals(player.team)) {
@@ -195,13 +222,18 @@ public class SensationalSensing extends Base {
         return enemyRobots;
     }
 
+
+    /**
+     * Returns an ArrayList of RobotInfo objects for each ally in sensor range.
+     * The results are cached for two turns to save bytecodes.
+     */
     public ArrayList<RobotInfo> senseAlliedRobotInfoInSensorRange() {
         if(alliedInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return alliedRobots;
         }
 
         alliedRobots = new ArrayList<RobotInfo>();
-        getGroundRobotInfo();
+        senseGroundRobotInfo();
 
         for(RobotInfo robot : groundInfo) {
             if(robot.team.equals(player.team)) {
@@ -212,6 +244,11 @@ public class SensationalSensing extends Base {
         return alliedRobots;
     }
 
+
+    /**
+     * Returns an ArrayList of MapLocation objects for each enemy in sensor range.
+     * The results are cached for two turns to save bytecodes.
+     */
     public ArrayList<MapLocation> senseEnemyRobotLocations() {
         if(enemyLocationSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return enemyLocations;
@@ -226,7 +263,13 @@ public class SensationalSensing extends Base {
         return enemyLocations;
     }
 
-    public Robot[] getAirRobots() {
+
+    /**
+     * Returns an Array of simple Robot objects for each air robot in range.
+     * Note: Both enemy and ally robots will be returned.
+     * The results are cached for two turns to save bytecodes.
+     */
+    public Robot[] senseAirRobots() {
         if(airSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return air;
         }
@@ -240,7 +283,12 @@ public class SensationalSensing extends Base {
         return air;
     }
 
-    public Robot[] getGroundRobots() {
+    /**
+     * Returns an Array of simple Robot objects for each ground robot in range.
+     * Note: Both enemy and ally robots will be returned.
+     * The results are cached for two turns to save bytecodes.
+     */
+    public Robot[] senseGroundRobots() {
         if(groundSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return ground;
         }
@@ -254,12 +302,17 @@ public class SensationalSensing extends Base {
         return ground;
     }
 
-    public ArrayList<RobotInfo> getAirRobotInfo() {
+    /**
+     * Returns an ArrayList of RobotInfo objects for every air robot in range.
+     * Note: Both enemy and ally robots will be returned.
+     * The results are cached for two turns to save bytecodes.
+     */
+    public ArrayList<RobotInfo> senseAirRobotInfo() {
         if(airInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return airInfo;
         }
 
-        getAirRobots();
+        senseAirRobots();
         airInfo = new ArrayList<RobotInfo>();
         for(Robot robot : air) {
             try {
@@ -274,23 +327,17 @@ public class SensationalSensing extends Base {
         return airInfo;
     }
 
-    public ArrayList<MapLocation> senseAlliedTeleporters() {
-            if (teleporterSensed < Clock.getRoundNum() - oldDataTolerance){
-                    try {
-                    List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
-                    if (!loc.isEmpty())
-                    teleporterLocations.addAll(loc);
-                    }catch (Exception e) {
-                    }
-            }
-            return teleporterLocations;
-    }
-    public ArrayList<RobotInfo> getGroundRobotInfo() {
+    /**
+     * Returns an ArrayList of RobotInfo objects for every ground robot in range.
+     * Note: Both enemy and ally robots will be returned.
+     * The results are cached for two turns to save bytecodes.
+     */
+    public ArrayList<RobotInfo> senseGroundRobotInfo() {
         if(groundInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return groundInfo;
         }
 
-        getGroundRobots();
+        senseGroundRobots();
         groundInfo = new ArrayList<RobotInfo>();
         for(Robot robot : ground) {
             try {
