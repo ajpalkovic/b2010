@@ -14,57 +14,47 @@ public class ArchonPlayer extends NovaPlayer {
     public int archonGroup = -1;
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
-    
+
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
-        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal()+2;
+        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 2;
     }
 
     public void step() {
         // reevaluate goal here?
         //sensing.senseAllTiles();
-    	switch(currentGoal) {
+        switch(currentGoal) {
             case Goal.collectingFlux:
                 spawning.changeMode(SpawnMode.collectingFlux);
+                navigation.changeToMoveableDirectionGoal(true);
+
                 spawning.spawnRobot();
-                if(moveTurns >= minMoveTurns && !controller.isMovementActive()) {
-                    Direction dir = navigation.getMoveableDirection(controller.getDirection());
-                    if(dir != null) navigation.moveOnceInDirection(dir, true);
+                if(moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0) {
+                    navigation.moveOnce(true);
                     moveTurns = 0;
                 }
-                if (spawning.canSupportTower(RobotType.TELEPORTER)) {
-                	//System.out.println("Can support it");
-                	setGoal(Goal.placingTower);                	                	
+                if(spawning.canSupportTower(RobotType.TELEPORTER)) {
+                    //System.out.println("Can support it");
+                    setGoal(Goal.placingTower);
                 }
-                moveTurns++;                
+                moveTurns++;
                 break;
             case Goal.placingTower:
-            	ArrayList<MapLocation> loc = sensing.senseAlliedTeleporters();
-            	if (loc.isEmpty()){
-            		try {controller.spawn(RobotType.TELEPORTER);sensing.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
-            		
-            	} else {
-            		MapLocation us = controller.getLocation();
-            		int min = Integer.MAX_VALUE;
-            		MapLocation close = us;
-            		for (MapLocation l : loc){
-            			int dist = navigation.getDistanceTo(l);
-            			if (dist < min) {
-            				close = l;
-            				min = dist;
-            			}
-            		}
-            		int dist = navigation.getDistanceTo(close);
-            		Direction dir = navigation.getDirection(us, close);
-            			navigation.moveOnceInDirection(dir, false);
-            			dist = navigation.getDistanceTo(close);
-            			if (dist <= 5) {
-            				try {controller.spawn(RobotType.TELEPORTER);sensing.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
-            			}
-            		
-            	}
-            	break;
+                navigation.changeToTowerGoal(true);
+                if(navigation.goal.done()) {
+                    try {
+                        controller.spawn(RobotType.TELEPORTER);
+                        sensing.teleporterLocations.add(controller.getLocation());
+                        setGoal(Goal.collectingFlux);
+                    } catch(Exception e) {
+                        pa("---Caught exception while spawning tower.");
+                    }
+                } else {
+                    navigation.moveOnce(false);
+                }
+                
+                break;
             case Goal.idle:
                 // reevaluate the goal
                 break;
@@ -74,7 +64,7 @@ public class ArchonPlayer extends NovaPlayer {
     public void boot() {
         team = controller.getTeam();
         senseArchonNumber();
-            setGoal(Goal.collectingFlux);
+        setGoal(Goal.collectingFlux);
         if(archonNumber < 5) {
             setGoal(Goal.collectingFlux);
             archonGroup = 1;

@@ -39,10 +39,8 @@ public class SoldierPlayer extends AttackPlayer {
                     moveToAttack();
                 }
             } else {
-                MapLocation archon = navigation.findNearestArchon();
-                if(!controller.getLocation().isAdjacentTo(archon) && controller.getRoundsUntilMovementIdle() < 2) {
-                    navigation.moveOnceTowardsLocation(archon, true);
-                }
+                navigation.changeToArchonGoal(true);
+                navigation.moveOnce(true);
             }
         }
     }
@@ -73,13 +71,9 @@ public class SoldierPlayer extends AttackPlayer {
 
     public void returnToArchon() {
         //SENSE ARCHONS, ITERATE TO FIND CLOSEST, GO TO THAT ONE
-        while(true) {
-            MapLocation location = navigation.findNearestArchon();
-            if(location.distanceSquaredTo(controller.getLocation()) > 2) {
-                navigation.moveOnceTowardsLocation(location, true);
-            } else {
-                break;
-            }
+        navigation.changeToArchonGoal(true);
+        while(!navigation.goal.done()) {
+            navigation.moveOnce(true);
         }
     }
 }

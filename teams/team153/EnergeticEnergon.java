@@ -183,6 +183,13 @@ public class EnergeticEnergon extends Base {
     }
 
     /**
+     * Returns true if the flux level is > 300
+     */
+    public boolean isFluxFull() {
+        return controller.getFlux() > 300;
+    }
+
+    /**
      * Returns true if the energon level plus energon reserve is less than the starting energon level
      */
     public boolean isEnergonLow() {
@@ -246,15 +253,13 @@ public class EnergeticEnergon extends Base {
         }
 
         int tries = 3;
-        MapLocation closest;
+        navigation.changeToArchonGoal(false);
         do {
-            closest = navigation.findNearestArchon();
-            if(closest == null)
-                break;
-            navigation.moveOnceTowardsLocation(closest, true);
+            navigation.moveOnce(true);
             tries--;
-        } while(tries > 0 && closest.distanceSquaredTo(controller.getLocation()) > 2);
+        } while(tries > 0 && !navigation.goal.done());
 
+        MapLocation closest = navigation.findNearestArchon();
         if(closest == null || closest.distanceSquaredTo(controller.getLocation()) > 2) {
             return Status.fail;
         }

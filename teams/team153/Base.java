@@ -82,7 +82,7 @@ public class Base {
 
         public static final int success = 1, fail = 0;
         public static final int notEnoughEnergon = 2;
-        public static final int cantMoveThere = 3, goalBlocked = 4;
+        public static final int cantMoveThere = 3, goalBlocked = 4, noGoal = 5;
         public static final int outOfRange = 10, turnsNotIdle = 11, cannotSupportUnit = 12;
     }
 

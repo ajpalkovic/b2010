@@ -9,11 +9,15 @@ public class NaughtyNavigation extends Base {
     public MapStore map;
     public MexicanMessaging messaging;
     public SensationalSensing sensing;
+    public NavigationGoal goal;
+    public LinkedList<NavigationGoal> goalStack;
 
     public NaughtyNavigation(NovaPlayer player) {
         super(player);
         map = player.map;
         messaging = player.messaging;
+        goal = null;
+        goalStack = new LinkedList<NavigationGoal>();
     }
 
     /**
@@ -287,74 +291,42 @@ public class NaughtyNavigation extends Base {
      * Makes the robot face a certain direction and then moves forawrd.
      * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
-    public int moveOnceInDirection(Direction dir, boolean block) {
-        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
-        
+    public int moveOnce(boolean block) {
+        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) {
+            return Status.turnsNotIdle;
+        }
+
+        if(goal == null) return Status.noGoal;
+        if(goal.done()) return Status.success;
+
+        Direction dir = goal.getDirection();
+
         if(faceDirection(dir) != Status.success) {
             return Status.fail;
         }
-        return moveOnce(true);
+
+        return moveOnce();
     }
 
     /*
      * Moves the robot one step forward if possible.
      * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
-    public int moveOnce(boolean block) {
-        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
-        
+    private int moveOnce() {
         Direction dir = controller.getDirection();
-        yieldMoving();
+        //yieldMoving();
         try {
-            for(int c = 0; c < 2; c++) {
-                if(controller.canMove(dir)) {
-                    controller.moveForward();
-                    controller.yield();
-                    player.pathStepTakenCallback();
-                    return Status.success;
-                }
+            if(controller.canMove(dir)) {
+                controller.moveForward();
                 controller.yield();
+                player.pathStepTakenCallback();
+                return Status.success;
             }
             return Status.cantMoveThere;
-
         } catch(Exception e) {
             System.out.println("----Caught Exception in moveOnce dir: " + dir.toString() + " Exception: " + e.toString());
         }
         return Status.fail;
-    }
-
-    /**
-     * Moves the robot once step in the direction of location.
-     * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
-     */
-    public int moveOnceTowardsLocation(MapLocation location, boolean block) {
-        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
-        
-        Direction dir = getDirection(controller.getLocation(), location);
-        dir = getMoveableDirection(dir);
-
-        if(dir == null) {
-            return Status.fail;
-        }
-        if(!player.directionCalculatedCallback(dir)) {
-            return Status.success;
-        }
-
-        return moveOnceInDirection(dir, true);
-    }
-
-    /**
-     * Selects the nearest archon and moves one step towards it.
-     * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
-     */
-    public int moveOnceTowardsArchon(boolean block) {
-        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) return Status.turnsNotIdle;
-        
-        MapLocation archonLocation = findNearestArchon();
-        if(isAdjacent(archonLocation, controller.getLocation())) {
-            return Status.success;
-        }
-        return moveOnceTowardsLocation(archonLocation, true);
     }
 
     /**
@@ -364,6 +336,9 @@ public class NaughtyNavigation extends Base {
         return start.distanceSquaredTo(end) < 3;
     }
 
+    /**
+     * Calls controller.yield until the robot is able to move again.
+     */
     public void yieldMoving() {
         String cur = Goal.toString(player.currentGoal);
         controller.setIndicatorString(1, "yielding");
@@ -371,5 +346,208 @@ public class NaughtyNavigation extends Base {
             controller.yield();
         }
         controller.setIndicatorString(1, cur);
+    }
+
+    /**
+     * Removes any navigation goal.
+     */
+    public void clearGoal() {
+        goal = null;
+    }
+
+    /**
+     * Restores the previous goal.
+     */
+    public void popGoal() {
+        if(goalStack.size() > 0) {
+            goal = goalStack.removeFirst();
+        }
+    }
+
+    /**
+     * Saves the current goal onto the stack so it can be restored later.
+     */
+    public void pushGoal(boolean removePreviousGoals) {
+        if(removePreviousGoals) {
+            goalStack.clear();
+        } else {
+            goalStack.addFirst(goal);
+        }
+    }
+
+    /**
+     * Causes moveOnce to always move in direction.
+     *
+     * If removePreviousGoals is false, then the previous goal will be pushed onto a stack.
+     * This enables temporary goals, like requestEnergonTransfer to work, without affecting high level goals.
+     * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
+     */
+    public void changeToDirectionGoal(Direction direction, boolean removePreviousGoals) {
+        pushGoal(removePreviousGoals);
+        goal = new DirectionGoal(direction);
+    }
+
+    /**
+     * Causes moveOnce to first try to move straight.  If it can't, the robot will rotate right until it can.
+     *
+     * This method will not overwrite the current goal if it is already a MoveableDirectionGoal.
+     * To force it to overwrite, call clearGoal first.
+     *
+     * If removePreviousGoals is false, then the previous goal will be pushed onto a stack.
+     * This enables temporary goals, like requestEnergonTransfer to work, without affecting high level goals.
+     * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
+     */
+    public void changeToMoveableDirectionGoal(boolean removePreviousGoals) {
+        pushGoal(removePreviousGoals);
+        goal = new MoveableDirectionGoal();
+    }
+
+    /**
+     * Causes moveOnce to always move closer to location.
+     *
+     * If removePreviousGoals is false, then the previous goal will be pushed onto a stack.
+     * This enables temporary goals, like requestEnergonTransfer to work, without affecting high level goals.
+     * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
+     */
+    public void changeToLocationGoal(MapLocation location, boolean removePreviousGoals) {
+        pushGoal(removePreviousGoals);
+        goal = new LocationGoal(location);
+    }
+
+    /**
+     * Changes the navigation goal to move closer to the nearest archon.
+     *
+     * This method will not overwrite the current goal if it is already an ArchonGoal.
+     * To force it to overwrite, call clearGoal first.
+     * 
+     * If removePreviousGoals is false, then the previous goal will be pushed onto a stack.
+     * This enables temporary goals, like requestEnergonTransfer to work, without affecting high level goals.
+     * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
+     */
+    public void changeToArchonGoal(boolean removePreviousGoals) {
+        if(goal instanceof ArchonGoal) return;
+        pushGoal(removePreviousGoals);
+        goal = new ArchonGoal();
+    }
+
+    /**
+     * Changes the navigation goal to move closer to the nearest tower.
+     * 
+     * This method will not overwrite the current goal if it is already a TowerGoal.
+     * To force it to overwrite, call clearGoal first.
+     * 
+     * If removePreviousGoals is false, then the previous goal will be pushed onto a stack.
+     * This enables temporary goals, like requestEnergonTransfer to work, without affecting high level goals.
+     * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
+     */
+    public void changeToTowerGoal(boolean removePreviousGoals) {
+        if(goal instanceof TowerGoal) return;
+        pushGoal(removePreviousGoals);
+        goal = new TowerGoal();
+    }
+
+    /**
+     * The purpose of this class is to enable flexible route planning that allows for movement one step at a time.
+     */
+    abstract class NavigationGoal {
+        public boolean completed = false;
+
+        /**
+         * This method is called every time moveOnce is called.  It should return the direction in which the robot should move next.
+         */
+        public abstract Direction getDirection();
+
+        /**
+         * This method should return true when the robot is at the goal.
+         */
+        public abstract boolean done();
+    }
+
+    class DirectionGoal extends NavigationGoal {
+
+        public Direction direction;
+
+        public DirectionGoal(Direction direction) {
+            this.direction = direction;
+        }
+
+        public Direction getDirection() {
+            return direction;
+        }
+
+        public boolean done() {
+            return false;
+        }
+    }
+
+    class MoveableDirectionGoal extends NavigationGoal {
+
+        public Direction getDirection() {
+            return getMoveableDirection(controller.getDirection());
+        }
+
+        public boolean done() {
+            return false;
+        }
+    }
+
+    class LocationGoal extends NavigationGoal {
+
+        public MapLocation location;
+
+        public LocationGoal(MapLocation location) {
+            this.location = location;
+        }
+
+        public Direction getDirection() {
+            Direction dir = controller.getLocation().directionTo(location);
+            return getMoveableDirection(dir);
+        }
+
+        public boolean done() {
+            completed = completed && controller.getLocation().equals(location);
+            return completed;
+        }
+    }
+
+    class ArchonGoal extends NavigationGoal {
+
+        public Direction getDirection() {
+            MapLocation location = findNearestArchon();
+            Direction dir = controller.getLocation().directionTo(location);
+            return getMoveableDirection(dir);
+        }
+
+        public boolean done() {
+            completed = completed && isAdjacent(controller.getLocation(), findNearestArchon());
+            return completed;
+        }
+    }
+
+    class TowerGoal extends NavigationGoal {
+        public MapLocation tower = null;
+        
+        public Direction getDirection() {
+            ArrayList<MapLocation> locations = sensing.senseAlliedTeleporters();
+            MapLocation closest = controller.getLocation();
+            int min = Integer.MAX_VALUE, distance;
+            
+            for(MapLocation location : locations) {
+                distance = location.distanceSquaredTo(closest);
+                if(distance < min) {
+                    closest = location;
+                    min = distance;
+                }
+            }
+
+            tower = closest;
+            Direction dir = controller.getLocation().directionTo(closest);
+            return getMoveableDirection(dir);
+        }
+
+        public boolean done() {
+            ArrayList<MapLocation> loc = sensing.senseAlliedTeleporters();
+            return loc.isEmpty() || tower == null || isAdjacent(controller.getLocation(), tower);
+        }
     }
 }
