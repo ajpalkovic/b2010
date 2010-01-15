@@ -19,14 +19,14 @@ public class WoutPlayer extends NovaPlayer {
                 energon.requestEnergonTransfer();
                 controller.yield();
             } else {
-                navigation.moveOnceTowardsLocation(location);
+                navigation.moveOnceTowardsLocation(location, false);
             }
         } else {
             if(distance > 50 || controller.getFlux() > 300) {
-                navigation.moveOnceTowardsLocation(location);
+                navigation.moveOnceTowardsLocation(location, false);
             } else {
                 Direction dir = navigation.getMoveableDirection(controller.getDirection());
-                navigation.moveOnceInDirection(dir);
+                navigation.moveOnceInDirection(dir, false);
             }
         }
     }

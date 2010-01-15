@@ -46,7 +46,7 @@ public class TurretPlayer extends AttackPlayer {
             } else {
                 MapLocation archon = navigation.findNearestArchon();
                 if(archon != null && !controller.getLocation().isAdjacentTo(archon) && controller.getRoundsUntilMovementIdle() < 2) {
-                    navigation.moveOnceTowardsLocation(archon);
+                    navigation.moveOnceTowardsLocation(archon, true);
                 }
             }
         }

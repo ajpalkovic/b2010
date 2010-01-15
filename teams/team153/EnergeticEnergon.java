@@ -251,7 +251,7 @@ public class EnergeticEnergon extends Base {
             closest = navigation.findNearestArchon();
             if(closest == null)
                 break;
-            navigation.moveOnceTowardsLocation(closest);
+            navigation.moveOnceTowardsLocation(closest, true);
             tries--;
         } while(tries > 0 && closest.distanceSquaredTo(controller.getLocation()) > 2);
 

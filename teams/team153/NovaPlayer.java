@@ -142,7 +142,7 @@ public class NovaPlayer extends Base {
      **************************************************************************/
     public void moveMessageCallback(MapLocation location) {
         if(!controller.getRobotType().isAirborne() && controller.getLocation().equals(location)) {
-            navigation.moveOnceInDirection(navigation.getMoveableDirection(Direction.NORTH));
+            navigation.moveOnceInDirection(navigation.getMoveableDirection(Direction.NORTH), true);
         }
     }
 

@@ -73,9 +73,9 @@ public abstract class AttackPlayer extends NovaPlayer {
     public void moveToAttack() {
         movingToAttack = true;
         if(outOfRangeEnemies.size() > 0) {
-            navigation.moveOnceTowardsLocation(getCheapestEnemy(outOfRangeEnemies).location);
+            navigation.moveOnceTowardsLocation(getCheapestEnemy(outOfRangeEnemies).location, false);
         } else {
-            navigation.moveOnceTowardsLocation(getCheapestEnemy(outOfRangeArchonEnemies).location);
+            navigation.moveOnceTowardsLocation(getCheapestEnemy(outOfRangeArchonEnemies).location, false);
         }
         movingToAttack = false;
     }

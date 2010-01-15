@@ -285,18 +285,24 @@ public class NaughtyNavigation extends Base {
 
     /**
      * Makes the robot face a certain direction and then moves forawrd.
+     * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
-    public int moveOnceInDirection(Direction dir) {
+    public int moveOnceInDirection(Direction dir, boolean block) {
+        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        
         if(faceDirection(dir) != Status.success) {
             return Status.fail;
         }
-        return moveOnce();
+        return moveOnce(true);
     }
 
     /*
      * Moves the robot one step forward if possible.
+     * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
-    public int moveOnce() {
+    public int moveOnce(boolean block) {
+        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        
         Direction dir = controller.getDirection();
         yieldMoving();
         try {
@@ -317,7 +323,13 @@ public class NaughtyNavigation extends Base {
         return Status.fail;
     }
 
-    public int moveOnceTowardsLocation(MapLocation location) {
+    /**
+     * Moves the robot once step in the direction of location.
+     * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
+     */
+    public int moveOnceTowardsLocation(MapLocation location, boolean block) {
+        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        
         Direction dir = getDirection(controller.getLocation(), location);
         dir = getMoveableDirection(dir);
 
@@ -328,15 +340,21 @@ public class NaughtyNavigation extends Base {
             return Status.success;
         }
 
-        return moveOnceInDirection(dir);
+        return moveOnceInDirection(dir, true);
     }
 
-    public int moveOnceTowardsArchon() {
+    /**
+     * Selects the nearest archon and moves one step towards it.
+     * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
+     */
+    public int moveOnceTowardsArchon(boolean block) {
+        if(!block && (controller.hasActionSet() || controller.isMovementActive())) return Status.turnsNotIdle;
+        
         MapLocation archonLocation = findNearestArchon();
         if(isAdjacent(archonLocation, controller.getLocation())) {
             return Status.success;
         }
-        return moveOnceTowardsLocation(archonLocation);
+        return moveOnceTowardsLocation(archonLocation, true);
     }
 
     /**

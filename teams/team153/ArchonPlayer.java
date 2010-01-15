@@ -30,7 +30,7 @@ public class ArchonPlayer extends NovaPlayer {
                 spawning.spawnRobot();
                 if(moveTurns >= minMoveTurns && !controller.isMovementActive()) {
                     Direction dir = navigation.getMoveableDirection(controller.getDirection());
-                    if(dir != null) navigation.moveOnceInDirection(dir);
+                    if(dir != null) navigation.moveOnceInDirection(dir, true);
                     moveTurns = 0;
                 }
                 if (spawning.canSupportTower(RobotType.TELEPORTER)) {
@@ -57,7 +57,7 @@ public class ArchonPlayer extends NovaPlayer {
             		}
             		int dist = navigation.getDistanceTo(close);
             		Direction dir = navigation.getDirection(us, close);
-            			navigation.moveOnceInDirection(dir);
+            			navigation.moveOnceInDirection(dir, false);
             			dist = navigation.getDistanceTo(close);
             			if (dist <= 5) {
             				try {controller.spawn(RobotType.TELEPORTER);sensing.teleporterLocations.add(controller.getLocation());setGoal(Goal.collectingFlux);break;}catch(Exception e){break;}
