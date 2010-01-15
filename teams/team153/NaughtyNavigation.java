@@ -314,7 +314,7 @@ public class NaughtyNavigation extends Base {
      */
     private int moveOnce() {
         Direction dir = controller.getDirection();
-        //yieldMoving();
+        yieldMoving();
         try {
             if(controller.canMove(dir)) {
                 controller.moveForward();
