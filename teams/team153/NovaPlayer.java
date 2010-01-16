@@ -13,6 +13,7 @@ public class NovaPlayer extends Base {
     public int trackingCount = 0;
     public int currentGoal = 0;
     public int followingArchonNumber = -1;
+    public int archonLeader;
 
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;

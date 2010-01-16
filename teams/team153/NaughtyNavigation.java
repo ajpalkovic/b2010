@@ -83,6 +83,27 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
+     * Returns location of an Archon Leader who the unit should follow
+     */
+    public MapLocation findArchonLeader() {
+        MapLocation currentLocation = controller.getLocation();
+        MapLocation[] archonLocations = controller.senseAlliedArchons();
+        Robot possibleLeader = null;
+
+        for (int i = 0; i < archonLocations.length; ++i) {
+            try {
+                possibleLeader = controller.senseAirRobotAtLocation(archonLocations[i]);
+                if (possibleLeader.getID() == player.archonLeader) {
+                    return archonLocations[i];
+                }
+            } catch (Exception e) {
+                pa("----Caught exception in findArchonLeader()");
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns the direction object needed to move a robot from the start square to the end square.
      */
     public Direction getDirection(MapLocation start, MapLocation end) {
