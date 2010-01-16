@@ -26,7 +26,7 @@ public class ArchonPlayer extends NovaPlayer {
         //sensing.senseAllTiles();
         switch(currentGoal) {
             case Goal.collectingFlux:
-                spawning.changeMode(SpawnMode.collectingFlux);
+                spawning.changeModeToCollectingFlux();
                 navigation.changeToMoveableDirectionGoal(true);
 
                 spawning.spawnRobot();
