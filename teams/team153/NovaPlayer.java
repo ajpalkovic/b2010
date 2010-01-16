@@ -140,9 +140,14 @@ public class NovaPlayer extends Base {
     /***************************************************************************
      * CALLBACKS
      **************************************************************************/
+    public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon) {
+    }
+
     public void moveMessageCallback(MapLocation location) {
         if(!controller.getRobotType().isAirborne() && controller.getLocation().equals(location)) {
-            navigation.moveOnceInDirection(navigation.getMoveableDirection(Direction.NORTH), true);
+            navigation.changeToDirectionGoal(navigation.getMoveableDirection(Direction.NORTH), false);
+            navigation.moveOnce(true);
+            navigation.popGoal();
         }
     }
 

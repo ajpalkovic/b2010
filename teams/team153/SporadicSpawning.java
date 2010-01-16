@@ -24,6 +24,33 @@ public class SporadicSpawning extends Base {
     }
 
     /**
+     * Spawns a tower.
+     */
+    public int spawnTower(RobotType towerType) {
+        MapLocation spawnLocation = getSpawnLocation(false);
+
+        if(spawnLocation == null) {
+            return Status.fail;
+        }
+
+        navigation.faceLocation(spawnLocation);
+
+        try {
+            if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), false)) {
+                controller.spawn(towerType);
+                sensing.teleporterLocations.add(controller.getLocation());
+                controller.yield();
+            } else {
+                return spawnTower(towerType);
+            }
+        } catch(GameActionException e) {
+            pa("----Caught Exception in spawnTower.  robot: " + towerType.toString() + " spawnLocation: " + spawnLocation.toString() + " Exception: " + e.toString());
+            return Status.fail;
+        }
+        return Status.success;
+    }
+
+    /**
      * Uses the spawning mode to get the next robot type to spawn and calls spawnRobot(type).
      * In almost all cases, this method should be called instead of the other spawnRobot method.
      */

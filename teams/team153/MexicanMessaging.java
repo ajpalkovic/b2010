@@ -151,6 +151,11 @@ public class MexicanMessaging extends Base {
                         ;//locations[0] is the location of the unit
                         //locations[i] corresponds to the location for the status
                         break;
+                    case BroadcastMessage.FOLLOW_REQUEST:
+                        if(recipientID == controller.getRobot().getID())
+                            player.followRequestMessageCallback(message.locations[locationIndex], senderID);
+                        locationIndex++;
+                        break;
                     case BroadcastMessage.SUPPORT:
 
                         break;
@@ -189,6 +194,8 @@ public class MexicanMessaging extends Base {
                 return 2;
             case BroadcastMessage.LOW_ALLIED_UNITS:
                 return 0;
+            case BroadcastMessage.FOLLOW_REQUEST:
+                return 2;
         }
         return -1;
     }
@@ -292,6 +299,16 @@ public class MexicanMessaging extends Base {
         MapLocation[] locations = new MapLocation[1];
         locations[0] = controller.getLocation();
         String[] strings = {controller.getRobotType().toString()};
+        return addMessage(ints, strings, locations);
+    }
+    
+    public boolean sendFollowRequest(MapLocation archonLocation, int recipientRobotId) {
+        int[] ints = new int[3];
+        ints[0] = BroadcastMessage.FOLLOW_REQUEST;
+        ints[1] = recipientRobotId;
+        MapLocation[] locations = new MapLocation[1];
+        locations[0] = archonLocation;
+        String[] strings = null;
         return addMessage(ints, strings, locations);
     }
 }
