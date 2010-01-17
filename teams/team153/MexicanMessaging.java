@@ -6,8 +6,8 @@ import java.util.*;
 
 public class MexicanMessaging extends Base {
 
-    public final int KEY1 = 9874345;
-    public final int KEY2 = 8465730;
+    public final int KEY1 = 439874345;
+    public final int KEY2 = 198465730;
     public ArrayList<Integer> messageInts = new ArrayList<Integer>();
     public ArrayList<String> messageStrings = new ArrayList<String>();
     public ArrayList<MapLocation> messageLocations = new ArrayList<MapLocation>();

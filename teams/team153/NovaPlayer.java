@@ -122,15 +122,6 @@ public class NovaPlayer extends Base {
     }
 
     /**
-     * Returns the number of turns to move between two tiles of the corresponding height.
-     * For ground units, this takes into consideration the difference in tile heights.
-     * For air units, this is overriden in their classes to only return the base movement delay.
-     */
-    public int calculateMovementDelay(boolean diagonal) {
-        return diagonal ? player.moveDiagonalDelay : player.moveStraightDelay;
-    }
-
-    /**
      * Default method to update the map each time the robot moves.
      */
     public void senseNewTiles() {
@@ -155,17 +146,6 @@ public class NovaPlayer extends Base {
         if(location2.equals(controller.getLocation())) {
             energon.addRequest(location1, isAirUnit == 1, amount);
         }
-    }
-
-    public void lowAlliedUnitMessageCallback() {
-        if(controller.getRobotType() != RobotType.ARCHON) {
-            energon.lowAllyRequests.clear();
-        }
-        energon.lowAllyRequestsTurn = Clock.getRoundNum();
-    }
-
-    public void lowAlliedUnitMessageCallback(MapLocation location, int level, int reserve, int max) {
-        energon.addLowAllyRequest(location, level, reserve, max);
     }
 
     /**
