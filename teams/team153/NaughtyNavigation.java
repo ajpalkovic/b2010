@@ -20,6 +20,38 @@ public class NaughtyNavigation extends Base {
         goalStack = new LinkedList<NavigationGoal>();
     }
 
+    public MapLocation findClosest(ArrayList<MapLocation> locations) {
+        MapLocation closest = null, current = controller.getLocation();
+        int min = Integer.MAX_VALUE, distance;
+
+        for(MapLocation location : locations) {
+            if(location == null) continue;
+            distance = current.distanceSquaredTo(location);
+            if(distance < min) {
+                closest = location;
+                min = distance;
+            }
+        }
+
+        return closest;
+    }
+
+    public MapLocation findClosest(MapLocation[] locations) {
+        MapLocation closest = null, current = controller.getLocation();
+        int min = Integer.MAX_VALUE, distance;
+
+        for(MapLocation location : locations) {
+            if(location == null) continue;
+            distance = current.distanceSquaredTo(location);
+            if(distance < min) {
+                closest = location;
+                min = distance;
+            }
+        }
+
+        return closest;
+    }
+
     /**
      * Causes the robot to the face the specified direction if necessary.
      */
@@ -440,10 +472,10 @@ public class NaughtyNavigation extends Base {
      * This enables temporary goals, like requestEnergonTransfer to work, without affecting high level goals.
      * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
      */
-    public void changeToTowerGoal(boolean removePreviousGoals) {
-        if(goal instanceof TowerGoal) return;
+    public void changeToClosestTeleporterGoal(boolean removePreviousGoals) {
+        if(goal instanceof ClosestTeleporterGoal) return;
         pushGoal(removePreviousGoals);
-        goal = new TowerGoal();
+        goal = new ClosestTeleporterGoal();
     }
 
     /**
@@ -505,7 +537,7 @@ public class NaughtyNavigation extends Base {
         }
 
         public boolean done() {
-            completed = completed && controller.getLocation().equals(location);
+            completed = completed || controller.getLocation().equals(location);
             return completed;
         }
     }
@@ -519,35 +551,37 @@ public class NaughtyNavigation extends Base {
         }
 
         public boolean done() {
-            completed = completed && isAdjacent(controller.getLocation(), findNearestArchon());
+            completed = completed || isAdjacent(controller.getLocation(), findNearestArchon());
             return completed;
         }
     }
 
-    class TowerGoal extends NavigationGoal {
+    class ClosestTeleporterGoal extends NavigationGoal {
         public MapLocation tower = null;
         
         public Direction getDirection() {
             ArrayList<MapLocation> locations = sensing.senseAlliedTeleporters();
-            MapLocation closest = controller.getLocation();
-            int min = Integer.MAX_VALUE, distance;
-            
-            for(MapLocation location : locations) {
-                distance = location.distanceSquaredTo(closest);
-                if(distance < min) {
-                    closest = location;
-                    min = distance;
-                }
-            }
-
-            tower = closest;
-            Direction dir = controller.getLocation().directionTo(closest);
+            tower = findClosest(locations);
+            Direction dir = controller.getLocation().directionTo(tower);
             return getMoveableDirection(dir);
         }
 
         public boolean done() {
             ArrayList<MapLocation> loc = sensing.senseAlliedTeleporters();
-            return loc.isEmpty() || tower == null || isAdjacent(controller.getLocation(), tower);
+            
+            if(loc.isEmpty()) return true;
+
+            //done can be called before getDirection, which means there is no cached tower
+            if(tower == null) getDirection();
+
+            //shenanigans
+            if(tower == null) return true;
+
+            // we are finished when we are in broadcast range
+            if(controller.getLocation().distanceSquaredTo(tower) <= Math.pow(controller.getRobotType().broadcastRadius()-1, 2))
+                return true;
+
+            return false;
         }
     }
 }

@@ -75,7 +75,7 @@ public class Base {
 
         public static final int collectingFlux = 2;
         public static final int idle = 20, scouting = 21;
-        public static final int placingTower = 34;
+        public static final int placingTower = 34, movingToTowerSpawnLocation = 35;
 
         public static String toString(int goal) {
             switch(goal) {
@@ -84,7 +84,9 @@ public class Base {
                 case idle:
                     return "Idle";
                 case placingTower:
-                	return "Placing Tower";                	
+                    return "Placing Tower";
+                case movingToTowerSpawnLocation:
+                    return "Moving to Tower Spawn Location";
             }
             return "?";
         }

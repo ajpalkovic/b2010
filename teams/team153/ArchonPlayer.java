@@ -14,6 +14,7 @@ public class ArchonPlayer extends NovaPlayer {
     public int archonGroup = -1;
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
+    public MapLocation spawnFromLocation;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -25,6 +26,7 @@ public class ArchonPlayer extends NovaPlayer {
         // reevaluate goal here?
         //sensing.senseAllTiles();
         switch(currentGoal) {
+            case Goal.idle:
             case Goal.collectingFlux:
                 spawning.changeModeToCollectingFlux();
                 navigation.changeToMoveableDirectionGoal(true);
@@ -41,7 +43,20 @@ public class ArchonPlayer extends NovaPlayer {
                 moveTurns++;
                 break;
             case Goal.placingTower:
-                navigation.changeToTowerGoal(true);
+                navigation.changeToClosestTeleporterGoal(true);
+                if(navigation.goal.done()) {
+                    MapLocation location = spawning.getTowerSpawnLocation();
+                    if(location == null) break;
+                    spawnFromLocation = location.subtract(controller.getLocation().directionTo(location));
+                    navigation.changeToLocationGoal(spawnFromLocation, true);
+                    controller.setIndicatorString(2, spawnFromLocation.toString());
+                    setGoal(Goal.movingToTowerSpawnLocation);
+                } else {
+                    navigation.moveOnce(false);
+                }
+                
+                break;
+            case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
                     spawning.spawnTower(RobotType.TELEPORTER);
                     setGoal(Goal.collectingFlux);
@@ -49,9 +64,6 @@ public class ArchonPlayer extends NovaPlayer {
                     navigation.moveOnce(false);
                 }
                 
-                break;
-            case Goal.idle:
-                // reevaluate the goal
                 break;
         }
     }
