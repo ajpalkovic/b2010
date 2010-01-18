@@ -14,7 +14,6 @@ public class ArchonPlayer extends NovaPlayer {
     public int archonGroup = -1;
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
-
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
     public MapLocation[] idealTowerSpawnLocations;
     public int turnsWaitedForTowerSpawnLocationMessage = 0;
@@ -67,8 +66,11 @@ public class ArchonPlayer extends NovaPlayer {
                     //we shouldn't ever get here, but who knows
                     placeTower();
                 } else {
-                    if(sensing.senseAlliedTowers().size() > 0) placeTower();
-                    else navigation.moveOnce(false);
+                    if(sensing.senseAlliedTowers().size() > 0) {
+                        placeTower();
+                    } else {
+                        navigation.moveOnce(false);
+                    }
                 }
                 break;
             case Goal.placingTeleporter:
@@ -94,7 +96,7 @@ public class ArchonPlayer extends NovaPlayer {
                 } else {
                     navigation.moveOnce(false);
                 }
-                
+
                 break;
         }
     }
