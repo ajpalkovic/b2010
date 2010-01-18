@@ -89,7 +89,7 @@ public class NovaPlayer extends Base {
 
             if(isArchon) {
                 energon.processEnergonTransferRequests();
-            } else {
+            } else if(!isTower) {
                 energon.autoTransferEnergonBetweenUnits();
             }
             step();
