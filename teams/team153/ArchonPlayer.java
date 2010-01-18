@@ -58,7 +58,7 @@ public class ArchonPlayer extends NovaPlayer {
                         towerSpawnFromLocation = towerSpawnLocation.subtract(controller.getLocation().directionTo(towerSpawnLocation));
                         navigation.changeToLocationGoal(towerSpawnFromLocation, true);
                         navigation.changeToLocationGoal(towerSpawnFromLocation, true);
-                        setGoal(Goal.movingToPreviousTowerLocation);
+                        setGoal(Goal.movingToTowerSpawnLocation);
                     }
                 }
                 break;
