@@ -9,4 +9,8 @@ public class TeleporterPlayer extends TowerPlayer {
     public TeleporterPlayer(RobotController controller) {
         super(controller);
     }
+
+    public void step() {
+        updateTowerBuildLocations();
+    }
 }

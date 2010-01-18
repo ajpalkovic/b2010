@@ -11,10 +11,16 @@ public class AuraPlayer extends TowerPlayer {
     }
 
     public void step() {
-        try {
+
+        updateTowerBuildLocations();
+    }
+
+    public void boot() {
+        /*try {
             controller.setAura(AuraType.OFF);
         } catch (Exception e) {
             pa("----Caught exception while setting aura.");
-        }
+            e.printStackTrace();
+        }*/
     }
 }
