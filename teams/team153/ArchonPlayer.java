@@ -75,7 +75,7 @@ public class ArchonPlayer extends NovaPlayer {
                 break;
             case Goal.placingTeleporter:
                 if(navigation.goal.done()) {
-                    navigation.faceLocation(towerSpawnFromLocation);
+                    navigation.faceLocation(towerSpawnLocation);
                     if(spawning.spawnTower(RobotType.TELEPORTER) != Status.success) {
                         placeTower();
                     } else {
@@ -87,7 +87,7 @@ public class ArchonPlayer extends NovaPlayer {
                 break;
             case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
-                    navigation.faceLocation(towerSpawnFromLocation);
+                    navigation.faceLocation(towerSpawnLocation);
                     if(spawning.spawnTower(RobotType.AURA) != Status.success) {
                         placeTower();
                     } else {
@@ -142,12 +142,12 @@ public class ArchonPlayer extends NovaPlayer {
 
     public void spawnTeleporter() {
         //there were no towers in range ever, so lets just build a new one:
-        MapLocation location = spawning.getTowerSpawnLocation();
-        if(location == null) {
+        towerSpawnLocation = spawning.getTowerSpawnLocation();
+        if(towerSpawnLocation == null) {
             pa("WTF.  There is nowhere to spawn the tower.");
             return;
         }
-        towerSpawnFromLocation = location.subtract(controller.getLocation().directionTo(location));
+        towerSpawnFromLocation = towerSpawnLocation.subtract(controller.getLocation().directionTo(towerSpawnLocation));
         navigation.changeToLocationGoal(towerSpawnFromLocation, true);
         controller.setIndicatorString(2, towerSpawnFromLocation.toString());
         setGoal(Goal.placingTeleporter);
