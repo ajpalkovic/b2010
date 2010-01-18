@@ -15,9 +15,9 @@ public class ArchonPlayer extends NovaPlayer {
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
 
-    public MapLocation spawnFromLocation;
-    public MapLocation[] idealSpawnLocations;
-    public int turnsWaitedForSpawnLocationMessage = 0;
+    public MapLocation towerSpawnFromLocation, towerSpawnLocation;
+    public MapLocation[] idealTowerSpawnLocations;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -46,9 +46,21 @@ public class ArchonPlayer extends NovaPlayer {
                 moveTurns++;
                 break;
             case Goal.askingForTowerLocation:
-                //what if there is no response for a few turns?
-                //what if the tower hasnt finished the calculations yet?
-                //what if the tower sends back no locations?
+                turnsWaitedForTowerSpawnLocationMessage++;
+                if(turnsWaitedForTowerSpawnLocationMessage > 5) {
+                    spawnTeleporter();
+                }
+
+                if(idealTowerSpawnLocations != null) {
+                    //we got the message, lets do something
+                    if(idealTowerSpawnLocations.length > 0) {
+                        towerSpawnLocation = spawning.getTowerSpawnLocation(idealTowerSpawnLocations);
+                        towerSpawnFromLocation = towerSpawnLocation.subtract(controller.getLocation().directionTo(towerSpawnLocation));
+                        navigation.changeToLocationGoal(towerSpawnFromLocation, true);
+                        navigation.changeToLocationGoal(towerSpawnFromLocation, true);
+                        setGoal(Goal.movingToPreviousTowerLocation);
+                    }
+                }
                 break;
             case Goal.movingToPreviousTowerLocation:
                 if(navigation.goal.done()) {
@@ -61,7 +73,7 @@ public class ArchonPlayer extends NovaPlayer {
                 break;
             case Goal.placingTeleporter:
                 if(navigation.goal.done()) {
-                    navigation.faceLocation(spawnFromLocation);
+                    navigation.faceLocation(towerSpawnFromLocation);
                     if(spawning.spawnTower(RobotType.TELEPORTER) != Status.success) {
                         placeTower();
                     } else {
@@ -73,7 +85,7 @@ public class ArchonPlayer extends NovaPlayer {
                 break;
             case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
-                    navigation.faceLocation(spawnFromLocation);
+                    navigation.faceLocation(towerSpawnFromLocation);
                     if(spawning.spawnTower(RobotType.AURA) != Status.success) {
                         placeTower();
                     } else {
@@ -87,10 +99,15 @@ public class ArchonPlayer extends NovaPlayer {
         }
     }
 
+    public void towerBuildLocationResponseCallback(MapLocation[] locations) {
+        idealTowerSpawnLocations = locations;
+    }
+
     public void placeTower() {
-        idealSpawnLocations = null;
-        turnsWaitedForSpawnLocationMessage = 0;
-        spawnFromLocation = null;
+        idealTowerSpawnLocations = null;
+        turnsWaitedForTowerSpawnLocationMessage = 0;
+        towerSpawnFromLocation = null;
+        towerSpawnLocation = null;
 
         ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
         if(towers.size() > 0) {
@@ -118,15 +135,19 @@ public class ArchonPlayer extends NovaPlayer {
             return;
         }
 
+        spawnTeleporter();
+    }
+
+    public void spawnTeleporter() {
         //there were no towers in range ever, so lets just build a new one:
         MapLocation location = spawning.getTowerSpawnLocation();
         if(location == null) {
             pa("WTF.  There is nowhere to spawn the tower.");
             return;
         }
-        spawnFromLocation = location.subtract(controller.getLocation().directionTo(location));
-        navigation.changeToLocationGoal(spawnFromLocation, true);
-        controller.setIndicatorString(2, spawnFromLocation.toString());
+        towerSpawnFromLocation = location.subtract(controller.getLocation().directionTo(location));
+        navigation.changeToLocationGoal(towerSpawnFromLocation, true);
+        controller.setIndicatorString(2, towerSpawnFromLocation.toString());
         setGoal(Goal.placingTeleporter);
     }
 
