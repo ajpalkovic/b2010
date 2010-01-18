@@ -6,8 +6,8 @@ import java.util.*;
 
 public class MexicanMessaging extends Base {
 
-    public final int KEY1 = 439874345;
-    public final int KEY2 = 198465730;
+    public int KEY1 = 439874345;
+    public int KEY2 = 198465730;
     public ArrayList<Integer> messageInts = new ArrayList<Integer>();
     public ArrayList<String> messageStrings = new ArrayList<String>();
     public ArrayList<MapLocation> messageLocations = new ArrayList<MapLocation>();
@@ -15,6 +15,13 @@ public class MexicanMessaging extends Base {
 
     public MexicanMessaging(NovaPlayer player) {
         super(player);
+
+        //swap the keys so if we play ourself we dont pick up each other's messages
+        if(player.team == Team.A) {
+            int tmp = KEY1;
+            KEY1 = KEY2;
+            KEY2 = tmp;
+        }
     }
 
     /**
@@ -23,6 +30,14 @@ public class MexicanMessaging extends Base {
      * The first two parameters are the message type (from BroadcastMessage.*) and the recipient id (BroadcastMessage.everyone for everyone)
      * Add message accepts an array of ints, strings, and MapLocations which will be sent along with the message.
      */
+    public boolean sendTowerBuildLocationRequest() {
+        return addMessage(BroadcastMessage.towerBuildLocationRequest, BroadcastMessage.everyone, null, null, null);
+    }
+
+    public boolean sendTowerBuildLocationResponse(MapLocation[] locations) {
+        return addMessage(BroadcastMessage.towerBuildLocationResponse, BroadcastMessage.everyone, new int[] {locations.length}, null, locations);
+    }
+
     public boolean sendMove(MapLocation location) {
         return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
     }
@@ -149,6 +164,12 @@ public class MexicanMessaging extends Base {
                             break;
                         case BroadcastMessage.support:
                             break;
+                        case BroadcastMessage.towerBuildLocationRequest:
+                            break;
+                        case BroadcastMessage.towerBuildLocationResponse:
+                            locationIndex += message.ints[intIndex];
+                            intIndex++;
+                            break;
                     }
                 } else {
                     // this message is ours
@@ -176,6 +197,18 @@ public class MexicanMessaging extends Base {
                             locationIndex++;
                             break;
                         case BroadcastMessage.support:
+                            break;
+                        case BroadcastMessage.towerBuildLocationRequest:
+                            player.towerBuildLocationRequestCallback();
+                            break;
+                        case BroadcastMessage.towerBuildLocationResponse:
+                            int count = message.ints[intIndex];
+                            MapLocation[] locations = new MapLocation[count];
+                            for(int c = 0; c < count; c++)
+                                locations[c] = message.locations[c];
+                            player.towerBuildLocationResponseCallback(locations);
+                            locationIndex += count;
+                            intIndex++;
                             break;
                     }
                 }

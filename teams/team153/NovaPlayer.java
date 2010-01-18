@@ -192,4 +192,12 @@ public class NovaPlayer extends Base {
      */
     public void enemyInSight(ArrayList<RobotInfo> enemies) {
     }
+
+    public void towerBuildLocationRequestCallback() {
+
+    }
+
+    public void towerBuildLocationResponseCallback(MapLocation[] locations) {
+        
+    }
 }

@@ -46,13 +46,22 @@ public class ArchonPlayer extends NovaPlayer {
                 moveTurns++;
                 break;
             case Goal.askingForTowerLocation:
-
+                //what if there is no response for a few turns?
+                //what if the tower hasnt finished the calculations yet?
+                //what if the tower sends back no locations?
                 break;
             case Goal.movingToPreviousTowerLocation:
-
+                if(navigation.goal.done()) {
+                    //we shouldn't ever get here, but who knows
+                    placeTower();
+                } else {
+                    if(sensing.senseAlliedTowers().size() > 0) placeTower();
+                    else navigation.moveOnce(false);
+                }
                 break;
             case Goal.placingTeleporter:
                 if(navigation.goal.done()) {
+                    navigation.faceLocation(spawnFromLocation);
                     if(spawning.spawnTower(RobotType.TELEPORTER) != Status.success) {
                         placeTower();
                     } else {
@@ -64,6 +73,7 @@ public class ArchonPlayer extends NovaPlayer {
                 break;
             case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
+                    navigation.faceLocation(spawnFromLocation);
                     if(spawning.spawnTower(RobotType.AURA) != Status.success) {
                         placeTower();
                     } else {
@@ -85,6 +95,7 @@ public class ArchonPlayer extends NovaPlayer {
         ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
         if(towers.size() > 0) {
             //there are teles in range, ask them where to build
+            messaging.sendTowerBuildLocationRequest();
             setGoal(Goal.askingForTowerLocation);
             return;
         }
@@ -92,6 +103,7 @@ public class ArchonPlayer extends NovaPlayer {
         towers = sensing.senseAlliedTowerLocations();
         if(towers.size() > 0) {
             //no teles in range, but there are other towers.  they should be talking to the tele and should know the status of where to build
+            messaging.sendTowerBuildLocationRequest();
             setGoal(Goal.askingForTowerLocation);
             return;
         }
@@ -100,6 +112,8 @@ public class ArchonPlayer extends NovaPlayer {
         towers = sensing.senseKnownAlliedTowerLocations();
         if(towers.size() > 0) {
             //we remember that there used to be a tower here, so lets try going there.  once we get there, we can ask again
+            MapLocation closest = navigation.findClosest(towers);
+            navigation.changeToLocationGoal(closest, true);
             setGoal(Goal.movingToPreviousTowerLocation);
             return;
         }
