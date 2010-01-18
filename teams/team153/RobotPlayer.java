@@ -20,6 +20,10 @@ public class RobotPlayer implements Runnable {
             player = new SoldierPlayer(controller);
         } else if (controller.getRobotType().equals(RobotType.WOUT)) {
             player = new WoutPlayer(controller);
+        } else if (controller.getRobotType().equals(RobotType.AURA)) {
+            player = new AuraPlayer(controller);
+        } else if (controller.getRobotType().equals(RobotType.TELEPORTER)) {
+            player = new TeleporterPlayer(controller);
         } else {
             player = new NovaPlayer(controller);
         }
