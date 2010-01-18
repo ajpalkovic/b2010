@@ -31,7 +31,7 @@ public class EnergeticEnergon extends Base {
         try {
             Robot robot = player.controller.senseAirRobotAtLocation(location);
             if(robot == null) {
-                location = navigation.findNearestArchon();
+                location = sensing.senseClosestArchon();
                 if(location.distanceSquaredTo(player.controller.getLocation()) > 2) {
                     return;
                 }
@@ -261,7 +261,7 @@ public class EnergeticEnergon extends Base {
             tries--;
         } while(tries > 0 && !navigation.goal.done());
 
-        MapLocation closest = navigation.findNearestArchon();
+        MapLocation closest = sensing.senseClosestArchon();
         if(closest == null || closest.distanceSquaredTo(controller.getLocation()) > 2) {
             return Status.fail;
         }

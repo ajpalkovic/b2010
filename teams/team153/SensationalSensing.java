@@ -11,13 +11,23 @@ public class SensationalSensing extends Base {
     public MapStore map;
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
-
-    public int airSensed = Integer.MIN_VALUE, teleporterSensed = Integer.MIN_VALUE, groundSensed = Integer.MIN_VALUE,
-            airInfoSensed = Integer.MIN_VALUE, groundInfoSensed = Integer.MIN_VALUE,
-            enemyInfoSensed = Integer.MIN_VALUE, alliedInfoSensed = Integer.MIN_VALUE, enemyLocationSensed = Integer.MIN_VALUE;
+    public int airSensed = Integer.MIN_VALUE,
+            groundSensed = Integer.MIN_VALUE,
+            airInfoSensed = Integer.MIN_VALUE,
+            groundInfoSensed = Integer.MIN_VALUE,
+            enemyInfoSensed = Integer.MIN_VALUE,
+            alliedInfoSensed = Integer.MIN_VALUE,
+            enemyLocationSensed = Integer.MIN_VALUE,
+            alliedTeleportersSensed = Integer.MIN_VALUE,
+            alliedTowersSensed = Integer.MIN_VALUE,
+            archonLocationsSensed = Integer.MIN_VALUE,
+            nearestArchonSensed = Integer.MIN_VALUE,
+            alliedTowerLocationsSensed = Integer.MIN_VALUE;
     public Robot[] air, ground;
-    public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots;
-    public ArrayList<MapLocation> enemyLocations;
+    public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots, alliedTowerInfo;
+    public ArrayList<MapLocation> enemyLocations, alliedTowerLocations;
+    public MapLocation[] archonLocations;
+    public MapLocation nearestArchon;
     public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();
     public int oldDataTolerance = 1;
 
@@ -57,9 +67,9 @@ public class SensationalSensing extends Base {
         boolean ret = true;
         if(data != null) {
             /*
-             TODO:: This breaks AttackPlayer badly.
-             if(data.airRobot != null || data.groundRobot != null) {
-                ret = player.enemyInSightCallback(data) && ret;
+            TODO:: This breaks AttackPlayer badly.
+            if(data.airRobot != null || data.groundRobot != null) {
+            ret = player.enemyInSightCallback(data) && ret;
             }*/
         }
         return ret;
@@ -152,8 +162,12 @@ public class SensationalSensing extends Base {
     public void senseTile(int x, int y) {
         MapLocation location = new MapLocation(x, y);
 
-        if(map.sensed(x, y)) return;
-        if(!controller.canSenseSquare(location)) return;
+        if(map.sensed(x, y)) {
+            return;
+        }
+        if(!controller.canSenseSquare(location)) {
+            return;
+        }
         map.set(x, y, controller.senseTerrainTile(location));
     }
 
@@ -174,6 +188,15 @@ public class SensationalSensing extends Base {
         }
     }
 
+    /**
+     * This method is not done!
+     * This method should be responsible for keeping a cache of all allied towers that are known to exist.
+     * This way, if an archon is not in sensor range of a tower, it can still know the general direction in which to go to find one.
+     */
+    public ArrayList<MapLocation> senseKnownAlliedTowerLocations() {
+        senseAlliedTowerLocations();
+        return alliedTowerLocations;
+    }
 
     /**
      * Returns an ArrayList of MapLocation objects for every allied teleporter tower.
@@ -182,12 +205,13 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public ArrayList<MapLocation> senseAlliedTeleporters() {
-        if(teleporterSensed < Clock.getRoundNum() - oldDataTolerance) {
+        if(alliedTeleportersSensed < Clock.getRoundNum() - oldDataTolerance) {
             try {
                 List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
                 if(!loc.isEmpty()) {
                     teleporterLocations.addAll(loc);
                 }
+                alliedTeleportersSensed = Clock.getRoundNum();
             } catch(Exception e) {
             }
         }
@@ -219,9 +243,50 @@ public class SensationalSensing extends Base {
             }
         }
 
+        enemyInfoSensed = Clock.getRoundNum();
         return enemyRobots;
     }
 
+    /**
+     * Returns an arraylist of all of the allied towers that are in range.
+     */
+    public ArrayList<RobotInfo> senseAlliedTowers() {
+        if(alliedTowersSensed >= Clock.getRoundNum() - oldDataTolerance) {
+            return alliedTowerInfo;
+        }
+
+        alliedTowerInfo = new ArrayList<RobotInfo>();
+        senseAlliedRobotInfoInSensorRange();
+
+        for(RobotInfo robot : alliedRobots) {
+            if(robot.type.isBuilding()) {
+                alliedTowerInfo.add(robot);
+            }
+        }
+
+        alliedTowersSensed = Clock.getRoundNum();
+        return alliedTowerInfo;
+    }
+
+    /**
+     * Returns an arraylist of all of the allied towers that are in range.
+     */
+    public ArrayList<MapLocation> senseAlliedTowerLocations() {
+        if(alliedTowerLocationsSensed >= Clock.getRoundNum() - oldDataTolerance) {
+            return alliedTowerLocations;
+        }
+
+        alliedTowerLocations = new ArrayList<MapLocation>();
+        senseAlliedRobotInfoInSensorRange();
+        for(RobotInfo robot : alliedRobots) {
+            if(robot.type.isBuilding()) {
+                alliedTowerLocations.add(robot.location);
+            }
+        }
+
+        alliedTowerLocationsSensed = Clock.getRoundNum();
+        return alliedTowerLocations;
+    }
 
     /**
      * Returns an ArrayList of RobotInfo objects for each ally in sensor range.
@@ -241,9 +306,9 @@ public class SensationalSensing extends Base {
             }
         }
 
+        alliedInfoSensed = Clock.getRoundNum();
         return alliedRobots;
     }
-
 
     /**
      * Returns an ArrayList of MapLocation objects for each enemy in sensor range.
@@ -260,9 +325,37 @@ public class SensationalSensing extends Base {
             enemyLocations.add(r.location);
         }
 
+        enemyLocationSensed = Clock.getRoundNum();
         return enemyLocations;
     }
 
+    /**
+     * Returns an array of all of the Archon MapLocations
+     * The results are cached for two turns to save bytecodes.
+     */
+    public MapLocation[] senseArchonLocations() {
+        if(archonLocationsSensed >= Clock.getRoundNum() - oldDataTolerance) {
+            return archonLocations;
+        }
+        archonLocations = controller.senseAlliedArchons();
+        archonLocationsSensed = Clock.getRoundNum();
+        return archonLocations;
+    }
+
+    /**
+     * Returns the MapLocation of the archon closest to the robot.
+     * The results are cached for two turns to save bytecodes.
+     */
+    public MapLocation senseClosestArchon() {
+        if(nearestArchonSensed >= Clock.getRoundNum() - oldDataTolerance) {
+            return nearestArchon;
+        }
+        
+        senseArchonLocations();
+        nearestArchon = navigation.findClosest(archonLocations);
+        nearestArchonSensed = Clock.getRoundNum();
+        return nearestArchon;
+    }
 
     /**
      * Returns an Array of simple Robot objects for each air robot in range.

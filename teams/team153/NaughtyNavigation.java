@@ -94,27 +94,6 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
-     * Returns the MapLocation of the archon closest to this robot.
-     */
-    public MapLocation findNearestArchon() {
-        MapLocation current = controller.getLocation();
-        MapLocation[] locations = controller.senseAlliedArchons();
-
-        MapLocation min = null;
-        int minDistance = Integer.MAX_VALUE;
-
-        for(MapLocation location : locations) {
-            int distance = current.distanceSquaredTo(location);
-            if(distance < minDistance && distance >= 1) {
-                minDistance = distance;
-                min = location;
-            }
-        }
-
-        return min;
-    }
-
-    /**
      * Returns the direction object needed to move a robot from the start square to the end square.
      */
     public Direction getDirection(MapLocation start, MapLocation end) {
@@ -202,7 +181,7 @@ public class NaughtyNavigation extends Base {
      * Returns the Manhattan Distance to the nearest archon
      */
     public int getDistanceToNearestArchon() {
-        MapLocation location = findNearestArchon();
+        MapLocation location = sensing.senseClosestArchon();
         int x = location.getX() - controller.getLocation().getX();
         int y = location.getY() - controller.getLocation().getY();
         return Math.abs(x) + Math.abs(y);
@@ -545,13 +524,13 @@ public class NaughtyNavigation extends Base {
     class ArchonGoal extends NavigationGoal {
 
         public Direction getDirection() {
-            MapLocation location = findNearestArchon();
+            MapLocation location = sensing.senseClosestArchon();
             Direction dir = controller.getLocation().directionTo(location);
             return getMoveableDirection(dir);
         }
 
         public boolean done() {
-            completed = completed || isAdjacent(controller.getLocation(), findNearestArchon());
+            completed = completed || isAdjacent(controller.getLocation(), sensing.senseClosestArchon());
             return completed;
         }
     }

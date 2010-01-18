@@ -26,7 +26,7 @@ public abstract class AttackPlayer extends NovaPlayer {
             return true;
         }
         MapLocation location = controller.getLocation().add(dir);
-        MapLocation[] archons = controller.senseAlliedArchons();
+        MapLocation[] archons = sensing.senseArchonLocations();
         for(MapLocation archon : archons) {
             if(location.isAdjacentTo(archon) || location.equals(archon)) {
                 return true;

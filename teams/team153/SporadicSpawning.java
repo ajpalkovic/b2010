@@ -112,23 +112,26 @@ public class SporadicSpawning extends Base {
     }
 
     /**
-     * Returns the MapLocation where a Tower should be spawned.
+     * Returns the MapLocation where a Tower should be spawned, using only the map locations surrounding the robot.
      */
     public MapLocation getTowerSpawnLocation() {
-        ArrayList<MapLocation> teleporters = sensing.senseAlliedTeleporters();
-        if(teleporters.size() == 0) {
-            return controller.getLocation();
-        }
+        return _getTowerSpawnLocation(navigation.getOrderedMapLocations());
+    }
 
-        MapLocation closest = navigation.findClosest(teleporters);
-        if(closest.distanceSquaredTo(controller.getLocation()) > Math.pow(controller.getRobotType().broadcastRadius(), 2)) {
-            return null;
-        }
+    /**
+     * Returns the MapLocation where a Tower should be spawned.
+     * It accepts an array of map locations to consider first, such as the locations a tower recommends.
+     */
+    public MapLocation getTowerSpawnLocation(MapLocation[] idealLocations) {
+        MapLocation ret = _getTowerSpawnLocation(idealLocations);
+        if(ret != null) return ret;
+        return _getTowerSpawnLocation(navigation.getOrderedMapLocations());
+    }
 
-        //send the message asking for a tele location
-        //wait for the response
-
-        MapLocation[] locations = navigation.getOrderedMapLocations();
+    /**
+     * Returns the MapLocation where a Tower should be spawned.
+     */
+    private MapLocation _getTowerSpawnLocation(MapLocation[] locations) {
         for(int c = 0; c < locations.length; c++) {
             if(!navigation.isLocationFree(locations[c], false)) {
                 locations[c] = null;

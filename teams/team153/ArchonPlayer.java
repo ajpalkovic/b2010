@@ -14,7 +14,10 @@ public class ArchonPlayer extends NovaPlayer {
     public int archonGroup = -1;
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
+
     public MapLocation spawnFromLocation;
+    public MapLocation[] idealSpawnLocations;
+    public int turnsWaitedForSpawnLocationMessage = 0;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -38,34 +41,79 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 if(spawning.canSupportTower(RobotType.TELEPORTER)) {
                     //System.out.println("Can support it");
-                    setGoal(Goal.placingTower);
+                    placeTower();
                 }
                 moveTurns++;
                 break;
-            case Goal.placingTower:
-                navigation.changeToClosestTeleporterGoal(true);
+            case Goal.askingForTowerLocation:
+
+                break;
+            case Goal.movingToPreviousTowerLocation:
+
+                break;
+            case Goal.placingTeleporter:
                 if(navigation.goal.done()) {
-                    MapLocation location = spawning.getTowerSpawnLocation();
-                    if(location == null) break;
-                    spawnFromLocation = location.subtract(controller.getLocation().directionTo(location));
-                    navigation.changeToLocationGoal(spawnFromLocation, true);
-                    controller.setIndicatorString(2, spawnFromLocation.toString());
-                    setGoal(Goal.movingToTowerSpawnLocation);
+                    if(spawning.spawnTower(RobotType.TELEPORTER) != Status.success) {
+                        placeTower();
+                    } else {
+                        setGoal(Goal.collectingFlux);
+                    }
                 } else {
                     navigation.moveOnce(false);
                 }
-                
                 break;
             case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
-                    spawning.spawnTower(RobotType.TELEPORTER);
-                    setGoal(Goal.collectingFlux);
+                    if(spawning.spawnTower(RobotType.AURA) != Status.success) {
+                        placeTower();
+                    } else {
+                        setGoal(Goal.collectingFlux);
+                    }
                 } else {
                     navigation.moveOnce(false);
                 }
                 
                 break;
         }
+    }
+
+    public void placeTower() {
+        idealSpawnLocations = null;
+        turnsWaitedForSpawnLocationMessage = 0;
+        spawnFromLocation = null;
+
+        ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
+        if(towers.size() > 0) {
+            //there are teles in range, ask them where to build
+            setGoal(Goal.askingForTowerLocation);
+            return;
+        }
+
+        towers = sensing.senseAlliedTowerLocations();
+        if(towers.size() > 0) {
+            //no teles in range, but there are other towers.  they should be talking to the tele and should know the status of where to build
+            setGoal(Goal.askingForTowerLocation);
+            return;
+        }
+
+
+        towers = sensing.senseKnownAlliedTowerLocations();
+        if(towers.size() > 0) {
+            //we remember that there used to be a tower here, so lets try going there.  once we get there, we can ask again
+            setGoal(Goal.movingToPreviousTowerLocation);
+            return;
+        }
+
+        //there were no towers in range ever, so lets just build a new one:
+        MapLocation location = spawning.getTowerSpawnLocation();
+        if(location == null) {
+            pa("WTF.  There is nowhere to spawn the tower.");
+            return;
+        }
+        spawnFromLocation = location.subtract(controller.getLocation().directionTo(location));
+        navigation.changeToLocationGoal(spawnFromLocation, true);
+        controller.setIndicatorString(2, spawnFromLocation.toString());
+        setGoal(Goal.placingTeleporter);
     }
 
     public void boot() {
