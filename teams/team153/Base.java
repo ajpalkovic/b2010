@@ -74,6 +74,7 @@ public class Base {
     static class Goal {
 
         public static final int collectingFlux = 2;
+        public static final int attackingEnemyArchons = 53;
         public static final int idle = 20, scouting = 21;
         public static final int placingTower = 34;
 
@@ -84,7 +85,9 @@ public class Base {
                 case idle:
                     return "Idle";
                 case placingTower:
-                	return "Placing Tower";                	
+                    return "Placing Tower";
+                case attackingEnemyArchons:
+                    return "Attacking Enemy Archons";
             }
             return "?";
         }

@@ -165,6 +165,10 @@ public class SporadicSpawning extends Base {
         mode = new CollectingFluxSpawnMode();
     }
 
+    public void changeModeToAttacking() {
+        mode = new AttackingSpawnMode();
+    }
+
     /**
      * The purpose of this class is to provide a way to change the spawning mechanism throughout the game.
      */
@@ -174,6 +178,12 @@ public class SporadicSpawning extends Base {
          * Returns the type of robot that should be spawned next.
          */
         public abstract RobotType getNextRobotSpawnType();
+    }
+
+    class AttackingSpawnMode extends SpawnMode {
+        public RobotType getNextRobotSpawnType() {
+            return RobotType.TURRET;
+        }
     }
 
     class CollectingFluxSpawnMode extends SpawnMode {

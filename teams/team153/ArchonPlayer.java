@@ -50,6 +50,12 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 
                 break;
+            case Goal.attackingEnemyArchons:
+                spawning.changeModeToAttacking();
+                if (spawning.spawnRobot() == Status.success) {
+                    //messaging.sendFollowRequest(controller.senseGroundRobotAtLocation(spawnLocation).getID() , trackingCount);
+                }
+                break;
             case Goal.idle:
                 // reevaluate the goal
                 break;
