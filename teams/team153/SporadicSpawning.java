@@ -112,6 +112,37 @@ public class SporadicSpawning extends Base {
     }
 
     /**
+     * Returns the MapLocation where a Tower should be spawned, using only the map locations surrounding the robot.
+     */
+    public MapLocation getTowerSpawnLocation() {
+        return _getTowerSpawnLocation(navigation.getOrderedMapLocations());
+    }
+
+    /**
+     * Returns the MapLocation where a Tower should be spawned.
+     * It accepts an array of map locations to consider first, such as the locations a tower recommends.
+     */
+    public MapLocation getTowerSpawnLocation(MapLocation[] idealLocations) {
+        MapLocation ret = _getTowerSpawnLocation(idealLocations);
+        if(ret != null) return ret;
+        return _getTowerSpawnLocation(navigation.getOrderedMapLocations());
+    }
+
+    /**
+     * Returns the MapLocation where a Tower should be spawned.
+     */
+    private MapLocation _getTowerSpawnLocation(MapLocation[] locations) {
+        for(int c = 0; c < locations.length; c++) {
+            if(!navigation.isLocationFree(locations[c], false)) {
+                locations[c] = null;
+            }
+        }
+
+        MapLocation closestLocation = navigation.findClosest(locations);
+        return closestLocation;
+    }
+
+    /**
      * Spawns a robot.
      * The method checks the energon level of the robot first.
      * It first calculates the first free spot that the archon can turn to face to
@@ -119,7 +150,7 @@ public class SporadicSpawning extends Base {
      *
      * If a robot gets in the way when the archon attempts to execute the spawn, it will recursively call the method.
      */
-    public int spawnRobot(RobotType robot) {
+    private int spawnRobot(RobotType robot) {
         if(controller.getEnergonLevel() < robot.spawnCost() + 10) {
             return Status.notEnoughEnergon;
         }

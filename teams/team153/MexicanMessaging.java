@@ -6,8 +6,8 @@ import java.util.*;
 
 public class MexicanMessaging extends Base {
 
-    public final int KEY1 = 1234567;
-    public final int KEY2 = 7654321;
+    public int KEY1 = 439874345;
+    public int KEY2 = 198465730;
     public ArrayList<Integer> messageInts = new ArrayList<Integer>();
     public ArrayList<String> messageStrings = new ArrayList<String>();
     public ArrayList<MapLocation> messageLocations = new ArrayList<MapLocation>();
@@ -15,11 +15,245 @@ public class MexicanMessaging extends Base {
 
     public MexicanMessaging(NovaPlayer player) {
         super(player);
+
+        //swap the keys so if we play ourself we dont pick up each other's messages
+        if(player.team == Team.A) {
+            int tmp = KEY1;
+            KEY1 = KEY2;
+            KEY2 = tmp;
+        }
     }
 
-    //sendMessage (int[] ints, MapLocation[] locations, String[] strings)
-    //sets a broadcast message to send at the end of turn.
-    public boolean sendMessage() {
+    /**
+     * Each of these methods represent the public interface for sending messages.
+     * All they have to do is call addMessage and pass it some data.
+     * The first two parameters are the message type (from BroadcastMessage.*) and the recipient id (BroadcastMessage.everyone for everyone)
+     * Add message accepts an array of ints, strings, and MapLocations which will be sent along with the message.
+     */
+    public boolean sendTowerBuildLocationRequest() {
+        return addMessage(BroadcastMessage.towerBuildLocationRequest, BroadcastMessage.everyone, null, null, null);
+    }
+
+    public boolean sendTowerBuildLocationResponse(MapLocation[] locations) {
+        return addMessage(BroadcastMessage.towerBuildLocationResponse, BroadcastMessage.everyone, new int[] {locations.length}, null, locations);
+    }
+
+    public boolean sendMove(MapLocation location) {
+        return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
+    }
+
+    public boolean sendLowEnergon(MapLocation archonLocation, int amount) {
+        int[] ints = new int[] {amount, player.isAirRobot ? 1 : 0};
+        MapLocation[] locations = new MapLocation[] {controller.getLocation(), archonLocation};
+        return addMessage(BroadcastMessage.lowEnergon, BroadcastMessage.everyone, ints, null, locations);
+    }
+
+    public boolean sendEnemyInSight(MapLocation location, int[] data, String robotType) {
+        int[] ints = new int[] {data[0]};
+        MapLocation[] locations = new MapLocation[] {controller.getLocation(), location};
+        String[] strings = {robotType};
+        return addMessage(BroadcastMessage.enemyInSight, BroadcastMessage.everyone, ints, strings, locations);
+    }
+
+    public boolean sendNewUnit() {
+        MapLocation[] locations = new MapLocation[] {controller.getLocation()};
+        String[] strings = {controller.getRobotType().toString()};
+        return addMessage(BroadcastMessage.newUnit, BroadcastMessage.everyone, null, strings, locations);
+    }
+
+    public boolean sendFollowRequest(MapLocation archonLocation, int recipientRobotId) {
+        MapLocation[] locations = new MapLocation[] {archonLocation};
+        return addMessage(BroadcastMessage.followRequest, recipientRobotId, null, null, locations);
+    }
+
+
+    /**
+     * This method sends enemyInSight message broadcast for all enemies in sight
+     */
+    public void sendMessageForEnemyRobots() {
+        ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
+        for(RobotInfo robot : enemies) {
+            int[] data = {(int) robot.energonLevel, -1};
+            String robotType = robot.type.toString();
+
+            // this is really inefficient, we should fix it
+            // it has to recopy the data from the arraylists to the arrays every time
+            sendEnemyInSight(robot.location, data, robotType);
+        }
+        if(enemies.size() > 0) {
+            sendMessage();
+            player.enemyInSight(enemies);
+        }
+    }
+
+
+    /**
+     * This method processes all of the messages that the robot has.
+     */
+    public void parseMessages() {
+        Message[] messages = controller.getAllMessages();
+        for(Message message : messages) {
+            processMessage(message);
+        }
+    }
+
+
+    /**
+     * This is the core method for processing a message.
+     * Every message must update this method with two switch cases.
+     *
+     * A message consists of a series of ints, strings, and locations.
+     * The first three ints of a message will always be our two keys and the sender's id.
+     * Those are the same from all messages sent from a robot.
+     *
+     * Inside of a Message object, we can actually send multiple "messages", by just adding a second message
+     * to the end of the ints/strings/locations.
+     * So, the role of this method is to process each message within the Message object.
+     *
+     * Any message can have two intended recipients: everyone, or one specific robot.
+     *
+     * Regardless of for whom the message is intended, this method must update the index in the array of the ints, strings, and locations.
+     * Even if the message is not intended for us, the data will still be there, so the indexes need to be updated.
+     * Updating the indexes ensures that for the next message, the indexes will point to the start of its data.
+     * Essentially, the amount each index needs to be updated is really just the same as the size of each of the arrays in the send method for that message.
+     *
+     * Finally, if the message is intended for us, it should call a callback function in NovaPlayer to process the message.
+     * Putting it there allows us to override it later.
+     * All this method should do is copy the data from the arrays into the callback function parameters.
+     *
+     **********************************************/
+    private void processMessage(Message message) {
+        if(message != null) {
+            //is it ours?
+            if(message.ints == null || message.ints.length < 3 || message.ints[0] != KEY1 || message.ints[1] != KEY2) {
+                return;
+            }
+
+            int senderID = message.ints[2];
+            int locationIndex = 0;
+            int stringIndex = 0;
+            int messageId = -1;
+            int recipientId = -1;
+            int myId = controller.getRobot().getID();
+
+            for(int intIndex = 3; intIndex < message.ints.length; ) {
+                messageId = message.ints[intIndex];
+                recipientId = message.ints[intIndex + 1];
+
+                intIndex += 2;
+
+                //If this was not my message, we still need to update the location and string arrays because they will contain the data from a message that is not mine.
+                if(recipientId != BroadcastMessage.everyone && recipientId != myId) {
+                    switch(messageId) {
+                        case BroadcastMessage.enemyInSight:
+                            locationIndex += 2;
+                            intIndex++;
+                            stringIndex++;
+                            break;
+                        case BroadcastMessage.newUnit:
+                            break;
+                        case BroadcastMessage.lowEnergon:
+                            intIndex += 2;
+                            locationIndex += 2;
+                            break;
+                        case BroadcastMessage.move:
+                            locationIndex++;
+                            break;
+                        case BroadcastMessage.followRequest:
+                            locationIndex++;
+                            break;
+                        case BroadcastMessage.support:
+                            break;
+                        case BroadcastMessage.towerBuildLocationRequest:
+                            break;
+                        case BroadcastMessage.towerBuildLocationResponse:
+                            locationIndex += message.ints[intIndex];
+                            intIndex++;
+                            break;
+                    }
+                } else {
+                    // this message is ours
+                    switch(messageId) {
+                        case BroadcastMessage.enemyInSight:
+                            player.enemyInSight(message.locations[locationIndex + 1], message.ints[intIndex], message.strings[stringIndex]);
+                            intIndex++;
+                            locationIndex += 2;
+                            stringIndex++;
+                            break;
+                        case BroadcastMessage.newUnit:
+                            player.newUnit(senderID, message.locations[locationIndex], message.strings[stringIndex]);
+                            break;
+                        case BroadcastMessage.lowEnergon:
+                            player.lowEnergonMessageCallback(message.locations[locationIndex], message.locations[locationIndex + 1], message.ints[intIndex + 1], message.ints[intIndex]);
+                            intIndex += 2;
+                            locationIndex += 2;
+                            break;
+                        case BroadcastMessage.move:
+                            player.moveMessageCallback(message.locations[locationIndex]);
+                            locationIndex++;
+                            break;
+                        case BroadcastMessage.followRequest:
+                            player.followRequestMessageCallback(message.locations[locationIndex], senderID);
+                            locationIndex++;
+                            break;
+                        case BroadcastMessage.support:
+                            break;
+                        case BroadcastMessage.towerBuildLocationRequest:
+                            player.towerBuildLocationRequestCallback();
+                            break;
+                        case BroadcastMessage.towerBuildLocationResponse:
+                            int count = message.ints[intIndex];
+                            MapLocation[] locations = new MapLocation[count];
+                            for(int c = 0; c < count; c++)
+                                locations[c] = message.locations[c];
+                            player.towerBuildLocationResponseCallback(locations);
+                            locationIndex += count;
+                            intIndex++;
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Copies the data into the arraylists.
+     * If no message exists, then any previous message must have been sent, so all the data id old and can be removed.
+     */
+    private boolean addMessage(int messageType, int recipientId, int[] ints, String[] strings, MapLocation[] locations) {
+        if(!controller.hasBroadcastMessage()) {
+            clearMessages();
+        }
+
+        int i = 0;
+        messageInts.add(messageType);
+        messageInts.add(recipientId);
+
+        if(ints != null) {
+            for(i = 0; i < ints.length; i++) {
+                messageInts.add(ints[i]);
+            }
+        }
+        if(strings != null) {
+            for(i = 0; strings != null && i < strings.length; i++) {
+                messageStrings.add(strings[i]);
+            }
+        }
+        if(locations != null) {
+            for(i = 0; i < locations.length; i++) {
+                messageLocations.add(locations[i]);
+            }
+        }
+
+        sendMessage();
+        return true;
+    }
+
+    /**
+     * This method copies all of the data from the arraylist of ints,strings,locations and puts them into a message object.
+     * @return
+     */
+    private boolean sendMessage() {
         Message message = new Message();
         message.ints = new int[messageInts.size() + 3];
         message.ints[0] = KEY1;
@@ -57,192 +291,6 @@ public class MexicanMessaging extends Base {
         return good;
     }
 
-    public void parseMessages() {
-        Message[] messages = controller.getAllMessages();
-        for(Message message : messages) {
-            processMessage(message);
-        }
-    }
-
-    public void processMessage(Message message) {
-        if(message != null) {
-
-            //We got a message!
-            /*String out = "";
-            for(int c = 0; c < message.ints.length; c++)
-            out += " ["+c+"]="+message.ints[c];
-            p("Message Received: "+out);*/
-
-            //is it ours?
-            if(message.ints == null || message.ints.length < 3 || message.ints[0] != KEY1 || message.ints[1] != KEY2) {
-                return;
-            }
-
-            int senderID = message.ints[2];
-
-            //Read it!
-            int locationIndex = 0;
-            int stringIndex = 0;
-            int messageID = -1, recipientID = -1;
-
-            for(int i = 3; i < message.ints.length; i += getMessageLength(messageID)) {
-                messageID = message.ints[i];
-                //System.out.println(messageID);
-                recipientID = message.ints[i + 1];
-                switch(messageID) {
-                    case BroadcastMessage.UNDER_ATTACK:
-                        ;//someone is under attack!!!!
-                        break;
-                    case BroadcastMessage.ENEMY_IN_SIGHT:
-                        player.enemyInSight(message.locations[locationIndex + 1], message.ints[i + 2], message.strings[stringIndex]);//theres an enemy!
-                        locationIndex += 2;
-                        stringIndex++;
-                        //this will broadcast the unit's location (locations[0]) and the enemy's location(locations[1])
-                        //
-                        break;
-                    case BroadcastMessage.MAP_INFO:
-                        ;//update of mapinfo can be very many locations[]
-                        break;
-                    case BroadcastMessage.NEW_UNIT:
-                        player.newUnit(senderID, message.locations[0], message.strings[0]);//theres a new unit! I should send my map info!
-                        break;
-                    case BroadcastMessage.LOW_ALLIED_UNITS:
-                        int count = message.ints[i + 2];
-                        int index = i + 3;
-                        if(player.isArchon) {
-                            player.lowAlliedUnitMessageCallback();
-                            for(int c = 0; c < count; c++) {
-                                MapLocation location = message.locations[locationIndex];
-                                int level = message.ints[index];
-                                int reserve = message.ints[index + 1];
-                                int max = message.ints[index + 2];
-
-                                player.lowAlliedUnitMessageCallback(location, level, reserve, max);
-
-                                index += 3;
-                                locationIndex++;
-                            }
-                            i = index + 1;
-                        } else {
-                            i = i + 3 + (count * 3) + 1;
-                        }
-                        break;
-                    case BroadcastMessage.LOW_ENERGON:
-                        //make sure the message is intended for me
-                        player.lowEnergonMessageCallback(message.locations[locationIndex], message.locations[locationIndex + 1], message.ints[i + 3], message.ints[i + 2]);
-                        break;
-                    case BroadcastMessage.MOVE:
-                        locationIndex++;
-
-                        player.moveMessageCallback(message.locations[locationIndex - 1]);
-
-                        break;
-                    case BroadcastMessage.PONG:
-                        for(int j = 2; i < message.ints.length; i++) {
-                            switch(message.ints[i]) {
-                                case BroadcastMessage.ENEMY_IN_SIGHT:
-                                    //this unit has seen an enemy in the past 100 turns
-                                    break;
-                                case BroadcastMessage.UNDER_ATTACK:
-                                    //this unit has been recently attacked
-                                    break;
-                            }
-                        }
-                        ;//locations[0] is the location of the unit
-                        //locations[i] corresponds to the location for the status
-                        break;
-                    case BroadcastMessage.FOLLOW_REQUEST:
-                        if(recipientID == controller.getRobot().getID())
-                            player.followRequestMessageCallback(message.locations[locationIndex], senderID);
-                        locationIndex++;
-                        break;
-                    case BroadcastMessage.SUPPORT:
-
-                        break;
-                }
-            }
-        }
-    }
-
-    public boolean broadcastMap(MapLocation[] locations) {
-        int[] ints = new int[2];
-        ints[1] = BroadcastMessage.MAP_INFO;
-        ints[0] = robot.getID();
-        return addMessage(ints, null, locations);
-    }
-
-    /**********************************************
-     *  BROADCASTING A MESSAGE CODE
-     *  ints[0] and ints[1] are the KEYS in the message
-     *  ints[2] is ints[0] in the messages.
-     *  ints[2] is senderID
-     *  ints[3] is messageCode
-     *  ints[4] is recepientID (-1 if its for everyone)
-     *  
-     **********************************************/
-    public int getMessageLength(int messageID) {
-        switch(messageID) {
-            case BroadcastMessage.ENEMY_IN_SIGHT:
-                return 3;
-            case BroadcastMessage.LOW_ENERGON:
-                return 4;
-            case BroadcastMessage.NEW_UNIT:
-                return 2;
-            case BroadcastMessage.FIND_BLOCKS:
-                return 3;
-            case BroadcastMessage.MOVE:
-                return 2;
-            case BroadcastMessage.LOW_ALLIED_UNITS:
-                return 0;
-            case BroadcastMessage.FOLLOW_REQUEST:
-                return 2;
-        }
-        return -1;
-    }
-
-    /**
-     * This method sends enemyInSight message broadcast for all enemies in sight
-     */
-    public void sendMessageForEnemyRobots() {
-        ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
-        for(RobotInfo robot : enemies) {
-            int[] data = {(int) robot.energonLevel, -1};
-            String robotType = robot.type.toString();
-
-            sendEnemyInSight(robot.location, data, robotType);
-        }
-        if(enemies.size() > 0) {
-            sendMessage();
-            player.enemyInSight(enemies);
-        }
-    }
-
-    public boolean addMessage(int[] ints, String[] strings, MapLocation[] locations) {
-        if(!controller.hasBroadcastMessage()) {
-            clearMessages();
-        }
-
-        int i = 0;
-        if(ints != null) {
-            for(i = 0; i < ints.length; i++) {
-                messageInts.add(ints[i]);
-            }
-        }
-        if(strings != null) {
-            for(i = 0; strings != null && i < strings.length; i++) {
-                messageStrings.add(strings[i]);
-            }
-        }
-        if(locations != null) {
-            for(i = 0; i < locations.length; i++) {
-                messageLocations.add(locations[i]);
-            }
-        }
-
-        sendMessage();
-        return true;
-    }
-
     /*
      * send message methods
      */
@@ -250,65 +298,5 @@ public class MexicanMessaging extends Base {
         messageInts.clear();
         messageStrings.clear();
         messageLocations.clear();
-    }
-
-    public boolean sendMove(MapLocation location) {
-        int[] ints = new int[2];
-        ints[0] = BroadcastMessage.MOVE;
-        ints[1] = -1;
-        MapLocation[] locations = new MapLocation[1];
-        locations[0] = location;
-        String[] strings = null;
-        pr("Sent Move");
-        return addMessage(ints, strings, locations);
-    }
-
-    public boolean sendLowEnergon(MapLocation archonLocation, int amount) {
-        int[] ints = new int[4];
-        ints[0] = BroadcastMessage.LOW_ENERGON;
-        ints[1] = -1;
-        ints[2] = amount;
-        ints[3] = player.isAirRobot ? 1 : 0;
-
-        MapLocation[] locations = new MapLocation[2];
-        locations[0] = controller.getLocation();
-        locations[1] = archonLocation;
-
-        String[] strings = null;
-
-        return addMessage(ints, strings, locations);
-    }
-
-    public boolean sendEnemyInSight(MapLocation location, int[] data, String robotType) {
-        int[] ints = new int[3];
-        ints[0] = BroadcastMessage.ENEMY_IN_SIGHT;
-        ints[1] = -1;
-        //the type of enemy
-        ints[2] = data[0];
-        MapLocation[] locations = new MapLocation[2];
-        locations[0] = controller.getLocation();
-        locations[1] = location;
-        String[] strings = {robotType};
-        return addMessage(ints, strings, locations);
-    }
-
-    public boolean sendNewUnit() {
-        int[] ints = new int[2];
-        ints[0] = BroadcastMessage.NEW_UNIT;
-        ints[1] = -1;
-        MapLocation[] locations = new MapLocation[1];
-        locations[0] = controller.getLocation();
-        String[] strings = {controller.getRobotType().toString()};
-        return addMessage(ints, strings, locations);
-    }
-    
-    public boolean sendFollowRequest(MapLocation archonLocation, int recipientRobotId) {
-        int[] ints = new int[3];
-        ints[0] = BroadcastMessage.FOLLOW_REQUEST;
-        ints[1] = recipientRobotId;
-        MapLocation[] locations = new MapLocation[1];
-        locations[0] = archonLocation;
-        String[] strings = null;
-        return addMessage(ints, strings, locations);
     }
 }

@@ -31,7 +31,7 @@ public class EnergeticEnergon extends Base {
         try {
             Robot robot = player.controller.senseAirRobotAtLocation(location);
             if(robot == null) {
-                location = navigation.findNearestArchon();
+                location = sensing.senseClosestArchon();
                 if(location.distanceSquaredTo(player.controller.getLocation()) > 2) {
                     return;
                 }
@@ -60,6 +60,7 @@ public class EnergeticEnergon extends Base {
         //p("auto transfer energon");
         ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
         for(RobotInfo robot : robots) {
+            if(robot.type.isBuilding()) continue;
             if(robot.location.distanceSquaredTo(controller.getLocation()) > 2) continue;
             int amount = calculateEnergonRequestAmount(robot);
             if(amount >= 1) {
@@ -80,6 +81,7 @@ public class EnergeticEnergon extends Base {
             RobotInfo min = null;
             ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
             for(RobotInfo robot : robots) {
+                if(robot.type.isBuilding()) continue;
                 if(!robot.location.isAdjacentTo(controller.getLocation())) continue;
                 if(min == null) {
                     min = robot;
@@ -259,7 +261,7 @@ public class EnergeticEnergon extends Base {
             tries--;
         } while(tries > 0 && !navigation.goal.done());
 
-        MapLocation closest = navigation.findNearestArchon();
+        MapLocation closest = sensing.senseClosestArchon();
         if(closest == null || closest.distanceSquaredTo(controller.getLocation()) > 2) {
             return Status.fail;
         }
@@ -296,9 +298,9 @@ public class EnergeticEnergon extends Base {
             }
             controller.transferUnitEnergon(amount, location, level);
         } catch(Exception e) {
-            /*System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
+            System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
                     " location: "+location.toString()+" isAirUnit: "+isAirUnit+" level: "+
-                    level.toString()+" Exception: "+e.toString());*/
+                    level.toString()+" Exception: "+e.toString());
             return Status.fail;
         }
         return Status.success;

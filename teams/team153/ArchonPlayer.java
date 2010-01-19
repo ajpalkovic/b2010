@@ -14,6 +14,9 @@ public class ArchonPlayer extends NovaPlayer {
     public int archonGroup = -1;
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
+    public MapLocation towerSpawnFromLocation, towerSpawnLocation;
+    public MapLocation[] idealTowerSpawnLocations;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -25,6 +28,7 @@ public class ArchonPlayer extends NovaPlayer {
         // reevaluate goal here?
         //sensing.senseAllTiles();
         switch(currentGoal) {
+            case Goal.idle:
             case Goal.collectingFlux:
                 spawning.changeModeToCollectingFlux();
                 navigation.changeToMoveableDirectionGoal(true);
@@ -36,19 +40,50 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 if(spawning.canSupportTower(RobotType.TELEPORTER)) {
                     //System.out.println("Can support it");
-                    setGoal(Goal.placingTower);
+                    placeTower();
                 }
                 moveTurns++;
                 break;
-            case Goal.placingTower:
-                navigation.changeToTowerGoal(true);
+            case Goal.askingForTowerLocation:
+                turnsWaitedForTowerSpawnLocationMessage++;
+                if(turnsWaitedForTowerSpawnLocationMessage > 5) {
+                    spawnTeleporter();
+                }
+
+                if(idealTowerSpawnLocations != null) {
+                    //we got the message, lets do something
+                    if(idealTowerSpawnLocations.length > 0) {
+                        towerSpawnLocation = spawning.getTowerSpawnLocation(idealTowerSpawnLocations);
+                        towerSpawnFromLocation = towerSpawnLocation.subtract(controller.getLocation().directionTo(towerSpawnLocation));
+                        navigation.changeToLocationGoal(towerSpawnFromLocation, true);
+                        navigation.changeToLocationGoal(towerSpawnFromLocation, true);
+                        setGoal(Goal.movingToTowerSpawnLocation);
+                    }
+                }
+                break;
+            case Goal.movingToPreviousTowerLocation:
                 if(navigation.goal.done()) {
-                    spawning.spawnTower(RobotType.TELEPORTER);
-                    setGoal(Goal.collectingFlux);
+                    //we shouldn't ever get here, but who knows
+                    placeTower();
+                } else {
+                    if(sensing.senseAlliedTowers().size() > 0) {
+                        placeTower();
+                    } else {
+                        navigation.moveOnce(false);
+                    }
+                }
+                break;
+            case Goal.placingTeleporter:
+                if(navigation.goal.done()) {
+                    navigation.faceLocation(towerSpawnLocation);
+                    if(spawning.spawnTower(RobotType.TELEPORTER) != Status.success) {
+                        placeTower();
+                    } else {
+                        setGoal(Goal.collectingFlux);
+                    }
                 } else {
                     navigation.moveOnce(false);
                 }
-                
                 break;
             case Goal.attackingEnemyArchons:
                 spawning.changeModeToAttacking();
@@ -56,10 +91,71 @@ public class ArchonPlayer extends NovaPlayer {
                     //messaging.sendFollowRequest(controller.senseGroundRobotAtLocation(spawnLocation).getID() , trackingCount);
                 }
                 break;
-            case Goal.idle:
-                // reevaluate the goal
+            case Goal.movingToTowerSpawnLocation:
+                if(navigation.goal.done()) {
+                    navigation.faceLocation(towerSpawnLocation);
+                    if(spawning.spawnTower(RobotType.AURA) != Status.success) {
+                        placeTower();
+                    } else {
+                        setGoal(Goal.collectingFlux);
+                    }
+                } else {
+                    navigation.moveOnce(false);
+                }
                 break;
         }
+    }
+
+    public void towerBuildLocationResponseCallback(MapLocation[] locations) {
+        idealTowerSpawnLocations = locations;
+    }
+
+    public void placeTower() {
+        idealTowerSpawnLocations = null;
+        turnsWaitedForTowerSpawnLocationMessage = 0;
+        towerSpawnFromLocation = null;
+        towerSpawnLocation = null;
+
+        ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
+        if(towers.size() > 0) {
+            //there are teles in range, ask them where to build
+            messaging.sendTowerBuildLocationRequest();
+            setGoal(Goal.askingForTowerLocation);
+            return;
+        }
+
+        towers = sensing.senseAlliedTowerLocations();
+        if(towers.size() > 0) {
+            //no teles in range, but there are other towers.  they should be talking to the tele and should know the status of where to build
+            messaging.sendTowerBuildLocationRequest();
+            setGoal(Goal.askingForTowerLocation);
+            return;
+        }
+
+
+        towers = sensing.senseKnownAlliedTowerLocations();
+        if(towers.size() > 0) {
+            //we remember that there used to be a tower here, so lets try going there.  once we get there, we can ask again
+            MapLocation closest = navigation.findClosest(towers);
+            navigation.changeToLocationGoal(closest, true);
+            setGoal(Goal.movingToPreviousTowerLocation);
+            return;
+        }
+
+        spawnTeleporter();
+    }
+
+    public void spawnTeleporter() {
+        //there were no towers in range ever, so lets just build a new one:
+        towerSpawnLocation = spawning.getTowerSpawnLocation();
+        if(towerSpawnLocation == null) {
+            pa("WTF.  There is nowhere to spawn the tower.");
+            return;
+        }
+        towerSpawnFromLocation = towerSpawnLocation.subtract(controller.getLocation().directionTo(towerSpawnLocation));
+        navigation.changeToLocationGoal(towerSpawnFromLocation, true);
+        controller.setIndicatorString(2, towerSpawnFromLocation.toString());
+        setGoal(Goal.placingTeleporter);
     }
 
     public void boot() {
