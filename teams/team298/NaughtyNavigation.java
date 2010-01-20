@@ -596,7 +596,6 @@ public class NaughtyNavigation extends Base {
                 }
             }
         }
-        
     }
 
     class LocationGoalWithBugging extends BuggingGoal {
