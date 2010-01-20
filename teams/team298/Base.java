@@ -1,4 +1,4 @@
-package team153;
+package team298;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -26,7 +26,7 @@ public class Base {
             return;
         }
 
-        if(controller.getRobot().getID() == 103) {
+        if(controller.getRobot().getID() == 124) {
             System.out.println(s);
         }
     }
