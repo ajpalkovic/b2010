@@ -1,4 +1,4 @@
-package team153;
+package team298;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -20,6 +20,7 @@ public class TowerPlayer extends NovaPlayer {
 
     public void updateTowerBuildLocations() {
         ArrayList<MapLocation> locations = sensing.senseAlliedTowerLocations();
+        System.out.println(locations.size());
         boolean top = true, bottom = true, left = true, right = true;
         MapLocation us = controller.getLocation();
 
