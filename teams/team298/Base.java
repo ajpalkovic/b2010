@@ -26,7 +26,7 @@ public class Base {
             return;
         }
 
-        if(controller.getRobot().getID() == 103) {
+        if(controller.getRobot().getID() == 124) {
             System.out.println(s);
         }
     }
