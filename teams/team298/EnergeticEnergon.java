@@ -269,6 +269,7 @@ public class EnergeticEnergon extends Base {
         messaging.sendLowEnergon(closest, calculateEnergonRequestAmount());
         controller.yield();
 
+        navigation.popGoal();
         return Status.success;
     }
 

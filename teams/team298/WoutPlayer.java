@@ -14,7 +14,7 @@ public class WoutPlayer extends NovaPlayer {
         MapLocation location = sensing.senseClosestArchon();
         int distance = location.distanceSquaredTo(controller.getLocation());
 
-        if(energon.isEnergonLow() || energon.isFluxFull() || distance > 50) {
+        /*if(energon.isEnergonLow() || energon.isFluxFull() || distance > 50) {
             navigation.changeToArchonGoal(true);
         } else {
             navigation.changeToMoveableDirectionGoal(true);
@@ -26,6 +26,7 @@ public class WoutPlayer extends NovaPlayer {
             controller.yield();
         } else {
             navigation.moveOnce(false);
-        }
+        }*/
+        navigation.moveOnce(false);
     }
 }

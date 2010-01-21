@@ -133,6 +133,9 @@ public class NovaPlayer extends Base {
      * CALLBACKS
      **************************************************************************/
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon) {
+        archonLeader = idOfSendingArchon;
+        navigation.changeToFollowingArchonGoal(archonLeader, true);
+        navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
     }
 
     public void moveMessageCallback(MapLocation location) {

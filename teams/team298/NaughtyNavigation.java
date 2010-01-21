@@ -10,6 +10,7 @@ public class NaughtyNavigation extends Base {
     public MexicanMessaging messaging;
     public SensationalSensing sensing;
     public NavigationGoal goal;
+    public FollowArchonGoal followArchonGoal;
     public LinkedList<NavigationGoal> goalStack;
 
     public NaughtyNavigation(NovaPlayer player) {
@@ -17,6 +18,7 @@ public class NaughtyNavigation extends Base {
         map = player.map;
         messaging = player.messaging;
         goal = null;
+        followArchonGoal = null;
         goalStack = new LinkedList<NavigationGoal>();
     }
 
@@ -96,15 +98,15 @@ public class NaughtyNavigation extends Base {
     /**
      * Returns location of an Archon Leader who the unit should follow
      */
-    public MapLocation findArchonLeader() {
+    public MapLocation findArchonLeader(int desiredArchonID) {
         MapLocation currentLocation = controller.getLocation();
-        MapLocation[] archonLocations = controller.senseAlliedArchons();
+        MapLocation[] archonLocations = sensing.senseArchonLocations();
         Robot possibleLeader = null;
 
         for (int i = 0; i < archonLocations.length; ++i) {
             try {
                 possibleLeader = controller.senseAirRobotAtLocation(archonLocations[i]);
-                if (possibleLeader.getID() == player.archonLeader) {
+                if (possibleLeader.getID() == desiredArchonID) {
                     return archonLocations[i];
                 }
             } catch (Exception e) {
@@ -336,7 +338,6 @@ public class NaughtyNavigation extends Base {
         if(faceDirection(dir) != Status.success) {
             return Status.fail;
         }
-
         return moveOnce();
     }
 
@@ -349,6 +350,7 @@ public class NaughtyNavigation extends Base {
         yieldMoving();
         try {
             if(controller.canMove(dir)) {
+
                 controller.moveForward();
                 controller.yield();
                 player.pathStepTakenCallback();
@@ -460,7 +462,6 @@ public class NaughtyNavigation extends Base {
     public void changeToArchonGoal(boolean removePreviousGoals) {
         if(goal instanceof ArchonGoal || goal instanceof ArchonGoalWithBugging) return;
         pushGoal(removePreviousGoals);
-        pr("Changing to Archon Goal");
         if(player.isArchon) goal = new ArchonGoal();
         else goal = new ArchonGoalWithBugging();
     }
@@ -479,6 +480,13 @@ public class NaughtyNavigation extends Base {
         if(goal instanceof ClosestTeleporterGoal) return;
         pushGoal(removePreviousGoals);
         goal = new ClosestTeleporterGoal();
+    }
+    
+    public void changeToFollowingArchonGoal(int archonID, boolean removePreviousGoals) {
+        if(goal instanceof FollowArchonGoal) return;
+        pushGoal(removePreviousGoals);
+        followArchonGoal = new FollowArchonGoal(archonID);
+        goal = followArchonGoal;
     }
 
     /**
@@ -542,6 +550,31 @@ public class NaughtyNavigation extends Base {
         public boolean done() {
             completed = completed || controller.getLocation().equals(location);
             return completed;
+        }
+    }
+
+    class FollowArchonGoal extends NavigationGoal {
+        public MapLocation archonLocation;
+        public int archonID;
+
+        public FollowArchonGoal(int archonID) {
+            this.archonID = archonID;
+        }
+        public Direction getDirection() {
+            //archonLocation = findArchonLeader(archonID);
+            Direction dir = controller.getLocation().directionTo(archonLocation);
+            p(dir.toString());
+            //getMoveableDirection(dir);
+            return dir;
+        }
+        public boolean done() {
+            return false;
+        }
+        public void updateArchonGoal(MapLocation location, int archonID) {
+            if (archonID == this.archonID) {
+                archonLocation = location;
+                this.archonID = archonID;
+            } 
         }
     }
 
@@ -659,8 +692,8 @@ public class NaughtyNavigation extends Base {
 
         public Direction getDirectionToGoal() {
             MapLocation location = sensing.senseClosestArchon();
-            pr(location.toString());
-            pr(controller.getLocation().directionTo(location).toString());
+            //pr(location.toString());
+            //pr(controller.getLocation().directionTo(location).toString());
             return controller.getLocation().directionTo(location);
         }
 

@@ -86,9 +86,18 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 break;
             case Goal.attackingEnemyArchons:
-                spawning.changeModeToAttacking();
-                if (spawning.spawnRobot() == Status.success) {
-                    //messaging.sendFollowRequest(controller.senseGroundRobotAtLocation(spawnLocation).getID() , trackingCount);
+                //spawning.changeModeToAttacking();
+                spawning.changeModeToCollectingFlux();
+                //p("Spawning mode changed to collecting flux");
+                int status = spawning.spawnRobot();
+                navigation.changeToMoveableDirectionGoal(true);
+                navigation.moveOnce(false);
+                if (status == Status.success) {
+                    try {
+                        messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
+                    } catch (Exception e) {
+                        pa("----Exception Caught in sendFollowRequest()");
+                    }
                 }
                 break;
             case Goal.movingToTowerSpawnLocation:
@@ -161,14 +170,14 @@ public class ArchonPlayer extends NovaPlayer {
     public void boot() {
         team = controller.getTeam();
         senseArchonNumber();
-        setGoal(Goal.collectingFlux);
-        if(archonNumber < 5) {
+        setGoal(Goal.attackingEnemyArchons);
+        /*if(archonNumber < 5) {
             setGoal(Goal.collectingFlux);
             archonGroup = 1;
         }
         if(archonNumber % 2 == 0) {
             //message to other archon
-        }
+        }*/
 
     }
 
@@ -198,5 +207,10 @@ public class ArchonPlayer extends NovaPlayer {
 
     public void senseNewTiles() {
         sensing.senseDeltas(verticalDeltas, horizontalDeltas, diagonalDeltas);
+    }
+    public boolean pathStepTakenCallback() {
+        senseNewTiles();
+        messaging.sendFollowRequest(controller.getLocation(), BroadcastMessage.everyone);
+        return true;
     }
 }

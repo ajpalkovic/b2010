@@ -12,6 +12,7 @@ public class SporadicSpawning extends Base {
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
     public SpawnMode mode;
+    public MapLocation spawnLocation;
 
     public SporadicSpawning(NovaPlayer player) {
         super(player);
@@ -157,7 +158,7 @@ public class SporadicSpawning extends Base {
 
         //type - true = ground, false = air
         boolean isAirUnit = robot == RobotType.ARCHON;
-        MapLocation spawnLocation = getSpawnLocation(isAirUnit);
+        spawnLocation = getSpawnLocation(isAirUnit);
 
         if(spawnLocation == null) {
             return Status.fail;
