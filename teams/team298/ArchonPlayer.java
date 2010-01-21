@@ -15,6 +15,7 @@ public class ArchonPlayer extends NovaPlayer {
     public SporadicSpawning spawning;
     public int minMoveTurns = 0, moveTurns = 0;
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
+    public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
     public int turnsWaitedForTowerSpawnLocationMessage = 0;
 
@@ -88,6 +89,7 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.attackingEnemyArchons:
                 //spawning.changeModeToAttacking();
                 spawning.changeModeToCollectingFlux();
+                //destinationLocation = new MapLocation(35,23);
                 //p("Spawning mode changed to collecting flux");
                 int status = spawning.spawnRobot();
                 navigation.changeToMoveableDirectionGoal(true);
