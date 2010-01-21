@@ -27,7 +27,7 @@ public class TurretPlayer extends AttackPlayer {
         }
 
         sortEnemies();
-        EnemyInfo enemy = selectEnemy();
+        EnemyInfo enemy = mode.getEnemyToAttack();
         if(enemy != null) {
             // attack
             if(!controller.canAttackSquare(enemy.location)) {
