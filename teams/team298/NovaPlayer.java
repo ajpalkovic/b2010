@@ -14,6 +14,7 @@ public class NovaPlayer extends Base {
     public int currentGoal = 0;
     public int followingArchonNumber = -1;
     public int archonLeader;
+    public boolean hasReceivedUniqueMsg;
 
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
@@ -33,6 +34,7 @@ public class NovaPlayer extends Base {
         oldEnemies = new ArrayList<Integer>();
         oldLocations = new ArrayList<MapLocation>();
         isAirRobot = controller.getRobotType() == RobotType.ARCHON;
+        hasReceivedUniqueMsg = false;
 
         messaging = new MexicanMessaging(this);
         navigation = new NaughtyNavigation(this);
@@ -132,13 +134,13 @@ public class NovaPlayer extends Base {
     /***************************************************************************
      * CALLBACKS
      **************************************************************************/
-    public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon) {
-        archonLeader = idOfSendingArchon;
-        navigation.changeToFollowingArchonGoal(archonLeader, true);
-        if (robot.getID() == 109) {
-            pa("Wierd mutherfluxing thing...it does the message callback" + robot);
+    public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
+        if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
+            hasReceivedUniqueMsg = true;
+            archonLeader = idOfSendingArchon;
+            navigation.changeToFollowingArchonGoal(archonLeader, true);
+            navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
         }
-        navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
     }
 
     public void moveMessageCallback(MapLocation location) {

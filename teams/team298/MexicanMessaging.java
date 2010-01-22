@@ -193,7 +193,7 @@ public class MexicanMessaging extends Base {
                             locationIndex++;
                             break;
                         case BroadcastMessage.followRequest:
-                            player.followRequestMessageCallback(message.locations[locationIndex], senderID);
+                            player.followRequestMessageCallback(message.locations[locationIndex], senderID, recipientId);
                             locationIndex++;
                             break;
                         case BroadcastMessage.support:

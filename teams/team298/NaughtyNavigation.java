@@ -623,13 +623,7 @@ public class NaughtyNavigation extends Base {
                 if (archonLocation == null) {
                     archonLocation = location;
                     archonDirection = controller.getLocation().directionTo(location);
-                    if (robot.getID() == 109) {
-                        pa("Wierd mutherfluxing thing..." + robot);
-                    }
                 } else {
-                    if (robot.getID() == 109) {
-                        pa("Wierd mutherfluxing thing...it actually has an archonLocation" + robot);
-                    }
                     archonDirection = archonLocation.directionTo(location);
                     if (archonDirection == Direction.EAST) {
                         if (controller.getLocation().getX() >= location.getX()) {
@@ -667,7 +661,6 @@ public class NaughtyNavigation extends Base {
                         }
                     } else {
                         // It was none?
-                        pa("No Direction");
                     }
                     archonLocation = location;
                     this.archonID = archonID;
