@@ -34,7 +34,7 @@ public class MapStore {
     }
 
     public boolean onMap(int x, int y) {
-        return !boolMap[x][y];
+        return !boolMap[x%size][y%size];
     }
 
     public boolean onMap(MapLocation location) {
