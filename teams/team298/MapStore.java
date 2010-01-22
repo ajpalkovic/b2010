@@ -8,11 +8,13 @@ public class MapStore {
 
     public TerrainTile[][] map;
     public TerrainType[][] mapType;
+    public boolean[][] boolMap;
 
     public static final int size = 180;
     public MapStore() {
         map = new TerrainTile[size][size];
         mapType = new TerrainType[size][size];
+        boolMap = new boolean[size][size];
     }
 
     public TerrainTile get(int x, int y) {
@@ -32,8 +34,7 @@ public class MapStore {
     }
 
     public boolean onMap(int x, int y) {
-        TerrainType type = getType(x, y);
-        return type == null || type == TerrainType.LAND;
+        return !boolMap[x][y];
     }
 
     public boolean onMap(MapLocation location) {
@@ -45,7 +46,9 @@ public class MapStore {
     }
 
     public void set(int x, int y, TerrainTile tile) {
+        TerrainType type = tile.getType();
         map[x % size][y % size] = tile;
-        mapType[x % size][y % size] = tile.getType();
+        mapType[x % size][y % size] = type;
+        boolMap[x%size][y%size] = type == TerrainType.OFF_MAP || type == TerrainType.VOID;
     }
 }
