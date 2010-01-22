@@ -696,7 +696,7 @@ public class NaughtyNavigation extends Base {
             width = terrain[0].length;
 
             int turn = Clock.getRoundNum();
-            LinkedList<BuggingState> path = planPath();
+            LinkedList<MapLocation> path = planPath();
             int size = path.size();
             int doneTurn = Clock.getRoundNum();
             int turns = (Clock.getRoundNum() - turn);
@@ -709,18 +709,16 @@ public class NaughtyNavigation extends Base {
             return !terrain[x%width][y%height];
         }
 
-        public LinkedList<BuggingState> planPath() {
-            LinkedList<BuggingState> path = new LinkedList<BuggingState>();
+        public LinkedList<MapLocation> planPath() {
+            LinkedList<MapLocation> path = new LinkedList<MapLocation>();
             Direction dir;
-            BuggingState currentState;
             int pathLength = 0;
             currentX = start.getX();
             currentY = start.getY();
             tracing = false;
 
             current = start;
-            currentState = new BuggingState(currentDirection, current);
-            path.add(currentState);
+            path.add(current);
 
             while(true) {
                 if(pathLength > 300) {
@@ -735,12 +733,10 @@ public class NaughtyNavigation extends Base {
 
                 dir = getNextDirection();
 
+                current = current.add(dir);
                 if(dir != currentDirection) {
-                    currentState = new BuggingState(dir, current);
-                    path.add(currentState);
+                    path.add(current);
                 }
-                currentState.count += 1;
-                currentState.end = current = current.add(dir);
                 currentX += dir.dx;
                 currentY += dir.dy;
                 currentDirection = dir;
@@ -751,14 +747,14 @@ public class NaughtyNavigation extends Base {
             return path;
         }
 
-        public void optimizePath(LinkedList<BuggingState> path) {
-            BuggingState start, goal;
+        public void optimizePath(LinkedList<MapLocation> path) {
+            MapLocation start, goal;
             for(int c = 0; c < path.size()-2; c++) {
                 start = path.get(c);
                 goal = path.get(c+2);
 
                 //try to go straight from start to goal
-                if(canGo(start.start, goal.start)) {
+                if(canGo(start, start)) {
                     path.remove(c+1);
                     c--;
                 }
@@ -839,23 +835,6 @@ public class NaughtyNavigation extends Base {
             }
 
             return dir;
-        }
-    }
-
-    class BuggingState {
-        public MapLocation start, end;
-        public Direction dir;
-        public int count;
-
-        public BuggingState (Direction dir, MapLocation start) {
-            count = 0;
-            this.start = start;
-            this.end = start;
-            this.dir = dir;
-        }
-
-        public String toString() {
-            return "\n"+start+" for "+count+" turns in direction "+dir;
         }
     }
 }
