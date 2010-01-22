@@ -12,12 +12,12 @@ public abstract class BendoverBugging extends NavigationGoal {
     public int size, currentX, currentY, maxPath, index, currentPathIndex;
     public boolean tracing, tracingLeft, pathCalculated, bugging;
     public MapLocation[] path;
-    public RobotController _controller;
+    public RobotController robotController;
 
     public abstract MapLocation getGoal();
 
     public BendoverBugging(RobotController controller, MapStore map) {
-        this._controller = controller;
+        this.robotController = controller;
         terrain = map.boolMap;
         size = terrain.length;
 
@@ -32,18 +32,21 @@ public abstract class BendoverBugging extends NavigationGoal {
             return null;
         }
 
+        boolean sameGoal = goal == null || goal.equals(newGoal);
+        goal = newGoal;
+
+        //if we havent resorted to bugging yet, lets at least try to go straight to the goal first
         if(!bugging) {
-            Direction dir = _controller.getLocation().directionTo(newGoal);
-            if(_controller.canMove(dir)) {
+            Direction dir = robotController.getLocation().directionTo(newGoal);
+            if(robotController.canMove(dir)) {
                 return dir;
             }
         }
 
         bugging = true;
-
         if(pathCalculated) {
-            if(!goal.equals(newGoal) && canGo(goal, newGoal)) {
-                goal = newGoal;
+            //if the goal has changed, but the new goal is next to the old goal, then we really dont need to recalculate the path
+            if(!sameGoal && canGo(goal, newGoal)) {
                 path[index - 1] = newGoal;
                 return getNextPathDirection();
             } else {
@@ -56,22 +59,19 @@ public abstract class BendoverBugging extends NavigationGoal {
         }
     }
 
+    /**
+     * This method has to figure out where in the path we are and figure out the next waypoint.
+     * It has to be careful about waypoints that were optimized out.
+     *
+     * TODO: What if we had bad sensor data and the new waypoint is VOID or OFF_MAP, or we just cant get there.
+     */
     public Direction getNextPathDirection() {
-        MapLocation goal = null, start = _controller.getLocation();
-        while(true) {
-            while(currentPathIndex < index && path[currentPathIndex] == null) currentPathIndex++;
-            goal = path[currentPathIndex];
-            if(goal == null) return null;
-            
-            if(goal.equals(start)) {
-                currentPathIndex++;
-            } else {
-                break;
-            }
-        }
+        MapLocation goal = null, start = robotController.getLocation();
 
+        //if we are not out of bounds, if the current path index has been optimized out, or the current path index is the start location, then we can advanced the waypoint
+        while(currentPathIndex < index && (path[currentPathIndex] == null || path[currentPathIndex].equals(start))) currentPathIndex++;
+        if((goal = path[currentPathIndex]) == null) return null;
         return getMoveableDirection(start.directionTo(goal));
-
     }
 
     /**
@@ -82,17 +82,17 @@ public abstract class BendoverBugging extends NavigationGoal {
             return null;
         }
         Direction leftDir = dir, rightDir = dir;
-        if(_controller.canMove(dir)) {
+        if(robotController.canMove(dir)) {
             return dir;
         } else {
             for(int d = 0; d < 3; d++) {
                 leftDir = leftDir.rotateLeft();
                 rightDir = rightDir.rotateRight();
 
-                if(_controller.canMove(leftDir)) {
+                if(robotController.canMove(leftDir)) {
                     return leftDir;
                 }
-                if(_controller.canMove(rightDir)) {
+                if(robotController.canMove(rightDir)) {
                     return rightDir;
                 }
             }
@@ -100,13 +100,16 @@ public abstract class BendoverBugging extends NavigationGoal {
         return null;
     }
 
+    /**
+     * This method is used for path planning, when we cant sense far enough away.
+     */
     public boolean canMove(int x, int y) {
         return !terrain[x % size][y % size];
     }
 
     public void planPath() {
         goal = getGoal();
-        currentDirection = _controller.getDirection();
+        currentDirection = robotController.getDirection();
         pathCalculated = true;
 
         Direction dir;
@@ -115,7 +118,7 @@ public abstract class BendoverBugging extends NavigationGoal {
         currentPathIndex = 0;
         int pathLength = 1;
 
-        path[0] = current = _controller.getLocation();
+        path[0] = current = robotController.getLocation();
         currentX = current.getX();
         currentY = current.getY();
 
