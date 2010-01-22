@@ -683,45 +683,47 @@ public class NaughtyNavigation extends Base {
         public boolean[][] terrain;
         public MapLocation goal, start, current;
         public Direction currentDirection, originalDirection;
-        public int width, height, currentX, currentY;
+        public int size, currentX, currentY, maxPath, index;
         public boolean tracing, tracingLeft;
+        public MapLocation[] path;
 
         public BugPlanner(MapLocation goal) {
             this.goal = goal;
             start = controller.getLocation();
             currentDirection = controller.getDirection();
             terrain = map.boolMap;
-            
-            height = terrain.length;
-            width = terrain[0].length;
+            size = terrain.length;
+
+            maxPath = 300;
+            index = 0;
+            path = new MapLocation[maxPath];
+
 
             int turn = Clock.getRoundNum();
-            LinkedList<MapLocation> path = planPath();
-            int size = path.size();
-            int doneTurn = Clock.getRoundNum();
-            int turns = (Clock.getRoundNum() - turn);
-            optimizePath(path);
+            planPath();
+            int doneTurn = Clock.getRoundNum(), turns = (Clock.getRoundNum() - turn);
+            int osize = optimizePath();
             int oturns = Clock.getRoundNum() - doneTurn;
-            System.out.println("Path took: "+turns+".  Optimization took: "+oturns+"  OriginalSize:  "+size+"  OptimizedSize:  "+path.size());
+            System.out.println("Path took: "+turns+".  Optimization took: "+oturns+"  OriginalSize:  "+index+"  OptimizedSize:  "+osize);
         }
 
         public boolean canMove(int x, int y) {
-            return !terrain[x%width][y%height];
+            return !terrain[x%size][y%size];
         }
 
-        public LinkedList<MapLocation> planPath() {
-            LinkedList<MapLocation> path = new LinkedList<MapLocation>();
+        public void planPath() {
             Direction dir;
-            int pathLength = 0;
+            int pathLength = 1;
             currentX = start.getX();
             currentY = start.getY();
             tracing = false;
 
             current = start;
-            path.add(current);
+            path[index] = current;
+            index++;
 
             while(true) {
-                if(pathLength > 300) {
+                if(pathLength >= maxPath) {
                     System.out.println("Path to big");
                     break;
                 }
@@ -735,7 +737,8 @@ public class NaughtyNavigation extends Base {
 
                 current = current.add(dir);
                 if(dir != currentDirection) {
-                    path.add(current);
+                    path[index] = current;
+                    index++;
                 }
                 currentX += dir.dx;
                 currentY += dir.dy;
@@ -743,22 +746,27 @@ public class NaughtyNavigation extends Base {
 
                 pathLength++;
             }
-
-            return path;
         }
 
-        public void optimizePath(LinkedList<MapLocation> path) {
+        public int optimizePath() {
             MapLocation start, goal;
-            for(int c = 0; c < path.size()-2; c++) {
-                start = path.get(c);
-                goal = path.get(c+2);
+
+            int osize = index;
+            int waypointIndex = 1;
+            start = path[0];
+            for(int c = 0; c < index-2; c++) {
+                goal = path[waypointIndex+1];
 
                 //try to go straight from start to goal
-                if(canGo(start, start)) {
-                    path.remove(c+1);
-                    c--;
+                if(canGo(start, goal)) {
+                    path[waypointIndex] = null;
+                    osize--;
+                } else {
+                    start = path[waypointIndex];
                 }
+                waypointIndex++;
             }
+            return osize;
         }
 
         public boolean canGo(MapLocation start, MapLocation goal) {
