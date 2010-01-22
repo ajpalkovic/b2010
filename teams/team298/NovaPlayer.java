@@ -135,6 +135,9 @@ public class NovaPlayer extends Base {
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon) {
         archonLeader = idOfSendingArchon;
         navigation.changeToFollowingArchonGoal(archonLeader, true);
+        if (robot.getID() == 109) {
+            pa("Wierd mutherfluxing thing...it does the message callback" + robot);
+        }
         navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
     }
 

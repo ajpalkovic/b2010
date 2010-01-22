@@ -240,6 +240,30 @@ public class NaughtyNavigation extends Base {
         return null;
     }
 
+    public Direction getMoveableArchonDirection(Direction dir) {
+        //pa("getMoveableArchonDirection() called");
+        if (dir == null) {
+            return null;
+        }
+        Direction leftDir = dir, rightDir = dir;
+        if (controller.canMove(dir) && map.onMap(controller.getLocation().add(dir))) {
+            return dir;
+        } else {
+            for (int d = 0; d < 3; d++) {
+                leftDir = leftDir.rotateLeft();
+                rightDir = rightDir.rotateRight();
+
+                if (controller.canMove(leftDir) && map.onMap(controller.getLocation().add(leftDir))) {
+                    return leftDir;
+                }
+                if (controller.canMove(rightDir) && map.onMap(controller.getLocation().add(rightDir))) {
+                    return rightDir;
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Returns an array of the 8 map locations around a robot.  These are sorted so
      * that the first location is the one the robot is facing, and then the 2 next to
@@ -547,7 +571,7 @@ public class NaughtyNavigation extends Base {
     class MoveableDirectionGoal extends NavigationGoal {
 
         public Direction getDirection() {
-            return getMoveableDirection(controller.getDirection());
+            return getMoveableArchonDirection(controller.getDirection());
         }
 
         public boolean done() {
@@ -599,44 +623,51 @@ public class NaughtyNavigation extends Base {
                 if (archonLocation == null) {
                     archonLocation = location;
                     archonDirection = controller.getLocation().directionTo(location);
+                    if (robot.getID() == 109) {
+                        pa("Wierd mutherfluxing thing..." + robot);
+                    }
                 } else {
+                    if (robot.getID() == 109) {
+                        pa("Wierd mutherfluxing thing...it actually has an archonLocation" + robot);
+                    }
                     archonDirection = archonLocation.directionTo(location);
                     if (archonDirection == Direction.EAST) {
                         if (controller.getLocation().getX() >= location.getX()) {
-                            archonDirection = Direction.WEST;
+                            archonDirection = null;
                         }
                     } else if (archonDirection == Direction.NORTH) {
                         if (controller.getLocation().getY() <= location.getY()) {
-                            archonDirection = Direction.SOUTH;
+                            archonDirection = null;
                         }
                     } else if (archonDirection == Direction.NORTH_EAST) {
                         if (controller.getLocation().getY() <= location.getY() && controller.getLocation().getX() >= location.getX()) {
-                            archonDirection = Direction.SOUTH_WEST;
+                            archonDirection = null;
                         }
                     } else if (archonDirection == Direction.NORTH_WEST) {
                         if (controller.getLocation().getY() <= location.getY() && controller.getLocation().getX() <= location.getX()) {
-                            archonDirection = Direction.SOUTH_EAST;
+                            archonDirection = null;
                         }
                     } else if (archonDirection == Direction.OMNI) {
-                        // I have no idea...
+                        archonDirection = null;
                     } else if (archonDirection == Direction.SOUTH) {
                         if (controller.getLocation().getY() >= location.getY()) {
-                            archonDirection = Direction.NORTH;
+                            archonDirection = null;
                         }
                     } else if (archonDirection == Direction.SOUTH_EAST) {
                         if (controller.getLocation().getY() >= location.getY() && controller.getLocation().getX() >= location.getX()) {
-                            archonDirection = Direction.NORTH_WEST;
+                            archonDirection = null;
                         }
                     } else if (archonDirection == Direction.SOUTH_WEST) {
-                        if (controller.getLocation().getY() <= location.getY() && controller.getLocation().getX() <= location.getX()) {
-                            archonDirection = Direction.NORTH_EAST;
+                        if (controller.getLocation().getY() >= location.getY() && controller.getLocation().getX() <= location.getX()) {
+                            archonDirection = null;
                         }
                     } else if (archonDirection == Direction.WEST) {
                         if (controller.getLocation().getX() <= location.getX()) {
-                            archonDirection = Direction.EAST;
+                            archonDirection = null;
                         }
                     } else {
                         // It was none?
+                        pa("No Direction");
                     }
                     archonLocation = location;
                     this.archonID = archonID;
