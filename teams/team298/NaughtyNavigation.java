@@ -638,6 +638,7 @@ public class NaughtyNavigation extends Base {
 
         public Direction getDirectionToGoal() {
             MapLocation location = sensing.senseClosestArchon();
+            new BugPlanner(location);
             pr(location.toString());
             pr(controller.getLocation().directionTo(location).toString());
             return controller.getLocation().directionTo(location);
@@ -675,6 +676,161 @@ public class NaughtyNavigation extends Base {
                 return true;
 
             return false;
+        }
+    }
+
+    class BugPlanner {
+        public boolean[][] terrain;
+        public MapLocation goal, start, current;
+        public Direction currentDirection, originalDirection;
+        public int width, height, currentX, currentY;
+        public boolean tracing, tracingLeft;
+
+        public BugPlanner(MapLocation goal) {
+            this.goal = goal;
+            start = controller.getLocation();
+            currentDirection = controller.getDirection();
+            terrain = map.boolMap;
+            
+            height = terrain.length;
+            width = terrain[0].length;
+
+            int turn = Clock.getRoundNum();
+            LinkedList<BuggingState> path = planPath();
+            int turns = (Clock.getRoundNum() - turn);
+            if(turns > 0)
+                System.out.println("Path took: "+turns+"   "+path.size());
+        }
+
+        public boolean canMove(int x, int y) {
+            return !terrain[x%width][y%height];
+        }
+
+        public LinkedList<BuggingState> planPath() {
+            LinkedList<BuggingState> path = new LinkedList<BuggingState>();
+            Direction dir;
+            BuggingState currentState;
+            int pathLength = 0;
+            currentX = start.getX();
+            currentY = start.getY();
+            tracing = false;
+
+            current = start;
+            currentState = new BuggingState(currentDirection, current);
+            path.add(currentState);
+
+            while(true) {
+                if(pathLength > 300) {
+                    System.out.println("Path to big");
+                    break;
+                }
+
+                if(current.equals(goal)) {
+                    //System.out.println("Arrived");
+                    break;
+                }
+
+                dir = getNextDirection();
+
+                if(dir != currentDirection) {
+                    currentState = new BuggingState(dir, current);
+                    path.add(currentState);
+                }
+                currentState.count += 1;
+                currentState.end = current = current.add(dir);
+                currentX += dir.dx;
+                currentY += dir.dy;
+                currentDirection = dir;
+
+                pathLength++;
+            }
+
+            return path;
+        }
+
+        public Direction getDirectionToGoal() {
+            return current.directionTo(goal);
+        }
+
+        public Direction getNextDirection() {
+            Direction dir = getDirectionToGoal();
+            int x, y;
+            if(tracing) {
+                dir = tryToUndoTrace(currentDirection);
+                x = currentX + dir.dx;
+                y = currentY + dir.dy;
+                if(!canMove(x, y)) {
+                    dir = getInitialTracingDirection(dir);
+                }
+                return dir;
+            } else {
+                x = currentX + dir.dx;
+                y = currentY + dir.dy;
+                if(canMove(x, y)) {
+                    return dir;
+                } else {
+                    tracing = true;
+                    originalDirection = dir;
+                    tracingLeft = !(dir == Direction.NORTH || dir == Direction.NORTH_EAST || dir == Direction.EAST || dir == Direction.SOUTH_WEST);
+                    dir = getInitialTracingDirection(dir);
+                    return dir;
+                }
+            }
+        }
+
+        public Direction getInitialTracingDirection(Direction dir) {
+            int x, y;
+            for(int c = 0; c < 8; c++) {
+                x = currentX + dir.dx;
+                y = currentY + dir.dy;
+                if(!canMove(x, y)) {
+                    dir = tracingLeft ? dir.rotateLeft() : dir.rotateRight();
+                } else {
+                    return dir;
+                }
+            }
+
+            return null;
+        }
+
+        public Direction tryToUndoTrace(Direction dir) {
+            Direction tmp;
+            int x, y;
+
+            for(int c = 0; c < 8; c++) {
+                tmp = tracingLeft ? dir.rotateRight() : dir.rotateLeft();
+                x = currentX + tmp.dx;
+                y = currentY + tmp.dy;
+
+                if(canMove(x, y)) {
+                    if(tmp == originalDirection) {
+                        tracing = false;
+                        return tmp;
+                    }
+                    dir = tmp;
+                } else {
+                    return dir;
+                }
+            }
+
+            return dir;
+        }
+    }
+
+    class BuggingState {
+        public MapLocation start, end;
+        public Direction dir;
+        public int count;
+
+        public BuggingState (Direction dir, MapLocation start) {
+            count = 0;
+            this.start = start;
+            this.end = start;
+            this.dir = dir;
+        }
+
+        public String toString() {
+            return "\n"+start+" for "+count+" turns in direction "+dir;
         }
     }
 }
