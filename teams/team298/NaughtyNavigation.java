@@ -697,9 +697,12 @@ public class NaughtyNavigation extends Base {
 
             int turn = Clock.getRoundNum();
             LinkedList<BuggingState> path = planPath();
+            int size = path.size();
+            int doneTurn = Clock.getRoundNum();
             int turns = (Clock.getRoundNum() - turn);
-            if(turns > 0)
-                System.out.println("Path took: "+turns+"   "+path.size());
+            optimizePath(path);
+            int oturns = Clock.getRoundNum() - doneTurn;
+            System.out.println("Path took: "+turns+".  Optimization took: "+oturns+"  OriginalSize:  "+size+"  OptimizedSize:  "+path.size());
         }
 
         public boolean canMove(int x, int y) {
@@ -746,6 +749,28 @@ public class NaughtyNavigation extends Base {
             }
 
             return path;
+        }
+
+        public void optimizePath(LinkedList<BuggingState> path) {
+            BuggingState start, goal;
+            for(int c = 0; c < path.size()-2; c++) {
+                start = path.get(c);
+                goal = path.get(c+2);
+
+                //try to go straight from start to goal
+                if(canGo(start.start, goal.start)) {
+                    path.remove(c+1);
+                    c--;
+                }
+            }
+        }
+
+        public boolean canGo(MapLocation start, MapLocation goal) {
+            while(!start.equals(goal)) {
+                start = start.add(start.directionTo(goal));
+                if(!canMove(start.getX(), start.getY())) return false;
+            }
+            return true;
         }
 
         public Direction getDirectionToGoal() {
