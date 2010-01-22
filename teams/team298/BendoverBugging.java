@@ -5,64 +5,128 @@ import static battlecode.common.GameConstants.*;
 import java.util.*;
 
 public abstract class BendoverBugging extends NavigationGoal {
+
     public boolean[][] terrain;
-    public MapLocation goal, start, current;
+    public MapLocation goal, current;
     public Direction currentDirection, originalDirection;
-    public int size, currentX, currentY, maxPath, index;
-    public boolean tracing, tracingLeft;
+    public int size, currentX, currentY, maxPath, index, currentPathIndex;
+    public boolean tracing, tracingLeft, pathCalculated, bugging;
     public MapLocation[] path;
     public RobotController _controller;
 
     public abstract MapLocation getGoal();
-    
-    public BendoverBugging(RobotController controller, MapLocation goal, MapStore map) {
-        this.goal = goal;
+
+    public BendoverBugging(RobotController controller, MapStore map) {
         this._controller = controller;
-        this.start = controller.getLocation();
-        this.currentDirection = controller.getDirection();
         terrain = map.boolMap;
         size = terrain.length;
 
-        maxPath = 300;
-        index = 0;
+        maxPath = 50;
+        bugging = pathCalculated = tracing = tracingLeft = false;
         path = new MapLocation[maxPath];
-
-
-        //int turn = Clock.getRoundNum();
-        planPath();
-        //int doneTurn = Clock.getRoundNum(), turns = (Clock.getRoundNum() - turn);
-        int osize = optimizePath();
-        //int oturns = Clock.getRoundNum() - doneTurn;
-        //System.out.println("Path took: "+turns+".  Optimization took: "+oturns+"  OriginalSize:  "+index+"  OptimizedSize:  "+osize);
     }
 
     public Direction getDirection() {
+        MapLocation newGoal = getGoal();
+        if(newGoal == null) {
+            return null;
+        }
+
+        if(!bugging) {
+            Direction dir = _controller.getLocation().directionTo(newGoal);
+            if(_controller.canMove(dir)) {
+                return dir;
+            }
+        }
+
+        bugging = true;
+
+        if(pathCalculated) {
+            if(!goal.equals(newGoal) && canGo(goal, newGoal)) {
+                goal = newGoal;
+                path[index - 1] = newGoal;
+                return getNextPathDirection();
+            } else {
+                planPath();
+                return getNextPathDirection();
+            }
+        } else {
+            planPath();
+            return getNextPathDirection();
+        }
+    }
+
+    public Direction getNextPathDirection() {
+        MapLocation goal = null, start = _controller.getLocation();
+        while(true) {
+            while(currentPathIndex < index && path[currentPathIndex] == null) currentPathIndex++;
+            goal = path[currentPathIndex];
+            if(goal == null) return null;
+            
+            if(goal.equals(start)) {
+                currentPathIndex++;
+            } else {
+                break;
+            }
+        }
+
+        return getMoveableDirection(start.directionTo(goal));
+
+    }
+
+    /**
+     * Returns the first direction that the robot can move in, starting with the given direction.
+     */
+    public Direction getMoveableDirection(Direction dir) {
+        if(dir == null) {
+            return null;
+        }
+        Direction leftDir = dir, rightDir = dir;
+        if(_controller.canMove(dir)) {
+            return dir;
+        } else {
+            for(int d = 0; d < 3; d++) {
+                leftDir = leftDir.rotateLeft();
+                rightDir = rightDir.rotateRight();
+
+                if(_controller.canMove(leftDir)) {
+                    return leftDir;
+                }
+                if(_controller.canMove(rightDir)) {
+                    return rightDir;
+                }
+            }
+        }
         return null;
     }
 
     public boolean canMove(int x, int y) {
-        return !terrain[x%size][y%size];
+        return !terrain[x % size][y % size];
     }
 
     public void planPath() {
-        Direction dir;
-        int pathLength = 1;
-        currentX = start.getX();
-        currentY = start.getY();
-        tracing = false;
+        goal = getGoal();
+        currentDirection = _controller.getDirection();
+        pathCalculated = true;
 
-        current = start;
-        path[index] = current;
-        index++;
+        Direction dir;
+        tracing = false;
+        index = 1;
+        currentPathIndex = 0;
+        int pathLength = 1;
+
+        path[0] = current = _controller.getLocation();
+        currentX = current.getX();
+        currentY = current.getY();
 
         while(true) {
-            if(pathLength >= maxPath) {
-                System.out.println("Path to big");
+            if(current.equals(goal)) {
+                //System.out.println("Arrived");
                 break;
             }
 
-            if(current.equals(goal)) {
-                //System.out.println("Arrived");
+            if(pathLength >= maxPath) {
+                System.out.println("Path to big");
                 break;
             }
 
@@ -79,6 +143,8 @@ public abstract class BendoverBugging extends NavigationGoal {
 
             pathLength++;
         }
+
+        optimizePath();
     }
 
     public int optimizePath() {
@@ -87,8 +153,8 @@ public abstract class BendoverBugging extends NavigationGoal {
         int osize = index;
         int waypointIndex = 1;
         start = path[0];
-        for(int c = 0; c < index-2; c++) {
-            goal = path[waypointIndex+1];
+        for(int c = 0; c < index - 2; c++) {
+            goal = path[waypointIndex + 1];
 
             //try to go straight from start to goal
             if(canGo(start, goal)) {
@@ -105,7 +171,9 @@ public abstract class BendoverBugging extends NavigationGoal {
     public boolean canGo(MapLocation start, MapLocation goal) {
         while(!start.equals(goal)) {
             start = start.add(start.directionTo(goal));
-            if(!canMove(start.getX(), start.getY())) return false;
+            if(!canMove(start.getX(), start.getY())) {
+                return false;
+            }
         }
         return true;
     }

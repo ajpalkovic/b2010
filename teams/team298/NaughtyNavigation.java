@@ -586,7 +586,7 @@ public class NaughtyNavigation extends Base {
         public MapLocation location;
 
         public LocationGoalWithBugPlanning(MapLocation location) {
-            super(controller, location, map);
+            super(controller, map);
             this.location = location;
         }
 
@@ -602,7 +602,7 @@ public class NaughtyNavigation extends Base {
 
     class ArchonGoalWithBugPlanning extends BendoverBugging {
         public ArchonGoalWithBugPlanning() {
-            super(controller, sensing.senseClosestArchon(), map);
+            super(controller, map);
         }
 
         public MapLocation getGoal() {
