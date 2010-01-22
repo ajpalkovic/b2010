@@ -107,6 +107,9 @@ public abstract class BendoverBugging extends NavigationGoal {
         return !terrain[x % size][y % size];
     }
 
+    /**
+     * This method computes the path that a bugging algorithm would normally take.
+     */
     public void planPath() {
         goal = getGoal();
         currentDirection = robotController.getDirection();
@@ -136,6 +139,8 @@ public abstract class BendoverBugging extends NavigationGoal {
             dir = getNextDirection();
 
             current = current.add(dir);
+
+            //we only need to store waypoints, which is when the robot changes direction
             if(dir != currentDirection) {
                 path[index] = current;
                 index++;
@@ -150,13 +155,21 @@ public abstract class BendoverBugging extends NavigationGoal {
         optimizePath();
     }
 
+    /**
+     * This method removes unnecessary waypoints.
+     * It looks at each set of three consecutive waypoints and sees if it can get to the waypoint
+     * using a greedy algorithm.
+     * If it can, then that waypoint is set to null.
+     */
     public int optimizePath() {
         MapLocation start, goal;
 
         int osize = index;
         int waypointIndex = 1;
         start = path[0];
+
         for(int c = 0; c < index - 2; c++) {
+            //the goal will always be the MapLocation immediately after the waypoint
             goal = path[waypointIndex + 1];
 
             //try to go straight from start to goal
@@ -164,13 +177,21 @@ public abstract class BendoverBugging extends NavigationGoal {
                 path[waypointIndex] = null;
                 osize--;
             } else {
+                //since we cant go directly from start to goal, we cannot get rid of the waypoint
+                //so, lets make this waypoint the new start and continue
                 start = path[waypointIndex];
             }
+
+            //always advance to the next waypoint
             waypointIndex++;
         }
         return osize;
     }
 
+    /**
+     * Uses a greedy algorithm to determine if we can get from start to goal.
+     * It just continually uses location.directionTo.
+     */
     public boolean canGo(MapLocation start, MapLocation goal) {
         while(!start.equals(goal)) {
             start = start.add(start.directionTo(goal));
@@ -181,12 +202,17 @@ public abstract class BendoverBugging extends NavigationGoal {
         return true;
     }
 
-    public Direction getDirectionToGoal() {
-        return current.directionTo(goal);
-    }
-
+    /**
+     * Returns the next step that the bugging algorithm would take.
+     * It tries to move directly to the goal.
+     * If that is not available then it begins to trace.
+     * Tracing means that it will try to turn all the way in one direction, say right, until it can no longer move forward.
+     * Then, each step it will try to undo the trace by moving left as much as it can.
+     * Tracing continues until the robot has returned to its original direction.
+     * TODO: Fix this for robots that get stuck in an infinite loop.
+     */
     public Direction getNextDirection() {
-        Direction dir = getDirectionToGoal();
+        Direction dir = current.directionTo(goal);
         int x, y;
         if(tracing) {
             dir = tryToUndoTrace(currentDirection);
@@ -211,6 +237,11 @@ public abstract class BendoverBugging extends NavigationGoal {
         }
     }
 
+    /**
+     * We can 'simulate' turning as far right as possible, but just turning left until we hit the first obstacle.
+     * That is what this method does.
+     * It returns the direction in which bug-tracing should start.
+     */
     public Direction getInitialTracingDirection(Direction dir) {
         int x, y;
         for(int c = 0; c < 8; c++) {
@@ -226,6 +257,9 @@ public abstract class BendoverBugging extends NavigationGoal {
         return null;
     }
 
+    /**
+     * Returns the direction in which the robot should move, trying to rotate the robot in the opposite direction from the initial trace.
+     */
     public Direction tryToUndoTrace(Direction dir) {
         Direction tmp;
         int x, y;
