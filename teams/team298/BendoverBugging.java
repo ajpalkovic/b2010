@@ -132,7 +132,7 @@ public abstract class BendoverBugging extends NavigationGoal {
             }
 
             if(pathLength >= maxPath) {
-                System.out.println("Path to big");
+                //System.out.println("Path to big");
                 break;
             }
 
