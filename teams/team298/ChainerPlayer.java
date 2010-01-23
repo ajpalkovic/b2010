@@ -14,6 +14,7 @@ public class ChainerPlayer extends AttackPlayer {
 
     public void step() {
         MapLocation location = sensing.senseClosestArchon();
+        if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());
 
         //if the robot goes to get energon, then we need to save the followArchon goal for later
@@ -53,7 +54,7 @@ public class ChainerPlayer extends AttackPlayer {
                 processEnemies();
             }
             int status = executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
-            if(status == Status.success) p("take that bitch");
+            //if(status == Status.success) p("take that bitch");
             processEnemies();
             attackLocation = enemy.location;
         } else {

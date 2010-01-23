@@ -57,7 +57,6 @@ public class EnergeticEnergon extends Base {
      * Auto energon transfers
      */
     public void autoTransferEnergon() {
-        //p("auto transfer energon");
         ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
         for(RobotInfo robot : robots) {
             if(robot.type.isBuilding()) continue;
@@ -211,7 +210,8 @@ public class EnergeticEnergon extends Base {
      */
     public void processEnergonTransferRequests() {
         double amount = controller.getEnergonLevel();
-        if(amount < 5) return;
+        double maxToGive = amount - 5;
+        if(maxToGive < 0) return;
 
         if(player.isArchon) {
             autoTransferEnergon();
@@ -226,12 +226,13 @@ public class EnergeticEnergon extends Base {
             }
 
             double percent = 1;
-            if(amount - 5 < sum) {
-                percent = (sum) / (amount - 5);
+            if(maxToGive < sum) {
+                percent = maxToGive / sum;
             }
 
-            //p("sum: "+sum+" percent: "+percent+" amount: "+amount);
+            //pr("sum: "+sum+" percent: "+percent+" amount: "+amount);
             for(EnergonTransferRequest request : requests) {
+                //pr(request.amount+"  "+(request.amount * percent)+"  "+request.location+"  "+request.isAirUnit);
                 int result = transferEnergon(request.amount * percent, request.location, request.isAirUnit);
             }
 
