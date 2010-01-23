@@ -6,17 +6,22 @@ import java.util.*;
 
 public class ChainerPlayer extends AttackPlayer {
 
+    public NavigationGoal prevGoal;
+    
     public ChainerPlayer(RobotController controller) {
         super(controller);
-
     }
 
     public void step() {
         MapLocation location = sensing.senseClosestArchon();
         int distance = location.distanceSquaredTo(controller.getLocation());
 
+        //if the robot goes to get energon, then we need to save the followArchon goal for later
+        if(prevGoal != null) prevGoal = navigation.goal;
+        
         if(energon.isEnergonLow() || energon.isFluxFull() || distance > 34) {
             navigation.changeToArchonGoal(true);
+            ignoreFollowRequest = true;
             if(distance < 3) {
                 energon.requestEnergonTransfer();
                 controller.yield();
@@ -25,6 +30,10 @@ public class ChainerPlayer extends AttackPlayer {
             }
             return;
         }
+
+        if(prevGoal != null) navigation.goal = prevGoal;
+        prevGoal = null;
+        ignoreFollowRequest = false;
 
         processEnemies();
         sortEnemies();
@@ -45,7 +54,7 @@ public class ChainerPlayer extends AttackPlayer {
                     moveToAttack();
                 }
             } else {
-                navigation.changeToMoveableDirectionGoal(true);
+                //navigation.changeToMoveableDirectionGoal(true);
                 navigation.moveOnce(true);
             }
         }

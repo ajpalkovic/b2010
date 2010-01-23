@@ -6,6 +6,7 @@ import java.util.*;
 
 public class SporadicSpawning extends Base {
 
+    public static Random gen = new Random();
     public MapStore map;
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
@@ -13,6 +14,7 @@ public class SporadicSpawning extends Base {
     public EnergeticEnergon energon;
     public SpawnMode mode;
     public MapLocation spawnLocation;
+    public RobotType previousSpawnType;
 
     public SporadicSpawning(NovaPlayer player) {
         super(player);
@@ -169,6 +171,7 @@ public class SporadicSpawning extends Base {
         //check the 8 tiles around me for a spawn location
         try {
             if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), isAirUnit)) {
+                previousSpawnType = robot;
                 controller.spawn(robot);
                 controller.yield();
 
@@ -213,15 +216,15 @@ public class SporadicSpawning extends Base {
     }
 
     class AttackingSpawnMode extends SpawnMode {
+        
         public RobotType getNextRobotSpawnType() {
-            return RobotType.CHAINER;
+            return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
         }
     }
 
     class CollectingFluxSpawnMode extends SpawnMode {
         public RobotType getNextRobotSpawnType() {
-            Random gen = new Random();
-            return gen.nextBoolean() ? RobotType.WOUT : RobotType.CHAINER;
+            return RobotType.WOUT;
         }
     }
 

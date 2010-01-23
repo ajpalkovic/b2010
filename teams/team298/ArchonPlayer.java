@@ -22,7 +22,7 @@ public class ArchonPlayer extends NovaPlayer {
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
-        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 2;
+        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 5;
     }
 
     public void step() {
@@ -31,18 +31,37 @@ public class ArchonPlayer extends NovaPlayer {
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
-                spawning.changeModeToCollectingFlux();
-                navigation.changeToMoveableDirectionGoal(true);
-                sensing.senseAlliedTeleporters();
-                spawning.spawnRobot();
+                if(false) {
+                    spawning.changeModeToCollectingFlux();
+                    navigation.changeToMoveableDirectionGoal(true);
+                } else {
+                    navigation.changeToMoveableDirectionGoal(true);
+                    spawning.changeModeToAttacking();
+                }
+
+                //add a small delay to archon movement so the other dudes can keep up
                 if(moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0) {
                     navigation.moveOnce(true);
                     moveTurns = 0;
                 }
+
+                //try to spawn a new dude every turn
+                int status = spawning.spawnRobot();
+                if (status == Status.success) {
+                    try {
+                        messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
+                    } catch (Exception e) {
+                        pa("----Exception Caught in sendFollowRequest()");
+                    }
+                }
+
+                //try to spawn a tower every turn
+                sensing.senseAlliedTeleporters();
                 if(spawning.canSupportTower(RobotType.TELEPORTER)) {
                     //System.out.println("Can support it");
                     placeTower();
                 }
+
                 moveTurns++;
                 break;
             case Goal.askingForTowerLocation:
@@ -87,20 +106,7 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 break;
             case Goal.attackingEnemyArchons:
-                spawning.changeModeToAttacking();
-                //spawning.changeModeToCollectingFlux();
-                //destinationLocation = new MapLocation(35,23);
-                //p("Spawning mode changed to collecting flux");
-                int status = spawning.spawnRobot();
-                navigation.changeToMoveableDirectionGoal(true);
-                navigation.moveOnce(false);
-                if (status == Status.success) {
-                    try {
-                        messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
-                    } catch (Exception e) {
-                        pa("----Exception Caught in sendFollowRequest()");
-                    }
-                }
+                setGoal(Goal.collectingFlux);
                 break;
             case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
@@ -173,13 +179,11 @@ public class ArchonPlayer extends NovaPlayer {
         team = controller.getTeam();
         senseArchonNumber();
         setGoal(Goal.attackingEnemyArchons);
-        /*if(archonNumber < 5) {
-            setGoal(Goal.collectingFlux);
-            archonGroup = 1;
+        if(archonNumber == 1) {
+
+        } else {
+
         }
-        if(archonNumber % 2 == 0) {
-            //message to other archon
-        }*/
 
     }
 
@@ -210,6 +214,7 @@ public class ArchonPlayer extends NovaPlayer {
     public void senseNewTiles() {
         sensing.senseDeltas(verticalDeltas, horizontalDeltas, diagonalDeltas);
     }
+    
     public boolean pathStepTakenCallback() {
         senseNewTiles();
         messaging.sendFollowRequest(controller.getLocation(), BroadcastMessage.everyone);
