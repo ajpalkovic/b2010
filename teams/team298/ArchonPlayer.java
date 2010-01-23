@@ -87,8 +87,8 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 break;
             case Goal.attackingEnemyArchons:
-                //spawning.changeModeToAttacking();
-                spawning.changeModeToCollectingFlux();
+                spawning.changeModeToAttacking();
+                //spawning.changeModeToCollectingFlux();
                 //destinationLocation = new MapLocation(35,23);
                 //p("Spawning mode changed to collecting flux");
                 int status = spawning.spawnRobot();

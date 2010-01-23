@@ -214,7 +214,7 @@ public class SporadicSpawning extends Base {
 
     class AttackingSpawnMode extends SpawnMode {
         public RobotType getNextRobotSpawnType() {
-            return RobotType.TURRET;
+            return RobotType.CHAINER;
         }
     }
 
