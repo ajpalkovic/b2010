@@ -21,7 +21,7 @@ public abstract class BendoverBugging extends NavigationGoal {
         terrain = map.boolMap;
         size = terrain.length;
 
-        maxPath = 50;
+        maxPath = 25;
         bugging = pathCalculated = tracing = tracingLeft = false;
         path = new MapLocation[maxPath];
     }
@@ -48,14 +48,14 @@ public abstract class BendoverBugging extends NavigationGoal {
             //if the goal has changed, but the new goal is next to the old goal, then we really dont need to recalculate the path
             if(!sameGoal && canGo(goal, newGoal)) {
                 path[index - 1] = newGoal;
-                return getNextPathDirection();
+                return getNextPathDirection(false);
             } else {
                 planPath();
-                return getNextPathDirection();
+                return getNextPathDirection(false);
             }
         } else {
             planPath();
-            return getNextPathDirection();
+            return getNextPathDirection(false);
         }
     }
 
@@ -65,11 +65,18 @@ public abstract class BendoverBugging extends NavigationGoal {
      *
      * TODO: What if we had bad sensor data and the new waypoint is VOID or OFF_MAP, or we just cant get there.
      */
-    public Direction getNextPathDirection() {
+    public Direction getNextPathDirection(boolean recurse) {
         MapLocation goal = null, start = robotController.getLocation();
 
         //if we are not out of bounds, if the current path index has been optimized out, or the current path index is the start location, then we can advanced the waypoint
         while(currentPathIndex < index && (path[currentPathIndex] == null || path[currentPathIndex].equals(start))) currentPathIndex++;
+        if(currentPathIndex >= index) {
+            if(recurse) return null;
+            //we have run out of path
+            planPath();
+            //we should really watch out for infinite recursion here
+            return getNextPathDirection(true);
+        }
         if((goal = path[currentPathIndex]) == null) return null;
         return getMoveableDirection(start.directionTo(goal));
     }

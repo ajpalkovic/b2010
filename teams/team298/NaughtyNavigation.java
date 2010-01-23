@@ -567,7 +567,7 @@ public class NaughtyNavigation extends Base {
         }
 
         public boolean done() {
-            completed = completed || controller.getLocation().equals(location);
+            completed = controller.getLocation().equals(location);
             return completed;
         }
     }
@@ -658,7 +658,7 @@ public class NaughtyNavigation extends Base {
         }
 
         public boolean done() {
-            completed = completed || controller.getLocation().equals(location);
+            completed = controller.getLocation().equals(location);
             return completed;
         }
     }
@@ -673,7 +673,7 @@ public class NaughtyNavigation extends Base {
         }
 
         public boolean done() {
-            completed = completed || isAdjacent(controller.getLocation(), sensing.senseClosestArchon());
+            completed = isAdjacent(controller.getLocation(), sensing.senseClosestArchon());
             return completed;
         }
     }
@@ -687,7 +687,7 @@ public class NaughtyNavigation extends Base {
         }
 
         public boolean done() {
-            completed = completed || isAdjacent(controller.getLocation(), sensing.senseClosestArchon());
+            completed = isAdjacent(controller.getLocation(), sensing.senseClosestArchon());
             return completed;
         }
     }
