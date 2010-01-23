@@ -18,7 +18,6 @@ public class ChainerPlayer extends AttackPlayer {
         if(energon.isEnergonLow() || energon.isFluxFull() || distance > 34) {
             navigation.changeToArchonGoal(true);
             if(distance < 3) {
-                energon.transferFlux(location);
                 energon.requestEnergonTransfer();
                 controller.yield();
             } else {
