@@ -62,8 +62,6 @@ public class ArchonPlayer extends NovaPlayer {
                     placeTower();
                 }
 
-                messaging.sendMessageForEnemyRobots();
-
                 moveTurns++;
                 break;
             case Goal.askingForTowerLocation:
