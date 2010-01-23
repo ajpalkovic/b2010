@@ -178,6 +178,7 @@ public class ArchonPlayer extends NovaPlayer {
     }
 
     public void boot() {
+        sensing.senseAllTiles();
         team = controller.getTeam();
         senseArchonNumber();
         setGoal(Goal.attackingEnemyArchons);
