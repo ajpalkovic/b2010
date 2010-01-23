@@ -51,7 +51,7 @@ public class TurretPlayer extends AttackPlayer {
                 navigation.changeToLocationGoal(enemy.location, false);
                 navigation.moveOnce(true);
                 navigation.popGoal();
-                processEnemies();
+                return;
             }
             int status = executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
             //if(status == Status.success) p("take that bitch");

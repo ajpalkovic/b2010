@@ -65,6 +65,10 @@ public class MexicanMessaging extends Base {
      */
     public void sendMessageForEnemyRobots() {
         try {
+            if(controller.hasBroadcastMessage()) {
+                controller.yield();
+            }
+
             ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
         
             if(enemies.size() > 0) {
@@ -85,10 +89,6 @@ public class MexicanMessaging extends Base {
                     locations[c] = robot.location;
                     ints[c+6] = (int)robot.energonLevel;
                     strings[c] = robot.type.toString();
-                }
-
-                if(controller.hasBroadcastMessage()) {
-                    controller.yield();
                 }
 
                 Message message = new Message();
