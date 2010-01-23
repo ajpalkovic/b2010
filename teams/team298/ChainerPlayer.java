@@ -4,13 +4,11 @@ import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 import java.util.*;
 
-public class SoldierPlayer extends AttackPlayer {
+public class ChainerPlayer extends AttackPlayer {
 
-    final int ARCHON_DISTANCE = 6;
-
-    public SoldierPlayer(RobotController controller) {
+    public ChainerPlayer(RobotController controller) {
         super(controller);
-        maxDistanceAway = 10;
+
     }
 
     public void step() {

@@ -477,11 +477,8 @@ public class NaughtyNavigation extends Base {
      */
     public void changeToLocationGoal(MapLocation location, boolean removePreviousGoals) {
         pushGoal(removePreviousGoals);
-        if (player.isArchon) {
-            goal = new LocationGoal(location);
-        } else {
-            goal = new LocationGoalWithBugging(location);
-        }
+        if(player.isArchon) goal = new LocationGoal(location);
+        else goal = new LocationGoalWithBugPlanning(location);
     }
 
     /**
@@ -495,15 +492,10 @@ public class NaughtyNavigation extends Base {
      * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
      */
     public void changeToArchonGoal(boolean removePreviousGoals) {
-        if (goal instanceof ArchonGoal || goal instanceof ArchonGoalWithBugging) {
-            return;
-        }
+        if(goal instanceof ArchonGoal || goal instanceof ArchonGoalWithBugPlanning) return;
         pushGoal(removePreviousGoals);
-        if (player.isArchon) {
-            goal = new ArchonGoal();
-        } else {
-            goal = new ArchonGoalWithBugging();
-        }
+        if(player.isArchon) goal = new ArchonGoal();
+        else goal = new ArchonGoalWithBugPlanning();
     }
 
     /**
@@ -531,24 +523,6 @@ public class NaughtyNavigation extends Base {
         pushGoal(removePreviousGoals);
         followArchonGoal = new FollowArchonGoal(archonID);
         goal = followArchonGoal;
-    }
-
-    /**
-     * The purpose of this class is to enable flexible route planning that allows for movement one step at a time.
-     */
-    abstract class NavigationGoal {
-
-        public boolean completed = false;
-
-        /**
-         * This method is called every time moveOnce is called.  It should return the direction in which the robot should move next.
-         */
-        public abstract Direction getDirection();
-
-        /**
-         * This method should return true when the robot is at the goal.
-         */
-        public abstract boolean done();
     }
 
     class DirectionGoal extends NavigationGoal {
@@ -669,94 +643,18 @@ public class NaughtyNavigation extends Base {
         }
     }
 
-    abstract class BuggingGoal extends NavigationGoal {
-
-        public boolean tracing, tracingLeft;
-        public Direction originalDirection;
-        public Hashtable<String, String> visitedStates;
-
-        public abstract Direction getDirectionToGoal();
-
-        public BuggingGoal() {
-            tracing = false;
-            tracingLeft = false;
-            originalDirection = null;
-            visitedStates = new Hashtable<String, String>();
-        }
-
-        public Direction getInitialTracingDirection(Direction dir) {
-            for (int c = 0; c < 8; c++) {
-                if (!controller.canMove(dir)) {
-                    if (tracingLeft) {
-                        dir = dir.rotateLeft();
-                    } else {
-                        dir = dir.rotateRight();
-                    }
-                } else {
-                    return dir;
-                }
-            }
-
-            return null;
-        }
-
-        public Direction tryToUndoTrace(Direction dir) {
-            Direction tmp;
-            for (int c = 0; c < 8; c++) {
-                if (tracingLeft) {
-                    tmp = dir.rotateRight();
-                } else {
-                    tmp = dir.rotateLeft();
-                }
-
-                if (controller.canMove(tmp)) {
-                    if (tmp == originalDirection) {
-                        tracing = false;
-                        return tmp;
-                    }
-                    dir = tmp;
-                } else {
-                    return dir;
-                }
-            }
-
-            return dir;
-        }
-
-        public Direction getDirection() {
-            Direction dir = getDirectionToGoal();
-            if (tracing) {
-                dir = controller.getDirection();
-                dir = tryToUndoTrace(dir);
-                if (!controller.canMove(dir)) {
-                    dir = getInitialTracingDirection(dir);
-                }
-                return dir;
-            } else {
-                if (controller.canMove(dir)) {
-                    return dir;
-                } else {
-                    tracing = true;
-                    originalDirection = dir;
-                    tracingLeft = !(dir == Direction.NORTH || dir == Direction.NORTH_EAST || dir == Direction.EAST || dir == Direction.SOUTH_WEST);
-                    dir = getInitialTracingDirection(dir);
-                    return dir;
-                }
-            }
-        }
-    }
-
-    class LocationGoalWithBugging extends BuggingGoal {
+    
+    class LocationGoalWithBugPlanning extends BendoverBugging {
 
         public MapLocation location;
 
-        public LocationGoalWithBugging(MapLocation location) {
-            super();
+        public LocationGoalWithBugPlanning(MapLocation location) {
+            super(controller, map);
             this.location = location;
         }
 
-        public Direction getDirectionToGoal() {
-            return controller.getLocation().directionTo(location);
+        public MapLocation getGoal() {
+            return location;
         }
 
         public boolean done() {
@@ -765,12 +663,13 @@ public class NaughtyNavigation extends Base {
         }
     }
 
-    class ArchonGoal extends NavigationGoal {
+    class ArchonGoalWithBugPlanning extends BendoverBugging {
+        public ArchonGoalWithBugPlanning() {
+            super(controller, map);
+        }
 
-        public Direction getDirection() {
-            MapLocation location = sensing.senseClosestArchon();
-            Direction dir = controller.getLocation().directionTo(location);
-            return getMoveableDirection(dir);
+        public MapLocation getGoal() {
+            return sensing.senseClosestArchon();
         }
 
         public boolean done() {
@@ -778,18 +677,13 @@ public class NaughtyNavigation extends Base {
             return completed;
         }
     }
+    
+    class ArchonGoal extends NavigationGoal {
 
-    class ArchonGoalWithBugging extends BuggingGoal {
-
-        public ArchonGoalWithBugging() {
-            super();
-        }
-
-        public Direction getDirectionToGoal() {
+        public Direction getDirection() {
             MapLocation location = sensing.senseClosestArchon();
-            //pr(location.toString());
-            //pr(controller.getLocation().directionTo(location).toString());
-            return controller.getLocation().directionTo(location);
+            Direction dir = controller.getLocation().directionTo(location);
+            return getMoveableDirection(dir);
         }
 
         public boolean done() {
@@ -834,4 +728,6 @@ public class NaughtyNavigation extends Base {
             return false;
         }
     }
+
+    
 }

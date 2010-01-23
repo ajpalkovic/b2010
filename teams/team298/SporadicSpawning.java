@@ -220,7 +220,8 @@ public class SporadicSpawning extends Base {
 
     class CollectingFluxSpawnMode extends SpawnMode {
         public RobotType getNextRobotSpawnType() {
-            return RobotType.WOUT;
+            Random gen = new Random();
+            return gen.nextBoolean() ? RobotType.WOUT : RobotType.CHAINER;
         }
     }
 

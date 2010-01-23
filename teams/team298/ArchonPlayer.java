@@ -33,7 +33,7 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.collectingFlux:
                 spawning.changeModeToCollectingFlux();
                 navigation.changeToMoveableDirectionGoal(true);
-
+                sensing.senseAlliedTeleporters();
                 spawning.spawnRobot();
                 if(moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0) {
                     navigation.moveOnce(true);

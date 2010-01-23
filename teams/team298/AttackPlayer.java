@@ -12,9 +12,12 @@ public abstract class AttackPlayer extends NovaPlayer {
     public boolean movingToAttack = false;
     public MapLocation attackLocation;
 
+    public AttackMode mode;
+
     public AttackPlayer(RobotController controller) {
         super(controller);
         enemies = new ArrayList<EnemyInfo>();
+        mode = new DefaultAttackMode();
     }
 
     /**
@@ -72,7 +75,7 @@ public abstract class AttackPlayer extends NovaPlayer {
      */
     public void moveToAttack() {
         movingToAttack = true;
-        navigation.changeToLocationGoal(getCheapestEnemy(outOfRangeEnemies.size() > 0 ? outOfRangeEnemies : outOfRangeArchonEnemies).location, true);
+        navigation.changeToLocationGoal(mode.getEnemyToAttack().location, true);
         navigation.moveOnce(false);
         movingToAttack = false;
     }
@@ -108,54 +111,6 @@ public abstract class AttackPlayer extends NovaPlayer {
                 inRangeEnemies.add(current);
             }
         }
-    }
-
-    /**
-     * This method figures out which enemy to attack.
-     * It will first attack in range enemies, and then it will attack archons.
-     */
-    public EnemyInfo selectEnemy() {
-        if(enemies.size() == 0) {
-            return null;
-        }
-
-        if(inRangeEnemies.size() > 0) {
-            return getCheapestEnemy(inRangeEnemies);
-        } else {
-            // if an enemy is just 1 or 2 hops a way, kill him but still come back
-            if(outOfRangeEnemies.size() == 0) {
-                if(archonEnemies.size() > 0) {
-                    return getCheapestEnemy(archonEnemies);
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * EnemyInfo stores a heuristic in it.
-     * Currently the heuristic is energon level * distance.  The idea is to attack close and weak enemies first.
-     * This method selects the cheapest of those.
-     */
-    public EnemyInfo getCheapestEnemy(ArrayList<EnemyInfo> enemyList) {
-        EnemyInfo min = enemyList.get(0);
-        for(int c = 1; c < enemyList.size(); c++) {
-            EnemyInfo current = enemyList.get(c);
-            if(controller.canSenseSquare(current.location)) {
-                try {
-                    if((current.type.isAirborne() && controller.senseAirRobotAtLocation(current.location) == null) ||
-                            (!current.type.isAirborne() && controller.senseGroundRobotAtLocation(current.location) == null)) {
-                        continue;
-                    }
-                } catch(Exception e) {
-                    System.out.println("----Caught Exception in getCheapestEnemy Exception: " + e.toString());
-                }
-            }
-            if(current.value < min.value) {
-                min = current;
-            }
-        }
-        return min;
     }
 
     /**
@@ -231,10 +186,10 @@ public abstract class AttackPlayer extends NovaPlayer {
     public MapLocation findBestLocation(MapLocation location) {
         return null;
     }
-    /*
+
+    /**
      * Returns ArrayList of MapData where this unit can attack this location from.
      */
-
     public ArrayList<MapLocation> getAttackLocations(MapLocation enemyLocation) {
         ArrayList<MapLocation> ableSpots = new ArrayList<MapLocation>();
         RobotType type = controller.getRobotType();
@@ -276,6 +231,68 @@ public abstract class AttackPlayer extends NovaPlayer {
             size = initSize;
         }
     }
-    //notes: we have a method for go-iing.  need one for go thing to go
-    //somewhere that attacks enemy en-route hostile move.
+
+    public void changeToDefaultAttackMode() {
+        if(!(mode instanceof DefaultAttackMode)) {
+            mode = new DefaultAttackMode();
+        }
+    }
+
+    abstract class AttackMode {
+        public abstract EnemyInfo getEnemyToAttack();
+    }
+    
+    class DefaultAttackMode extends AttackMode {
+        /**
+         * This method figures out which enemy to attack.
+         * It will first attack in range enemies, and then it will attack archons.
+         */
+        public EnemyInfo getEnemyToAttack() {
+            if(enemies.size() == 0) {
+                return null;
+            }
+
+            if(inRangeEnemies.size() > 0) {
+                return getCheapestEnemy(inRangeEnemies);
+            } else {
+                // if an enemy is just 1 or 2 hops a way, kill him but still come back
+                if(outOfRangeEnemies.size() == 0) {
+                    if(archonEnemies.size() > 0) {
+                        return getCheapestEnemy(archonEnemies);
+                    } else {
+                        return getCheapestEnemy(outOfRangeArchonEnemies);
+                    }
+                } else {
+                    return getCheapestEnemy(outOfRangeEnemies);
+                }
+            }
+            //return null;
+        }
+
+        /**
+         * EnemyInfo stores a heuristic in it.
+         * Currently the heuristic is energon level * distance.  The idea is to attack close and weak enemies first.
+         * This method selects the cheapest of those.
+         */
+        public EnemyInfo getCheapestEnemy(ArrayList<EnemyInfo> enemyList) {
+            EnemyInfo min = enemyList.get(0);
+            for(int c = 1; c < enemyList.size(); c++) {
+                EnemyInfo current = enemyList.get(c);
+                if(controller.canSenseSquare(current.location)) {
+                    try {
+                        if((current.type.isAirborne() && controller.senseAirRobotAtLocation(current.location) == null) ||
+                                (!current.type.isAirborne() && controller.senseGroundRobotAtLocation(current.location) == null)) {
+                            continue;
+                        }
+                    } catch(Exception e) {
+                        System.out.println("----Caught Exception in getCheapestEnemy Exception: " + e.toString());
+                    }
+                }
+                if(current.value < min.value) {
+                    min = current;
+                }
+            }
+            return min;
+        }
+    }
 }
