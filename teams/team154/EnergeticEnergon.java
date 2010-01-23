@@ -1,4 +1,4 @@
-package team298;
+package team154;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -31,14 +31,11 @@ public class EnergeticEnergon extends Base {
         try {
             Robot robot = player.controller.senseAirRobotAtLocation(location);
             if(robot == null) {
-                location = sensing.senseClosestArchon();
+                location = navigation.findNearestArchon();
                 if(location.distanceSquaredTo(player.controller.getLocation()) > 2) {
                     return;
                 }
             }
-
-            if(location.distanceSquaredTo(controller.getLocation()) > 2) return;
-            if(controller.canSenseSquare(location) && controller.senseAirRobotAtLocation(location) == null) return;
             
             double amount = player.controller.getFlux();
             player.controller.transferFlux(amount, location, RobotLevel.IN_AIR);
@@ -60,9 +57,9 @@ public class EnergeticEnergon extends Base {
      * Auto energon transfers
      */
     public void autoTransferEnergon() {
+        //p("auto transfer energon");
         ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
         for(RobotInfo robot : robots) {
-            if(robot.type.isBuilding()) continue;
             if(robot.location.distanceSquaredTo(controller.getLocation()) > 2) continue;
             int amount = calculateEnergonRequestAmount(robot);
             if(amount >= 1) {
@@ -83,7 +80,6 @@ public class EnergeticEnergon extends Base {
             RobotInfo min = null;
             ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
             for(RobotInfo robot : robots) {
-                if(robot.type.isBuilding()) continue;
                 if(!robot.location.isAdjacentTo(controller.getLocation())) continue;
                 if(min == null) {
                     min = robot;
@@ -187,13 +183,6 @@ public class EnergeticEnergon extends Base {
     }
 
     /**
-     * Returns true if the flux level is > 300
-     */
-    public boolean isFluxFull() {
-        return controller.getFlux() > 300;
-    }
-
-    /**
      * Returns true if the energon level plus energon reserve is less than the starting energon level
      */
     public boolean isEnergonLow() {
@@ -213,8 +202,7 @@ public class EnergeticEnergon extends Base {
      */
     public void processEnergonTransferRequests() {
         double amount = controller.getEnergonLevel();
-        double maxToGive = amount - 5;
-        if(maxToGive < 0) return;
+        if(amount < 5) return;
 
         if(player.isArchon) {
             autoTransferEnergon();
@@ -229,13 +217,12 @@ public class EnergeticEnergon extends Base {
             }
 
             double percent = 1;
-            if(maxToGive < sum) {
-                percent = maxToGive / sum;
+            if(amount - 5 < sum) {
+                percent = (sum) / (amount - 5);
             }
 
-            //pr("sum: "+sum+" percent: "+percent+" amount: "+amount);
+            //p("sum: "+sum+" percent: "+percent+" amount: "+amount);
             for(EnergonTransferRequest request : requests) {
-                //pr(request.amount+"  "+(request.amount * percent)+"  "+request.location+"  "+request.isAirUnit);
                 int result = transferEnergon(request.amount * percent, request.location, request.isAirUnit);
             }
 
@@ -259,13 +246,15 @@ public class EnergeticEnergon extends Base {
         }
 
         int tries = 3;
-        navigation.changeToArchonGoal(false);
+        MapLocation closest;
         do {
-            navigation.moveOnce(true);
+            closest = navigation.findNearestArchon();
+            if(closest == null)
+                break;
+            navigation.moveOnceTowardsLocation(closest, true);
             tries--;
-        } while(tries > 0 && !navigation.goal.done());
+        } while(tries > 0 && closest.distanceSquaredTo(controller.getLocation()) > 2);
 
-        MapLocation closest = sensing.senseClosestArchon();
         if(closest == null || closest.distanceSquaredTo(controller.getLocation()) > 2) {
             return Status.fail;
         }
@@ -273,7 +262,6 @@ public class EnergeticEnergon extends Base {
         messaging.sendLowEnergon(closest, calculateEnergonRequestAmount());
         controller.yield();
 
-        navigation.popGoal();
         return Status.success;
     }
 
@@ -303,9 +291,9 @@ public class EnergeticEnergon extends Base {
             }
             controller.transferUnitEnergon(amount, location, level);
         } catch(Exception e) {
-            System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
+            /*System.out.println("----Caught Exception in transferEnergon. amount: "+amount+
                     " location: "+location.toString()+" isAirUnit: "+isAirUnit+" level: "+
-                    level.toString()+" Exception: "+e.toString());
+                    level.toString()+" Exception: "+e.toString());*/
             return Status.fail;
         }
         return Status.success;

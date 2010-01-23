@@ -1,4 +1,4 @@
-package team298;
+package team154;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -13,8 +13,7 @@ public class NovaPlayer extends Base {
     public int trackingCount = 0;
     public int currentGoal = 0;
     public int followingArchonNumber = -1;
-    public int archonLeader = -1;
-    public boolean hasReceivedUniqueMsg, ignoreFollowRequest = false;
+    public int archonLeader;
 
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
@@ -34,7 +33,6 @@ public class NovaPlayer extends Base {
         oldEnemies = new ArrayList<Integer>();
         oldLocations = new ArrayList<MapLocation>();
         isAirRobot = controller.getRobotType() == RobotType.ARCHON;
-        hasReceivedUniqueMsg = false;
 
         messaging = new MexicanMessaging(this);
         navigation = new NaughtyNavigation(this);
@@ -82,6 +80,10 @@ public class NovaPlayer extends Base {
         return type == RobotType.WOUT;
     }
 
+    public void setArchonLeader() {
+
+    }
+
     public void run() throws Exception {
         team = controller.getTeam();
         boot();
@@ -92,7 +94,7 @@ public class NovaPlayer extends Base {
 
             if(isArchon) {
                 energon.processEnergonTransferRequests();
-            } else if(!isTower) {
+            } else {
                 energon.autoTransferEnergonBetweenUnits();
             }
             step();
@@ -113,7 +115,6 @@ public class NovaPlayer extends Base {
      */
     public void boot() {
         messaging.sendNewUnit();
-        sensing.senseAllTiles();
     }
 
     /**
@@ -126,6 +127,15 @@ public class NovaPlayer extends Base {
     }
 
     /**
+     * Returns the number of turns to move between two tiles of the corresponding height.
+     * For ground units, this takes into consideration the difference in tile heights.
+     * For air units, this is overriden in their classes to only return the base movement delay.
+     */
+    public int calculateMovementDelay(boolean diagonal) {
+        return diagonal ? player.moveDiagonalDelay : player.moveStraightDelay;
+    }
+
+    /**
      * Default method to update the map each time the robot moves.
      */
     public void senseNewTiles() {
@@ -135,22 +145,9 @@ public class NovaPlayer extends Base {
     /***************************************************************************
      * CALLBACKS
      **************************************************************************/
-    public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
-        if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
-            if(archonLeader < 0 || idOfSendingArchon == archonLeader) {
-                hasReceivedUniqueMsg = true;
-                archonLeader = idOfSendingArchon;
-                if(!ignoreFollowRequest) navigation.changeToFollowingArchonGoal(archonLeader, true);
-                if(navigation.followArchonGoal != null) navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
-            }
-        }
-    }
-
     public void moveMessageCallback(MapLocation location) {
         if(!controller.getRobotType().isAirborne() && controller.getLocation().equals(location)) {
-            navigation.changeToDirectionGoal(navigation.getMoveableDirection(Direction.NORTH), false);
-            navigation.moveOnce(true);
-            navigation.popGoal();
+            navigation.moveOnceInDirection(navigation.getMoveableDirection(Direction.NORTH), true);
         }
     }
 
@@ -158,6 +155,17 @@ public class NovaPlayer extends Base {
         if(location2.equals(controller.getLocation())) {
             energon.addRequest(location1, isAirUnit == 1, amount);
         }
+    }
+
+    public void lowAlliedUnitMessageCallback() {
+        if(controller.getRobotType() != RobotType.ARCHON) {
+            energon.lowAllyRequests.clear();
+        }
+        energon.lowAllyRequestsTurn = Clock.getRoundNum();
+    }
+
+    public void lowAlliedUnitMessageCallback(MapLocation location, int level, int reserve, int max) {
+        energon.addLowAllyRequest(location, level, reserve, max);
     }
 
     /**
@@ -203,13 +211,5 @@ public class NovaPlayer extends Base {
      * callback for an enemy in sight to be overridden
      */
     public void enemyInSight(ArrayList<RobotInfo> enemies) {
-    }
-
-    public void towerBuildLocationRequestCallback() {
-
-    }
-
-    public void towerBuildLocationResponseCallback(MapLocation[] locations) {
-        
     }
 }

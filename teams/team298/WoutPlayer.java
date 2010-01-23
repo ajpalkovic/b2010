@@ -17,7 +17,7 @@ public class WoutPlayer extends NovaPlayer {
         MapLocation location = sensing.senseClosestArchon();
         int distance = location.distanceSquaredTo(controller.getLocation());
 
-        if(energon.isEnergonLow() || energon.isFluxFull() || distance > 50) {
+        if(energon.isEnergonLow() || energon.isFluxFull() || distance > 34) {
             navigation.changeToArchonGoal(true);
         } else {
             navigation.changeToMoveableDirectionGoal(true);
@@ -30,6 +30,12 @@ public class WoutPlayer extends NovaPlayer {
         } else {
             navigation.moveOnce(false);
         }
+
+        messaging.sendMessageForEnemyRobots();
+    }
+
+    public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
+
     }
 
     public void senseNewTiles() {

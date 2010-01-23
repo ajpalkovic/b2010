@@ -1,4 +1,4 @@
-package team298;
+package team154;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -6,15 +6,12 @@ import java.util.*;
 
 public class SporadicSpawning extends Base {
 
-    public static Random gen = new Random();
     public MapStore map;
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
     public SpawnMode mode;
-    public MapLocation spawnLocation;
-    public RobotType previousSpawnType;
 
     public SporadicSpawning(NovaPlayer player) {
         super(player);
@@ -24,33 +21,6 @@ public class SporadicSpawning extends Base {
         sensing = player.sensing;
         energon = player.energon;
         mode = new CollectingFluxSpawnMode();
-    }
-
-    /**
-     * Spawns a tower.
-     */
-    public int spawnTower(RobotType towerType) {
-        MapLocation spawnLocation = getSpawnLocation(false);
-
-        if(spawnLocation == null) {
-            return Status.fail;
-        }
-
-        navigation.faceLocation(spawnLocation);
-
-        try {
-            if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), false)) {
-                controller.spawn(towerType);
-                sensing.teleporterLocations.add(controller.getLocation());
-                controller.yield();
-            } else {
-                return spawnTower(towerType);
-            }
-        } catch(GameActionException e) {
-            pa("----Caught Exception in spawnTower.  robot: " + towerType.toString() + " spawnLocation: " + spawnLocation.toString() + " Exception: " + e.toString());
-            return Status.fail;
-        }
-        return Status.success;
     }
 
     /**
@@ -115,37 +85,6 @@ public class SporadicSpawning extends Base {
     }
 
     /**
-     * Returns the MapLocation where a Tower should be spawned, using only the map locations surrounding the robot.
-     */
-    public MapLocation getTowerSpawnLocation() {
-        return _getTowerSpawnLocation(navigation.getOrderedMapLocations());
-    }
-
-    /**
-     * Returns the MapLocation where a Tower should be spawned.
-     * It accepts an array of map locations to consider first, such as the locations a tower recommends.
-     */
-    public MapLocation getTowerSpawnLocation(MapLocation[] idealLocations) {
-        MapLocation ret = _getTowerSpawnLocation(idealLocations);
-        if(ret != null) return ret;
-        return _getTowerSpawnLocation(navigation.getOrderedMapLocations());
-    }
-
-    /**
-     * Returns the MapLocation where a Tower should be spawned.
-     */
-    private MapLocation _getTowerSpawnLocation(MapLocation[] locations) {
-        for(int c = 0; c < locations.length; c++) {
-            if(!navigation.isLocationFree(locations[c], false)) {
-                locations[c] = null;
-            }
-        }
-
-        MapLocation closestLocation = navigation.findClosest(locations);
-        return closestLocation;
-    }
-
-    /**
      * Spawns a robot.
      * The method checks the energon level of the robot first.
      * It first calculates the first free spot that the archon can turn to face to
@@ -153,14 +92,14 @@ public class SporadicSpawning extends Base {
      *
      * If a robot gets in the way when the archon attempts to execute the spawn, it will recursively call the method.
      */
-    private int spawnRobot(RobotType robot) {
+    public int spawnRobot(RobotType robot) {
         if(controller.getEnergonLevel() < robot.spawnCost() + 10) {
             return Status.notEnoughEnergon;
         }
 
         //type - true = ground, false = air
         boolean isAirUnit = robot == RobotType.ARCHON;
-        spawnLocation = getSpawnLocation(isAirUnit);
+        MapLocation spawnLocation = getSpawnLocation(isAirUnit);
 
         if(spawnLocation == null) {
             return Status.fail;
@@ -171,7 +110,6 @@ public class SporadicSpawning extends Base {
         //check the 8 tiles around me for a spawn location
         try {
             if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), isAirUnit)) {
-                previousSpawnType = robot;
                 controller.spawn(robot);
                 controller.yield();
 
@@ -187,38 +125,16 @@ public class SporadicSpawning extends Base {
     }
 
     /**
-     * Updates the spawning mode to the 2009 spawning code.
+     * Updates the spawning mode to the corresponding type which is defined in SpawnModes.
      */
-    public void changeModeToOld() {
-        mode = new OldSpawnMode();
-    }
-
-    /**
-     * Updates the spawning mode to spawn flux collecting units.
-     */
-    public void changeModeToCollectingFlux() {
-        mode = new CollectingFluxSpawnMode();
-    }
-
-    public void changeModeToAttacking() {
-        mode = new AttackingSpawnMode();
-    }
-
-    /**
-     * The purpose of this class is to provide a way to change the spawning mechanism throughout the game.
-     */
-    abstract class SpawnMode {
-
-        /**
-         * Returns the type of robot that should be spawned next.
-         */
-        public abstract RobotType getNextRobotSpawnType();
-    }
-
-    class AttackingSpawnMode extends SpawnMode {
-        
-        public RobotType getNextRobotSpawnType() {
-            return previousSpawnType == null || previousSpawnType == RobotType.TURRET ? RobotType.WOUT : RobotType.TURRET;
+    public void changeMode(int type) {
+        switch(type) {
+            case SpawnMode.old:
+                mode = new OldSpawnMode();
+                break;
+            case SpawnMode.collectingFlux:
+                mode = new CollectingFluxSpawnMode();
+                break;
         }
     }
 

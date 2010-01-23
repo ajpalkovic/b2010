@@ -68,6 +68,7 @@ public class Base {
     static class Goal {
 
         public static final int collectingFlux = 2;
+        public static final int attackingEnemyArchons = 53;
         public static final int idle = 20, scouting = 21;
         public static final int placingTower = 34, movingToTowerSpawnLocation = 35, placingTeleporter=36, movingToPreviousTowerLocation = 37, askingForTowerLocation = 38;;
 
@@ -79,6 +80,8 @@ public class Base {
                     return "Idle";
                 case placingTower:
                     return "Placing Tower";
+                case attackingEnemyArchons:
+                    return "Attacking Enemy Archons";
                 case movingToTowerSpawnLocation:
                     return "Moving to Tower Spawn Location";
                 case placingTeleporter:

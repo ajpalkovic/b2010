@@ -10,6 +10,7 @@ public class NaughtyNavigation extends Base {
     public MexicanMessaging messaging;
     public SensationalSensing sensing;
     public NavigationGoal goal;
+    public FollowArchonGoal followArchonGoal;
     public LinkedList<NavigationGoal> goalStack;
 
     public NaughtyNavigation(NovaPlayer player) {
@@ -17,6 +18,7 @@ public class NaughtyNavigation extends Base {
         map = player.map;
         messaging = player.messaging;
         goal = null;
+        followArchonGoal = null;
         goalStack = new LinkedList<NavigationGoal>();
     }
 
@@ -24,10 +26,12 @@ public class NaughtyNavigation extends Base {
         MapLocation closest = null, current = controller.getLocation();
         int min = Integer.MAX_VALUE, distance;
 
-        for(MapLocation location : locations) {
-            if(location == null) continue;
+        for (MapLocation location : locations) {
+            if (location == null) {
+                continue;
+            }
             distance = current.distanceSquaredTo(location);
-            if(distance < min) {
+            if (distance < min) {
                 closest = location;
                 min = distance;
             }
@@ -40,10 +44,12 @@ public class NaughtyNavigation extends Base {
         MapLocation closest = null, current = controller.getLocation();
         int min = Integer.MAX_VALUE, distance;
 
-        for(MapLocation location : locations) {
-            if(location == null) continue;
+        for (MapLocation location : locations) {
+            if (location == null) {
+                continue;
+            }
             distance = current.distanceSquaredTo(location);
-            if(distance < min) {
+            if (distance < min) {
                 closest = location;
                 min = distance;
             }
@@ -56,19 +62,19 @@ public class NaughtyNavigation extends Base {
      * Causes the robot to the face the specified direction if necessary.
      */
     public int faceDirection(Direction dir) {
-        if(dir == null) {
+        if (dir == null) {
             return Status.fail;
         }
 
-        if(controller.getDirection().equals(dir)) {
+        if (controller.getDirection().equals(dir)) {
             return Status.success;
         }
 
-        if(dir.equals(Direction.OMNI)) {
+        if (dir.equals(Direction.OMNI)) {
             return Status.success;
         }
 
-        while(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() != 0) {
+        while (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() != 0) {
             controller.yield();
         }
 
@@ -76,7 +82,7 @@ public class NaughtyNavigation extends Base {
             controller.setDirection(dir);
             controller.yield();
             return Status.success;
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.out.println("----Caught Exception in faceDirection with dir: " + dir.toString() + " Exception: " + e.toString());
         }
 
@@ -94,6 +100,27 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
+     * Returns location of an Archon Leader who the unit should follow
+     */
+    public MapLocation findArchonLeader(int desiredArchonID) {
+        MapLocation currentLocation = controller.getLocation();
+        MapLocation[] archonLocations = sensing.senseArchonLocations();
+        Robot possibleLeader = null;
+
+        for (int i = 0; i < archonLocations.length; ++i) {
+            try {
+                possibleLeader = controller.senseAirRobotAtLocation(archonLocations[i]);
+                if (possibleLeader.getID() == desiredArchonID) {
+                    return archonLocations[i];
+                }
+            } catch (Exception e) {
+                pa("----Caught exception in findArchonLeader()");
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns the direction object needed to move a robot from the start square to the end square.
      */
     public Direction getDirection(MapLocation start, MapLocation end) {
@@ -103,31 +130,31 @@ public class NaughtyNavigation extends Base {
     }
 
     public Direction getDirection(int x, int y) {
-        if(y < 0) {
-            if(x > 0) {
+        if (y < 0) {
+            if (x > 0) {
                 return Direction.NORTH_EAST;
             }
-            if(x == 0) {
+            if (x == 0) {
                 return Direction.NORTH;
             }
-            if(x < 0) {
+            if (x < 0) {
                 return Direction.NORTH_WEST;
             }
-        } else if(y == 0) {
-            if(x > 0) {
+        } else if (y == 0) {
+            if (x > 0) {
                 return Direction.EAST;
             }
-            if(x < 0) {
+            if (x < 0) {
                 return Direction.WEST;
             }
-        } else if(y > 0) {
-            if(x > 0) {
+        } else if (y > 0) {
+            if (x > 0) {
                 return Direction.SOUTH_EAST;
             }
-            if(x == 0) {
+            if (x == 0) {
                 return Direction.SOUTH;
             }
-            if(x < 0) {
+            if (x < 0) {
                 return Direction.SOUTH_WEST;
             }
         }
@@ -138,34 +165,34 @@ public class NaughtyNavigation extends Base {
      * Returns the change to the location of an object if it moves one tile in the specified direction.
      */
     public int[] getDirectionDelta(Direction direction) {
-        if(direction == Direction.NORTH_WEST) {
-            return new int[] {-1, -1};
+        if (direction == Direction.NORTH_WEST) {
+            return new int[]{-1, -1};
         }
-        if(direction == Direction.NORTH) {
-            return new int[] {0, -1};
+        if (direction == Direction.NORTH) {
+            return new int[]{0, -1};
         }
-        if(direction == Direction.NORTH_EAST) {
-            return new int[] {1, -1};
-        }
-
-        if(direction == Direction.EAST) {
-            return new int[] {1, 0};
-        }
-        if(direction == Direction.WEST) {
-            return new int[] {-1, 0};
+        if (direction == Direction.NORTH_EAST) {
+            return new int[]{1, -1};
         }
 
-        if(direction == Direction.SOUTH_WEST) {
-            return new int[] {-1, 1};
+        if (direction == Direction.EAST) {
+            return new int[]{1, 0};
         }
-        if(direction == Direction.SOUTH) {
-            return new int[] {0, 1};
-        }
-        if(direction == Direction.SOUTH_EAST) {
-            return new int[] {1, 1};
+        if (direction == Direction.WEST) {
+            return new int[]{-1, 0};
         }
 
-        return new int[] {0, 0};
+        if (direction == Direction.SOUTH_WEST) {
+            return new int[]{-1, 1};
+        }
+        if (direction == Direction.SOUTH) {
+            return new int[]{0, 1};
+        }
+        if (direction == Direction.SOUTH_EAST) {
+            return new int[]{1, 1};
+        }
+
+        return new int[]{0, 0};
     }
 
     /**
@@ -191,21 +218,45 @@ public class NaughtyNavigation extends Base {
      * Returns the first direction that the robot can move in, starting with the given direction.
      */
     public Direction getMoveableDirection(Direction dir) {
-        if(dir == null) {
+        if (dir == null) {
             return null;
         }
         Direction leftDir = dir, rightDir = dir;
-        if(controller.canMove(dir)) {
+        if (controller.canMove(dir)) {
             return dir;
         } else {
-            for(int d = 0; d < 3; d++) {
+            for (int d = 0; d < 3; d++) {
                 leftDir = leftDir.rotateLeft();
                 rightDir = rightDir.rotateRight();
 
-                if(controller.canMove(leftDir)) {
+                if (controller.canMove(leftDir)) {
                     return leftDir;
                 }
-                if(controller.canMove(rightDir)) {
+                if (controller.canMove(rightDir)) {
+                    return rightDir;
+                }
+            }
+        }
+        return null;
+    }
+
+    public Direction getMoveableArchonDirection(Direction dir) {
+        //pa("getMoveableArchonDirection() called");
+        if (dir == null) {
+            return null;
+        }
+        Direction leftDir = dir, rightDir = dir;
+        if (controller.canMove(dir) && map.onMap(controller.getLocation().add(dir))) {
+            return dir;
+        } else {
+            for (int d = 0; d < 3; d++) {
+                leftDir = leftDir.rotateLeft();
+                rightDir = rightDir.rotateRight();
+
+                if (controller.canMove(leftDir) && map.onMap(controller.getLocation().add(leftDir))) {
+                    return leftDir;
+                }
+                if (controller.canMove(rightDir) && map.onMap(controller.getLocation().add(rightDir))) {
                     return rightDir;
                 }
             }
@@ -251,8 +302,8 @@ public class NaughtyNavigation extends Base {
         int pauseCount = 5;
         do {
             try {
-                if(controller.canSenseSquare(location) && controller.senseGroundRobotAtLocation(location) != null) {
-                    if(!messageSent) {
+                if (controller.canSenseSquare(location) && controller.senseGroundRobotAtLocation(location) != null) {
+                    if (!messageSent) {
                         messaging.sendMove(location);
                         messageSent = true;
                     }
@@ -260,10 +311,10 @@ public class NaughtyNavigation extends Base {
                 } else {
                     break;
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
             }
             pauseCount--;
-        } while(pauseCount >= 0);
+        } while (pauseCount >= 0);
     }
 
     /**
@@ -273,25 +324,25 @@ public class NaughtyNavigation extends Base {
      */
     public boolean isLocationFree(MapLocation location, boolean isAirUnit) {
         try {
-            if(!map.onMap(location)) {
+            if (!map.onMap(location)) {
                 return false;
             }
 
-            if(!controller.canSenseSquare(location)) {
+            if (!controller.canSenseSquare(location)) {
                 return true;
             }
 
             TerrainTile tile = map.get(location);
-            if(tile != null && !tile.isTraversableAtHeight((isAirUnit ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND))) {
+            if (tile != null && !tile.isTraversableAtHeight((isAirUnit ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND))) {
                 return false;
             }
 
-            if(isAirUnit) {
+            if (isAirUnit) {
                 return controller.senseAirRobotAtLocation(location) == null;
             } else {
                 return controller.senseGroundRobotAtLocation(location) == null;
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             pa("----Caught Exception in isLocationFree location: " + location.toString() + " isAirUnit: " +
                     isAirUnit + " Exception: " + e.toString());
             return false;
@@ -303,19 +354,22 @@ public class NaughtyNavigation extends Base {
      * If block is false, then the robot will not call yield until it is able to move, it will return immediately instead.
      */
     public int moveOnce(boolean block) {
-        if(!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) {
+        if (!block && (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0)) {
             return Status.turnsNotIdle;
         }
 
-        if(goal == null) return Status.noGoal;
-        if(goal.done()) return Status.success;
+        if (goal == null) {
+            return Status.noGoal;
+        }
+        if (goal.done()) {
+            return Status.success;
+        }
 
         Direction dir = goal.getDirection();
 
-        if(faceDirection(dir) != Status.success) {
+        if (faceDirection(dir) != Status.success) {
             return Status.fail;
         }
-
         return moveOnce();
     }
 
@@ -327,14 +381,15 @@ public class NaughtyNavigation extends Base {
         Direction dir = controller.getDirection();
         yieldMoving();
         try {
-            if(controller.canMove(dir)) {
+            if (controller.canMove(dir)) {
+
                 controller.moveForward();
                 controller.yield();
                 player.pathStepTakenCallback();
                 return Status.success;
             }
             return Status.cantMoveThere;
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.out.println("----Caught Exception in moveOnce dir: " + dir.toString() + " Exception: " + e.toString());
         }
         return Status.fail;
@@ -353,7 +408,7 @@ public class NaughtyNavigation extends Base {
     public void yieldMoving() {
         String cur = Goal.toString(player.currentGoal);
         controller.setIndicatorString(1, "yielding");
-        while(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() != 0) {
+        while (controller.hasActionSet() || controller.getRoundsUntilMovementIdle() != 0) {
             controller.yield();
         }
         controller.setIndicatorString(1, cur);
@@ -370,7 +425,7 @@ public class NaughtyNavigation extends Base {
      * Restores the previous goal.
      */
     public void popGoal() {
-        if(goalStack.size() > 0) {
+        if (goalStack.size() > 0) {
             goal = goalStack.removeFirst();
         }
     }
@@ -379,7 +434,7 @@ public class NaughtyNavigation extends Base {
      * Saves the current goal onto the stack so it can be restored later.
      */
     public void pushGoal(boolean removePreviousGoals) {
-        if(removePreviousGoals) {
+        if (removePreviousGoals) {
             goalStack.clear();
         } else {
             goalStack.addFirst(goal);
@@ -439,7 +494,6 @@ public class NaughtyNavigation extends Base {
     public void changeToArchonGoal(boolean removePreviousGoals) {
         if(goal instanceof ArchonGoal || goal instanceof ArchonGoalWithBugPlanning) return;
         pushGoal(removePreviousGoals);
-        pr("Changing to Archon Goal");
         if(player.isArchon) goal = new ArchonGoal();
         else goal = new ArchonGoalWithBugPlanning();
     }
@@ -455,9 +509,20 @@ public class NaughtyNavigation extends Base {
      * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
      */
     public void changeToClosestTeleporterGoal(boolean removePreviousGoals) {
-        if(goal instanceof ClosestTeleporterGoal) return;
+        if (goal instanceof ClosestTeleporterGoal) {
+            return;
+        }
         pushGoal(removePreviousGoals);
         goal = new ClosestTeleporterGoal();
+    }
+
+    public void changeToFollowingArchonGoal(int archonID, boolean removePreviousGoals) {
+        if (goal instanceof FollowArchonGoal) {
+            return;
+        }
+        pushGoal(removePreviousGoals);
+        followArchonGoal = new FollowArchonGoal(archonID);
+        goal = followArchonGoal;
     }
 
     class DirectionGoal extends NavigationGoal {
@@ -480,7 +545,7 @@ public class NaughtyNavigation extends Base {
     class MoveableDirectionGoal extends NavigationGoal {
 
         public Direction getDirection() {
-            return getMoveableDirection(controller.getDirection());
+            return getMoveableArchonDirection(controller.getDirection());
         }
 
         public boolean done() {
@@ -507,6 +572,78 @@ public class NaughtyNavigation extends Base {
         }
     }
 
+    class FollowArchonGoal extends NavigationGoal {
+
+        public MapLocation archonLocation;
+        public int archonID;
+        public Direction archonDirection;
+
+        public FollowArchonGoal(int archonID) {
+            this.archonID = archonID;
+        }
+
+        public Direction getDirection() {
+            //archonLocation = findArchonLeader(archonID
+            //getMoveableDirection(dir);
+            return archonDirection;
+        }
+
+        public boolean done() {
+            return false;
+        }
+
+        public void updateArchonGoal(MapLocation location, int archonID) {
+            if (archonID == this.archonID) {
+                if (archonLocation == null) {
+                    archonLocation = location;
+                    archonDirection = controller.getLocation().directionTo(location);
+                } else {
+                    archonDirection = archonLocation.directionTo(location);
+                    if (archonDirection == Direction.EAST) {
+                        if (controller.getLocation().getX() >= location.getX()) {
+                            archonDirection = null;
+                        }
+                    } else if (archonDirection == Direction.NORTH) {
+                        if (controller.getLocation().getY() <= location.getY()) {
+                            archonDirection = null;
+                        }
+                    } else if (archonDirection == Direction.NORTH_EAST) {
+                        if (controller.getLocation().getY() <= location.getY() && controller.getLocation().getX() >= location.getX()) {
+                            archonDirection = null;
+                        }
+                    } else if (archonDirection == Direction.NORTH_WEST) {
+                        if (controller.getLocation().getY() <= location.getY() && controller.getLocation().getX() <= location.getX()) {
+                            archonDirection = null;
+                        }
+                    } else if (archonDirection == Direction.OMNI) {
+                        archonDirection = null;
+                    } else if (archonDirection == Direction.SOUTH) {
+                        if (controller.getLocation().getY() >= location.getY()) {
+                            archonDirection = null;
+                        }
+                    } else if (archonDirection == Direction.SOUTH_EAST) {
+                        if (controller.getLocation().getY() >= location.getY() && controller.getLocation().getX() >= location.getX()) {
+                            archonDirection = null;
+                        }
+                    } else if (archonDirection == Direction.SOUTH_WEST) {
+                        if (controller.getLocation().getY() >= location.getY() && controller.getLocation().getX() <= location.getX()) {
+                            archonDirection = null;
+                        }
+                    } else if (archonDirection == Direction.WEST) {
+                        if (controller.getLocation().getX() <= location.getX()) {
+                            archonDirection = null;
+                        }
+                    } else {
+                        // It was none?
+                    }
+                    archonLocation = location;
+                    this.archonID = archonID;
+                }
+            }
+        }
+    }
+
+    
     class LocationGoalWithBugPlanning extends BendoverBugging {
 
         public MapLocation location;
@@ -540,7 +677,7 @@ public class NaughtyNavigation extends Base {
             return completed;
         }
     }
-
+    
     class ArchonGoal extends NavigationGoal {
 
         public Direction getDirection() {
@@ -556,8 +693,9 @@ public class NaughtyNavigation extends Base {
     }
 
     class ClosestTeleporterGoal extends NavigationGoal {
+
         public MapLocation tower = null;
-        
+
         public Direction getDirection() {
             ArrayList<MapLocation> locations = sensing.senseAlliedTeleporters();
             tower = findClosest(locations);
@@ -567,18 +705,25 @@ public class NaughtyNavigation extends Base {
 
         public boolean done() {
             ArrayList<MapLocation> loc = sensing.senseAlliedTeleporters();
-            
-            if(loc.isEmpty()) return true;
+
+            if (loc.isEmpty()) {
+                return true;
+            }
 
             //done can be called before getDirection, which means there is no cached tower
-            if(tower == null) getDirection();
+            if (tower == null) {
+                getDirection();
+            }
 
             //shenanigans
-            if(tower == null) return true;
+            if (tower == null) {
+                return true;
+            }
 
             // we are finished when we are in broadcast range
-            if(controller.getLocation().distanceSquaredTo(tower) <= Math.pow(controller.getRobotType().broadcastRadius()-1, 2))
+            if (controller.getLocation().distanceSquaredTo(tower) <= Math.pow(controller.getRobotType().broadcastRadius() - 1, 2)) {
                 return true;
+            }
 
             return false;
         }
