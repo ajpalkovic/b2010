@@ -15,6 +15,7 @@ public class WoutPlayer extends NovaPlayer {
 
     public void step() {
         MapLocation location = sensing.senseClosestArchon();
+        if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());
 
         if(energon.isEnergonLow() || energon.isFluxFull() || distance > 34) {
