@@ -110,6 +110,7 @@ public class NovaPlayer extends Base {
      */
     public void boot() {
         messaging.sendNewUnit();
+        sensing.senseAllTiles();
     }
 
     /**
