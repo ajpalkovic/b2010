@@ -14,13 +14,22 @@ public class SoldierPlayer extends AttackPlayer {
     }
 
     public void step() {
-        processEnemies();
-        if(energon.isEnergonLow()) {
-            energon.requestEnergonTransfer();
-            controller.yield();
+        MapLocation location = sensing.senseClosestArchon();
+        int distance = location.distanceSquaredTo(controller.getLocation());
+
+        if(energon.isEnergonLow() || energon.isFluxFull() || distance > 34) {
+            navigation.changeToArchonGoal(true);
+            if(distance < 3) {
+                energon.transferFlux(location);
+                energon.requestEnergonTransfer();
+                controller.yield();
+            } else {
+                navigation.moveOnce(false);
+            }
             return;
         }
 
+        processEnemies();
         sortEnemies();
         EnemyInfo enemy = mode.getEnemyToAttack();
         if(enemy != null) {
@@ -39,41 +48,9 @@ public class SoldierPlayer extends AttackPlayer {
                     moveToAttack();
                 }
             } else {
-                navigation.changeToArchonGoal(true);
+                navigation.changeToMoveableDirectionGoal(true);
                 navigation.moveOnce(true);
             }
-        }
-    }
-
-    public MapLocation findBestLocation(MapLocation enemyLocation) {
-        if(true) {
-            return enemyLocation;
-        }
-        controller.getLocation();
-        int x, y;
-        Direction dir = navigation.getDirection(controller.getLocation(), enemyLocation);
-        x = enemyLocation.getX();
-        y = enemyLocation.getY();
-        ArrayList<MapLocation> locations = getAttackLocations(new MapLocation(x, y));
-
-        MapLocation returnData = enemyLocation;
-        int minDistance = Integer.MAX_VALUE;
-        int distance;
-        for(MapLocation m : locations) {
-            distance = m.distanceSquaredTo(m);
-            if(distance < minDistance) {
-                distance = minDistance;
-                returnData = m;
-            }
-        }
-        return returnData;
-    }
-
-    public void returnToArchon() {
-        //SENSE ARCHONS, ITERATE TO FIND CLOSEST, GO TO THAT ONE
-        navigation.changeToArchonGoal(true);
-        while(!navigation.goal.done()) {
-            navigation.moveOnce(true);
         }
     }
 }

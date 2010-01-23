@@ -18,6 +18,8 @@ public class RobotPlayer implements Runnable {
             player = new ArchonPlayer(controller);
         } else if(controller.getRobotType().equals(RobotType.SOLDIER)) {
             player = new SoldierPlayer(controller);
+        } else if(controller.getRobotType().equals(RobotType.CHAINER)) {
+            player = new ChainerPlayer(controller);
         } else if (controller.getRobotType().equals(RobotType.WOUT)) {
             player = new WoutPlayer(controller);
         } else if (controller.getRobotType().equals(RobotType.AURA)) {
