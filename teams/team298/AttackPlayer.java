@@ -75,8 +75,9 @@ public abstract class AttackPlayer extends NovaPlayer {
      */
     public void moveToAttack() {
         movingToAttack = true;
-        navigation.changeToLocationGoal(mode.getEnemyToAttack().location, true);
+        navigation.changeToLocationGoal(mode.getEnemyToAttack().location, false);
         navigation.moveOnce(false);
+        navigation.popGoal();
         movingToAttack = false;
     }
 

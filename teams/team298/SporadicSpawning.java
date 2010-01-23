@@ -218,7 +218,8 @@ public class SporadicSpawning extends Base {
     class AttackingSpawnMode extends SpawnMode {
         
         public RobotType getNextRobotSpawnType() {
-            return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
+            //return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
+            return RobotType.CHAINER;
         }
     }
 

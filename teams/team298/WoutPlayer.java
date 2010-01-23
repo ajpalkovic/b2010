@@ -30,6 +30,8 @@ public class WoutPlayer extends NovaPlayer {
         } else {
             navigation.moveOnce(false);
         }
+
+        messaging.sendMessageForEnemyRobots();
     }
 
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
