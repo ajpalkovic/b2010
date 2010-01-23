@@ -36,6 +36,9 @@ public class EnergeticEnergon extends Base {
                     return;
                 }
             }
+
+            if(location.distanceSquaredTo(controller.getLocation()) > 2) return;
+            if(controller.canSenseSquare(location) && controller.senseAirRobotAtLocation(location) == null) return;
             
             double amount = player.controller.getFlux();
             player.controller.transferFlux(amount, location, RobotLevel.IN_AIR);
