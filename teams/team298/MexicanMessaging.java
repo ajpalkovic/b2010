@@ -48,13 +48,6 @@ public class MexicanMessaging extends Base {
         return addMessage(BroadcastMessage.lowEnergon, BroadcastMessage.everyone, ints, null, locations);
     }
 
-    public boolean sendEnemyInSight(MapLocation location, int[] data, String robotType) {
-        int[] ints = new int[] {data[0]};
-        MapLocation[] locations = new MapLocation[] {controller.getLocation(), location};
-        String[] strings = {robotType};
-        return addMessage(BroadcastMessage.enemyInSight, BroadcastMessage.everyone, ints, strings, locations);
-    }
-
     public boolean sendNewUnit() {
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
         String[] strings = {controller.getRobotType().toString()};
@@ -71,18 +64,42 @@ public class MexicanMessaging extends Base {
      * This method sends enemyInSight message broadcast for all enemies in sight
      */
     public void sendMessageForEnemyRobots() {
-        ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
-        for(RobotInfo robot : enemies) {
-            int[] data = {(int) robot.energonLevel, -1};
-            String robotType = robot.type.toString();
+        try {
+            ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
+        
+            if(enemies.size() > 0) {
+                MapLocation[] locations = new MapLocation[enemies.size()];
+                int[] ints = new int[enemies.size()+6];
+                String[] strings = new String[enemies.size()];
 
-            // this is really inefficient, we should fix it
-            // it has to recopy the data from the arraylists to the arrays every time
-            sendEnemyInSight(robot.location, data, robotType);
-        }
-        if(enemies.size() > 0) {
-            sendMessage();
-            player.enemyInSight(enemies);
+                RobotInfo robot = null;
+
+                ints[0] = KEY1;
+                ints[1] = KEY2;
+                ints[2] = player.robot.getID();
+                ints[3] = BroadcastMessage.enemyInSight;
+                ints[4] = BroadcastMessage.everyone;
+                ints[5] = locations.length;
+                for(int c = 0; c < locations.length; c++) {
+                    robot = enemies.get(c);
+                    locations[c] = robot.location;
+                    ints[c+6] = (int)robot.energonLevel;
+                    strings[c] = robot.type.toString();
+                }
+
+                if(controller.hasBroadcastMessage()) {
+                    controller.yield();
+                }
+
+                Message message = new Message();
+                message.ints = ints;
+                message.locations = locations;
+                message.strings = strings;
+                controller.broadcast(message);
+                player.enemyInSight(enemies);
+            }
+        } catch (Exception e) {
+            pa("----Caught exception in sendMessageForEnemyRobots "+e.toString());
         }
     }
 
@@ -146,9 +163,9 @@ public class MexicanMessaging extends Base {
                 if(recipientId != BroadcastMessage.everyone && recipientId != myId) {
                     switch(messageId) {
                         case BroadcastMessage.enemyInSight:
-                            locationIndex += 2;
-                            intIndex++;
-                            stringIndex++;
+                            locationIndex += message.ints[intIndex];
+                            stringIndex += message.ints[intIndex];
+                            intIndex += message.ints[intIndex]+1;
                             break;
                         case BroadcastMessage.newUnit:
                             break;
@@ -173,12 +190,14 @@ public class MexicanMessaging extends Base {
                     }
                 } else {
                     // this message is ours
+                    int count;
                     switch(messageId) {
                         case BroadcastMessage.enemyInSight:
-                            player.enemyInSight(message.locations[locationIndex + 1], message.ints[intIndex], message.strings[stringIndex]);
-                            intIndex++;
-                            locationIndex += 2;
-                            stringIndex++;
+                            count = message.ints[intIndex];
+                            player.enemyInSight(message.locations, message.ints, message.strings, locationIndex, intIndex+1, stringIndex, count);
+                            intIndex += count+1;
+                            locationIndex += count;
+                            stringIndex += count;
                             break;
                         case BroadcastMessage.newUnit:
                             player.newUnit(senderID, message.locations[locationIndex], message.strings[stringIndex]);
@@ -202,7 +221,7 @@ public class MexicanMessaging extends Base {
                             player.towerBuildLocationRequestCallback();
                             break;
                         case BroadcastMessage.towerBuildLocationResponse:
-                            int count = message.ints[intIndex];
+                            count = message.ints[intIndex];
                             MapLocation[] locations = new MapLocation[count];
                             for(int c = 0; c < count; c++)
                                 locations[c] = message.locations[c];

@@ -190,7 +190,7 @@ public class NovaPlayer extends Base {
      * is called when received an enemyInSight message - to be overloaded
      * 
      **/
-    public void enemyInSight(MapLocation enemyLocation, int enemyID, String enemyType) {
+    public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
     }
 
     /**
