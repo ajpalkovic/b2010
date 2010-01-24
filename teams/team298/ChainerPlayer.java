@@ -7,7 +7,7 @@ import java.util.*;
 public class ChainerPlayer extends AttackPlayer {
 
     public NavigationGoal prevGoal;
-    
+
     public ChainerPlayer(RobotController controller) {
         super(controller);
     }
@@ -16,6 +16,7 @@ public class ChainerPlayer extends AttackPlayer {
         MapLocation location = sensing.senseClosestArchon();
         if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());
+        boolean canMove = true;
 
         //if the robot goes to get energon, then we need to save the followArchon goal for later
         if(prevGoal != null) prevGoal = navigation.goal;
@@ -31,13 +32,13 @@ public class ChainerPlayer extends AttackPlayer {
             } else {
                 navigation.moveOnce(false);
             }
-            return;
+            canMove = false;
+        } else {
+            //restore the follow request goal
+            if(prevGoal != null) navigation.goal = prevGoal;
+            prevGoal = null;
+            ignoreFollowRequest = false;
         }
-
-        //restore the follow request goal
-        if(prevGoal != null) navigation.goal = prevGoal;
-        prevGoal = null;
-        ignoreFollowRequest = false;
 
         //find any enemey to attack.  mode.getEnemeyToAttack could return an out of range enemy too
         processEnemies();
@@ -46,12 +47,12 @@ public class ChainerPlayer extends AttackPlayer {
 
         if(enemy != null) {
             navigation.faceLocation(enemy.location);
-            
-            if(!controller.canAttackSquare(enemy.location)) {
+
+            if(!controller.canAttackSquare(enemy.location) && canMove) {
                 navigation.changeToLocationGoal(enemy.location, false);
                 navigation.moveOnce(true);
                 navigation.popGoal();
-                processEnemies();
+                return;
             }
             int status = executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
             //if(status == Status.success) p("take that bitch");
