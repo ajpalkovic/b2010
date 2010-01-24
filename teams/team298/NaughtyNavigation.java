@@ -601,10 +601,25 @@ public class NaughtyNavigation extends Base {
                     return getMoveableArchonDirection(controller.getLocation().directionTo(closest));
                 }
             } else {
+                //try to move in the current direction first
+                Direction currentDirection = controller.getDirection();
+                int dx = currentDirection.dx*3, dy = currentDirection.dy*3;
+                MapLocation location = controller.getLocation();
+                MapLocation newLocation = new MapLocation(location.getX()+dx, location.getY()+dy);
+                try {
+                    if(controller.senseFluxAtLocation(newLocation) > 1) {
+                        return getMoveableDirection(currentDirection);
+                    }
+                } catch (Exception e) {
+                    pa("----Caught exception in WoutCollectingFluxGoal "+e.toString());
+                }
+
+                //alright, we cant go straight, lets see whats best
                 int[][] fluxDeltas = ((WoutPlayer)player).fluxDeltas;
                 int[] cur, min=null;
                 int minAmount = -1, curAmount;
                 for(int c = 0; c < fluxDeltas.length; c++) {
+                    //p(fluxDeltas[c][0]+", "+fluxDeltas[c][1]+":  "+fluxDeltas[c][2]);
                     cur = fluxDeltas[c];
                     curAmount = cur[2];
                     if(curAmount > minAmount) {
@@ -613,11 +628,14 @@ public class NaughtyNavigation extends Base {
                     }
                 }
 
+                //p("MIN: "+min[0]+", "+min[1]+", "+min[2]);
+
                 if(minAmount > 1) {
-                    MapLocation location = controller.getLocation();
                     location = new MapLocation(location.getX()+min[0], location.getY()+min[1]);
+                    //p("Returning: "+getMoveableDirection(controller.getLocation().directionTo(location)));
                     return getMoveableDirection(controller.getLocation().directionTo(location));
                 } else {
+                    //p("Returning2: "+getMoveableDirection(controller.getDirection()));
                     return getMoveableDirection(controller.getDirection());
                 }
             }
