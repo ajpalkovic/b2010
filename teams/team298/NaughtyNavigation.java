@@ -545,7 +545,25 @@ public class NaughtyNavigation extends Base {
     class MoveableDirectionGoal extends NavigationGoal {
 
         public Direction getDirection() {
-            return getMoveableArchonDirection(controller.getDirection());
+            if(player.isArchon) {
+                ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
+                if(enemies.size() > 0) {
+                    MapLocation closest = findClosest(enemies);
+                    int distance = closest.distanceSquaredTo(controller.getLocation());
+                    if(distance >= 20 && distance <= 30) {
+                        return null;
+                    } else if(distance > 30) {
+                        return getMoveableArchonDirection(controller.getLocation().directionTo(closest));
+                    } else {
+                        return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
+                    }
+                } else {
+                    return getMoveableArchonDirection(controller.getDirection());
+                }
+            }
+            else {
+                return getMoveableArchonDirection(controller.getDirection());
+            }
         }
 
         public boolean done() {

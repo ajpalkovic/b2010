@@ -13,6 +13,7 @@ public abstract class BendoverBugging extends NavigationGoal {
     public boolean tracing, tracingLeft, pathCalculated, bugging;
     public MapLocation[] path;
     public RobotController robotController;
+    public boolean debug = false;
 
     public abstract MapLocation getGoal();
 
@@ -37,8 +38,10 @@ public abstract class BendoverBugging extends NavigationGoal {
 
         //if we havent resorted to bugging yet, lets at least try to go straight to the goal first
         if(!bugging) {
+            if(debug) System.out.println("not bugging");
             Direction dir = robotController.getLocation().directionTo(newGoal);
             if(robotController.canMove(dir)) {
+                if(debug) System.out.println("greedy in "+dir);
                 return dir;
             }
         }
@@ -66,18 +69,22 @@ public abstract class BendoverBugging extends NavigationGoal {
      * TODO: What if we had bad sensor data and the new waypoint is VOID or OFF_MAP, or we just cant get there.
      */
     public Direction getNextPathDirection(boolean recurse) {
+        if(debug) System.out.println("getNextPathDirection");
         MapLocation goal = null, start = robotController.getLocation();
 
         //if we are not out of bounds, if the current path index has been optimized out, or the current path index is the start location, then we can advanced the waypoint
         while(currentPathIndex < index && (path[currentPathIndex] == null || path[currentPathIndex].equals(start))) currentPathIndex++;
         if(currentPathIndex >= index) {
+            if(debug) System.out.println(currentPathIndex+" "+index);
             if(recurse) return null;
             //we have run out of path
             planPath();
             //we should really watch out for infinite recursion here
             return getNextPathDirection(true);
         }
+        if(debug) System.out.println(path[currentPathIndex] == null);
         if((goal = path[currentPathIndex]) == null) return null;
+        if(debug) System.out.println(start+" "+goal+" "+getMoveableDirection(start.directionTo(goal)));
         return getMoveableDirection(start.directionTo(goal));
     }
 
@@ -121,6 +128,7 @@ public abstract class BendoverBugging extends NavigationGoal {
         goal = getGoal();
         currentDirection = robotController.getDirection();
         pathCalculated = true;
+        if(debug) System.out.println("Plan path to "+goal);
 
         Direction dir;
         tracing = false;
@@ -138,7 +146,7 @@ public abstract class BendoverBugging extends NavigationGoal {
                 break;
             }
 
-            if(pathLength >= maxPath) {
+            if(pathLength >= maxPath-1) {
                 //System.out.println("Path to big");
                 break;
             }
@@ -158,8 +166,18 @@ public abstract class BendoverBugging extends NavigationGoal {
 
             pathLength++;
         }
+        path[index] = goal;
+        index++;
 
         optimizePath();
+
+        if(debug) {
+            for(int c = 0; c < index; c++) {
+                if(path[c] != null) {
+                    System.out.println(path[c]);
+                }
+            }
+        }
     }
 
     /**

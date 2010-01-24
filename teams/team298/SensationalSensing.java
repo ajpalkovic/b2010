@@ -2,8 +2,6 @@ package team298;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
-
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class SensationalSensing extends Base {
@@ -29,7 +27,7 @@ public class SensationalSensing extends Base {
     public MapLocation[] archonLocations;
     public MapLocation nearestArchon;
     public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();
-    public int oldDataTolerance = 1;
+    public int oldDataTolerance = 0;
 
     public SensationalSensing(NovaPlayer player) {
         super(player);
