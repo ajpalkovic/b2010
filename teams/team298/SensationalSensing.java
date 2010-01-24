@@ -124,6 +124,24 @@ public class SensationalSensing extends Base {
     }
 
     /**
+     * Senses the flux at a radius of three to optimize the wout.
+     */
+    public void senseFlux(int[][] fluxDeltas) {
+        int currentX = controller.getLocation().getX();
+        int currentY = controller.getLocation().getY();
+        MapLocation current;
+
+        try {
+            for(int c = 0; c < fluxDeltas.length; c++) {
+                current = new MapLocation(currentX + fluxDeltas[c][0], currentY + fluxDeltas[c][1]);
+                fluxDeltas[c][2] = controller.senseFluxAtLocation(current);
+            }
+        } catch (Exception e) {
+            pa("----Caught exception in senseFlux "+e.toString());
+        }
+    }
+
+    /**
      * Sense the 8 tiles around the robot.
      */
     public void senseSurroundingSquares() {

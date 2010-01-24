@@ -8,6 +8,24 @@ public class WoutPlayer extends AttackPlayer {
     public int[] verticalDeltas = new int[] {-5, 0, -4, 3, -3, 4, -2, 4, -1, 4, 0, 5, 1, 4, 2, 4, 3, 4, 4, 3, 5, 0};
     public int[] horizontalDeltas = new int[] {0, -5, 3, -4, 4, -3, 4, -2, 4, -1, 5, 0, 4, 1, 4, 2, 4, 3, 3, 4, 0, 5};
     public int[] diagonalDeltas = new int[] {4, -3, 4, -2, 4, -1, 4, 0, 5, 0, 4, 1, 4, 2, 4, 3, 3, 3, 3, 4, 2, 4, 1, 4, 0, 4, 0, 5};
+    public int[][] fluxDeltas = new int[][] {
+        {-3, 0, 0},
+        {-3, 1, 0},
+        {-2, 2, 0},
+        {-1, 3, 0},
+        {0, 3, 0},
+        {1, 3, 0},
+        {2, 2, 0},
+        {3, 1, 0},
+        {3, 0, 0},
+        {3, -1, 0},
+        {2, -2, 0},
+        {1, -3, 0},
+        {0, -3, 0},
+        {-1, -3, 0},
+        {-2, -2, 0},
+        {-3, -1, 0}
+    };
 
     public WoutPlayer(RobotController controller) {
         super(controller);
@@ -18,10 +36,10 @@ public class WoutPlayer extends AttackPlayer {
         if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());
 
-        if(energon.isEnergonLow() || energon.isFluxFull() || distance > 34) {
+        if(energon.isEnergonLow() || energon.isFluxFull() || distance > 50) {
             navigation.changeToArchonGoal(true);
         } else {
-            navigation.changeToMoveableDirectionGoal(true);
+            navigation.changeToWoutCollectingFluxGoal(true);
         }
 
         if((energon.isEnergonLow() || energon.isFluxFull()) && distance < 3) {
@@ -53,5 +71,6 @@ public class WoutPlayer extends AttackPlayer {
 
     public void senseNewTiles() {
         sensing.senseDeltas(verticalDeltas, horizontalDeltas, diagonalDeltas);
+        sensing.senseFlux(fluxDeltas);
     }
 }

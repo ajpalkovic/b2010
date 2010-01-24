@@ -469,6 +469,21 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
+     * Causes moveOnce to first try to move straight.  If it can't, the robot will rotate right until it can.
+     *
+     * This method will not overwrite the current goal if it is already a MoveableDirectionGoal.
+     * To force it to overwrite, call clearGoal first.
+     *
+     * If removePreviousGoals is false, then the previous goal will be pushed onto a stack.
+     * This enables temporary goals, like requestEnergonTransfer to work, without affecting high level goals.
+     * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
+     */
+    public void changeToWoutCollectingFluxGoal(boolean removePreviousGoals) {
+        pushGoal(removePreviousGoals);
+        goal = new WoutCollectingFluxGoal();
+    }
+
+    /**
      * Causes moveOnce to always move closer to location.
      *
      * If removePreviousGoals is false, then the previous goal will be pushed onto a stack.
@@ -563,6 +578,48 @@ public class NaughtyNavigation extends Base {
             }
             else {
                 return getMoveableArchonDirection(controller.getDirection());
+            }
+        }
+
+        public boolean done() {
+            return false;
+        }
+    }
+
+    class WoutCollectingFluxGoal extends NavigationGoal {
+
+        public Direction getDirection() {
+            if(controller.getRoundsUntilMovementIdle() > 1) return null;
+
+            ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
+            if(enemies.size() > 0) {
+                MapLocation closest = findClosest(enemies);
+                int distance = closest.distanceSquaredTo(controller.getLocation());
+                if(distance < 15) {
+                    return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
+                } else {
+                    return getMoveableArchonDirection(controller.getLocation().directionTo(closest));
+                }
+            } else {
+                int[][] fluxDeltas = ((WoutPlayer)player).fluxDeltas;
+                int[] cur, min=null;
+                int minAmount = -1, curAmount;
+                for(int c = 0; c < fluxDeltas.length; c++) {
+                    cur = fluxDeltas[c];
+                    curAmount = cur[2];
+                    if(curAmount > minAmount) {
+                        minAmount = curAmount;
+                        min = cur;
+                    }
+                }
+
+                if(minAmount > 1) {
+                    MapLocation location = controller.getLocation();
+                    location = new MapLocation(location.getX()+min[0], location.getY()+min[1]);
+                    return getMoveableDirection(controller.getLocation().directionTo(location));
+                } else {
+                    return getMoveableDirection(controller.getDirection());
+                }
             }
         }
 
