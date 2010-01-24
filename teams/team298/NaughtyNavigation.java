@@ -550,9 +550,9 @@ public class NaughtyNavigation extends Base {
                 if(enemies.size() > 0) {
                     MapLocation closest = findClosest(enemies);
                     int distance = closest.distanceSquaredTo(controller.getLocation());
-                    if(distance >= 20 && distance <= 30) {
+                    if(distance >= 15 && distance <= 20) {
                         return null;
-                    } else if(distance > 30) {
+                    } else if(distance > 20) {
                         return getMoveableArchonDirection(controller.getLocation().directionTo(closest));
                     } else {
                         return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
