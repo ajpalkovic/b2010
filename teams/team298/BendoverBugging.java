@@ -10,7 +10,7 @@ public abstract class BendoverBugging extends NavigationGoal {
     public MapLocation goal, current;
     public Direction currentDirection, originalDirection;
     public int size, currentX, currentY, maxPath, index, currentPathIndex;
-    public boolean tracing, tracingLeft, pathCalculated, bugging;
+    public boolean tracing, tracingLeft, pathCalculated, bugging, isAirRobot;
     public MapLocation[] path;
     public RobotController robotController;
     public boolean debug = false;
@@ -19,6 +19,7 @@ public abstract class BendoverBugging extends NavigationGoal {
 
     public BendoverBugging(RobotController controller, MapStore map) {
         this.robotController = controller;
+        isAirRobot = controller.getRobotType().isAirborne();
         terrain = map.boolMap;
         size = terrain.length;
 
@@ -118,7 +119,20 @@ public abstract class BendoverBugging extends NavigationGoal {
      * This method is used for path planning, when we cant sense far enough away.
      */
     public boolean canMove(int x, int y) {
-        return !terrain[x % size][y % size];
+        if(terrain[x % size][y % size]) return false;
+        /*try {
+            MapLocation location = new MapLocation(x, y);
+            if(robotController.canSenseSquare(location)) {
+                if(isAirRobot) {
+                    return robotController.senseAirRobotAtLocation(location) != null;
+                } else {
+                    return robotController.senseGroundRobotAtLocation(goal) != null;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("----Caught exception in canMove "+e.toString());
+        }*/
+        return true;
     }
 
     /**

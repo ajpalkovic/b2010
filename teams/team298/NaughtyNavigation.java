@@ -95,7 +95,7 @@ public class NaughtyNavigation extends Base {
      * The robot will then wait until it's movement is idle and proceed to turn to that direction.
      */
     public int faceLocation(MapLocation location) {
-        Direction newDir = getDirection(controller.getLocation(), location);
+        Direction newDir = controller.getLocation().directionTo(location);
         return faceDirection(newDir);
     }
 
@@ -118,100 +118,6 @@ public class NaughtyNavigation extends Base {
             }
         }
         return null;
-    }
-
-    /**
-     * Returns the direction object needed to move a robot from the start square to the end square.
-     */
-    public Direction getDirection(MapLocation start, MapLocation end) {
-        int x = end.getX() - start.getX();
-        int y = end.getY() - start.getY();
-        return getDirection(x, y);
-    }
-
-    public Direction getDirection(int x, int y) {
-        if (y < 0) {
-            if (x > 0) {
-                return Direction.NORTH_EAST;
-            }
-            if (x == 0) {
-                return Direction.NORTH;
-            }
-            if (x < 0) {
-                return Direction.NORTH_WEST;
-            }
-        } else if (y == 0) {
-            if (x > 0) {
-                return Direction.EAST;
-            }
-            if (x < 0) {
-                return Direction.WEST;
-            }
-        } else if (y > 0) {
-            if (x > 0) {
-                return Direction.SOUTH_EAST;
-            }
-            if (x == 0) {
-                return Direction.SOUTH;
-            }
-            if (x < 0) {
-                return Direction.SOUTH_WEST;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Returns the change to the location of an object if it moves one tile in the specified direction.
-     */
-    public int[] getDirectionDelta(Direction direction) {
-        if (direction == Direction.NORTH_WEST) {
-            return new int[]{-1, -1};
-        }
-        if (direction == Direction.NORTH) {
-            return new int[]{0, -1};
-        }
-        if (direction == Direction.NORTH_EAST) {
-            return new int[]{1, -1};
-        }
-
-        if (direction == Direction.EAST) {
-            return new int[]{1, 0};
-        }
-        if (direction == Direction.WEST) {
-            return new int[]{-1, 0};
-        }
-
-        if (direction == Direction.SOUTH_WEST) {
-            return new int[]{-1, 1};
-        }
-        if (direction == Direction.SOUTH) {
-            return new int[]{0, 1};
-        }
-        if (direction == Direction.SOUTH_EAST) {
-            return new int[]{1, 1};
-        }
-
-        return new int[]{0, 0};
-    }
-
-    /**
-     * Returns the Manhattan Distance
-     */
-    public int getDistanceTo(MapLocation location) {
-        int x = location.getX() - controller.getLocation().getX();
-        int y = location.getY() - controller.getLocation().getY();
-        return Math.abs(x) + Math.abs(y);
-    }
-
-    /**
-     * Returns the Manhattan Distance to the nearest archon
-     */
-    public int getDistanceToNearestArchon() {
-        MapLocation location = sensing.senseClosestArchon();
-        int x = location.getX() - controller.getLocation().getX();
-        int y = location.getY() - controller.getLocation().getY();
-        return Math.abs(x) + Math.abs(y);
     }
 
     /**
@@ -295,26 +201,6 @@ public class NaughtyNavigation extends Base {
         ret[6] = start.add(left);
 
         return ret;
-    }
-
-    public void checkBlockedUnitsAndWait(MapLocation location) {
-        boolean messageSent = false;
-        int pauseCount = 5;
-        do {
-            try {
-                if (controller.canSenseSquare(location) && controller.senseGroundRobotAtLocation(location) != null) {
-                    if (!messageSent) {
-                        messaging.sendMove(location);
-                        messageSent = true;
-                    }
-                    controller.yield();
-                } else {
-                    break;
-                }
-            } catch (Exception e) {
-            }
-            pauseCount--;
-        } while (pauseCount >= 0);
     }
 
     /**

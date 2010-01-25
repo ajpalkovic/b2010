@@ -61,18 +61,6 @@ public class SensationalSensing extends Base {
         return tiles;
     }
 
-    public boolean runSensorCallbacks(MapLocation data) {
-        boolean ret = true;
-        if(data != null) {
-            /*
-            TODO:: This breaks AttackPlayer badly.
-            if(data.airRobot != null || data.groundRobot != null) {
-            ret = player.enemyInSightCallback(data) && ret;
-            }*/
-        }
-        return ret;
-    }
-
     /**
      * Iteratres through each of the tiles in sensor range of the robot.
      * This probably isn't needed anymore though.
@@ -94,23 +82,22 @@ public class SensationalSensing extends Base {
      */
     public void senseDeltas(int[] verticalDeltas, int[] horizontalDeltas, int[] diagonalDeltas) {
         Direction dir = controller.getDirection();
-        int[] directionDelta = navigation.getDirectionDelta(dir);
         int currentX = controller.getLocation().getX(), currentY = controller.getLocation().getY();
 
         int xDelta, yDelta, x, y;
         int[] deltas;
 
-        if(directionDelta[0] == 0) {
+        if(dir.dx == 0) {
             xDelta = 1;
-            yDelta = directionDelta[1];
+            yDelta = dir.dy;
             deltas = verticalDeltas;
-        } else if(directionDelta[1] == 0) {
-            xDelta = directionDelta[0];
+        } else if(dir.dy == 0) {
+            xDelta = dir.dx;
             yDelta = 1;
             deltas = horizontalDeltas;
         } else {
-            xDelta = directionDelta[0];
-            yDelta = directionDelta[1];
+            xDelta = dir.dx;
+            yDelta = dir.dy;
             deltas = diagonalDeltas;
         }
 
@@ -119,7 +106,6 @@ public class SensationalSensing extends Base {
             y = currentY + deltas[c + 1] * yDelta;
 
             senseTile(x, y);
-            runSensorCallbacks(new MapLocation(x, y));
         }
     }
 
@@ -139,32 +125,6 @@ public class SensationalSensing extends Base {
         } catch (Exception e) {
             pa("----Caught exception in senseFlux "+e.toString());
         }
-    }
-
-    /**
-     * Sense the 8 tiles around the robot.
-     */
-    public void senseSurroundingSquares() {
-        senseSurroundingSquares(controller.getLocation());
-    }
-
-    /**
-     * Sense the 8 tiles around the robot.
-     */
-    public void senseSurroundingSquares(MapLocation location) {
-        int x = location.getX(), y = location.getY();
-
-        senseTile(x - 1, y - 1);
-        senseTile(x, y - 1);
-        senseTile(x + 1, y - 1);
-
-        senseTile(x - 1, y);
-        senseTile(x, y);
-        senseTile(x + 1, y);
-
-        senseTile(x - 1, y + 1);
-        senseTile(x, y + 1);
-        senseTile(x + 1, y + 1);
     }
 
     /**
@@ -196,9 +156,6 @@ public class SensationalSensing extends Base {
             for(MapLocation tile : row) {
                 if(tile != null) {
                     senseTile(tile);
-                    if(!runSensorCallbacks(tile)) {
-                        return;
-                    }
                 }
             }
         }
