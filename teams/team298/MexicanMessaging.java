@@ -42,9 +42,9 @@ public class MexicanMessaging extends Base {
         return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
     }
 
-    public boolean sendLowEnergon(MapLocation archonLocation, int amount) {
+    public boolean sendLowEnergon(int amount) {
         int[] ints = new int[] {amount, player.isAirRobot ? 1 : 0};
-        MapLocation[] locations = new MapLocation[] {controller.getLocation(), archonLocation};
+        MapLocation[] locations = new MapLocation[] {controller.getLocation()};
         return addMessage(BroadcastMessage.lowEnergon, BroadcastMessage.everyone, ints, null, locations);
     }
 
@@ -171,7 +171,7 @@ public class MexicanMessaging extends Base {
                             break;
                         case BroadcastMessage.lowEnergon:
                             intIndex += 2;
-                            locationIndex += 2;
+                            locationIndex += 1;
                             break;
                         case BroadcastMessage.move:
                             locationIndex++;
@@ -203,9 +203,9 @@ public class MexicanMessaging extends Base {
                             player.newUnit(senderID, message.locations[locationIndex], message.strings[stringIndex]);
                             break;
                         case BroadcastMessage.lowEnergon:
-                            player.lowEnergonMessageCallback(message.locations[locationIndex], message.locations[locationIndex + 1], message.ints[intIndex + 1], message.ints[intIndex]);
+                            player.lowEnergonMessageCallback(message.locations[locationIndex], message.ints[intIndex + 1], message.ints[intIndex]);
                             intIndex += 2;
-                            locationIndex += 2;
+                            locationIndex += 1;
                             break;
                         case BroadcastMessage.move:
                             player.moveMessageCallback(message.locations[locationIndex]);

@@ -73,4 +73,7 @@ public class WoutPlayer extends AttackPlayer {
         sensing.senseDeltas(verticalDeltas, horizontalDeltas, diagonalDeltas);
         sensing.senseFlux(fluxDeltas);
     }
+
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
+    }
 }

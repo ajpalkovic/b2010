@@ -90,6 +90,8 @@ public class NovaPlayer extends Base {
             controller.setIndicatorString(0, controller.getLocation().toString());
             messaging.parseMessages();
 
+            if(!isArchon && !isTower && energon.isEnergonLow()) messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
+
             if(isArchon) {
                 energon.processEnergonTransferRequests();
             } else if(!isTower) {
@@ -154,10 +156,8 @@ public class NovaPlayer extends Base {
         }
     }
 
-    public void lowEnergonMessageCallback(MapLocation location1, MapLocation location2, int amount, int isAirUnit) {
-        if(location2.equals(controller.getLocation())) {
-            energon.addRequest(location1, isAirUnit == 1, amount);
-        }
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
+        energon.addRequest(location1, isAirUnit == 1, amount);
     }
 
     /**

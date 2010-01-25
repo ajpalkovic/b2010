@@ -76,10 +76,13 @@ public class EnergeticEnergon extends Base {
      * Auto energon transfers between units
      */
     public void autoTransferEnergonBetweenUnits() {
+        if(player.isTower) return;
+        
         if(controller.getEnergonLevel() < controller.getRobotType().maxEnergon() / 2) {
             return;
         }
-        if(!(player.isChainer || player.isTurret)) {
+
+        if(player.isArchon || player.isWout) {
             RobotInfo min = null;
             ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
             for(RobotInfo robot : robots) {
@@ -130,9 +133,9 @@ public class EnergeticEnergon extends Base {
             }
 
             double amount = calculateEnergonRequestAmount(min.level, min.reserve, min.max);
-            if(amount < 2) {
+            /*if(amount < 2) {
                 return;
-            }
+            }*/
             amount = amount / 2;
 
             transferEnergon(amount, min.location, false);
@@ -265,12 +268,7 @@ public class EnergeticEnergon extends Base {
             tries--;
         } while(tries > 0 && !navigation.goal.done());
 
-        MapLocation closest = sensing.senseClosestArchon();
-        if(closest == null || closest.distanceSquaredTo(controller.getLocation()) > 2) {
-            return Status.fail;
-        }
-
-        messaging.sendLowEnergon(closest, calculateEnergonRequestAmount());
+        messaging.sendLowEnergon(calculateEnergonRequestAmount());
         controller.yield();
 
         navigation.popGoal();

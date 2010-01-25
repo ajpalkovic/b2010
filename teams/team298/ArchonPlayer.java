@@ -223,4 +223,7 @@ public class ArchonPlayer extends NovaPlayer {
         messaging.sendFollowRequest(controller.getLocation(), BroadcastMessage.everyone);
         return true;
     }
+
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
+    }
 }
