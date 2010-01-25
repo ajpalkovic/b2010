@@ -479,6 +479,7 @@ public class NaughtyNavigation extends Base {
 
             ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
             if(enemies.size() > 0) {
+                //p("Enemy");
                 MapLocation closest = findClosest(enemies);
                 int distance = closest.distanceSquaredTo(controller.getLocation());
                 if(distance < 15) {
@@ -494,6 +495,7 @@ public class NaughtyNavigation extends Base {
                 MapLocation newLocation = new MapLocation(location.getX()+dx, location.getY()+dy);
                 try {
                     if(controller.senseFluxAtLocation(newLocation) > 1) {
+                        p("Going straight: "+newLocation);
                         return getMoveableDirection(currentDirection);
                     }
                 } catch (Exception e) {

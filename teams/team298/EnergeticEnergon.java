@@ -193,7 +193,8 @@ public class EnergeticEnergon extends Base {
      * Returns true if the flux level is > 300
      */
     public boolean isFluxFull() {
-        return controller.getFlux() > 200;
+        if(sensing.senseEnemyRobotInfoInSensorRange().size() > 0) return controller.getFlux() > 200;
+        return controller.getFlux() > 500;
     }
 
     /**
