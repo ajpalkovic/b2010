@@ -7,7 +7,7 @@ import java.util.*;
 public abstract class AttackPlayer extends NovaPlayer {
 
     public ArrayList<EnemyInfo> enemies, enemiesTemp;
-    public ArrayList<EnemyInfo> inRangeEnemies, outOfRangeEnemies, archonEnemies, outOfRangeArchonEnemies;
+    public ArrayList<EnemyInfo> inRangeEnemies, inRangeWithoutTurningEnemies, outOfRangeEnemies, archonEnemies, outOfRangeArchonEnemies;
     public int noEnemiesCount = 0, maxDistanceAway = 3;
     public boolean movingToAttack = false;
     public MapLocation attackLocation;
@@ -91,6 +91,7 @@ public abstract class AttackPlayer extends NovaPlayer {
      */
     public void sortEnemies() {
         inRangeEnemies = new ArrayList<EnemyInfo>();
+        inRangeWithoutTurningEnemies = new ArrayList<EnemyInfo>();
         outOfRangeEnemies = new ArrayList<EnemyInfo>();
         archonEnemies = new ArrayList<EnemyInfo>();
         outOfRangeArchonEnemies = new ArrayList<EnemyInfo>();
@@ -109,7 +110,11 @@ public abstract class AttackPlayer extends NovaPlayer {
             } else if(current.distance > range || current.distance < minRange) {
                 outOfRangeEnemies.add(current);
             } else {
-                inRangeEnemies.add(current);
+                if(controller.canAttackSquare(current.location)) {
+                    inRangeWithoutTurningEnemies.add(current);
+                } else {
+                    inRangeEnemies.add(current);
+                }
             }
         }
     }
@@ -258,21 +263,16 @@ public abstract class AttackPlayer extends NovaPlayer {
                 return null;
             }
 
-            if(inRangeEnemies.size() > 0) {
+            if(inRangeWithoutTurningEnemies.size() > 0)
+                return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(inRangeEnemies.size() > 0)
                 return getCheapestEnemy(inRangeEnemies);
-            } else {
-                // if an enemy is just 1 or 2 hops a way, kill him but still come back
-                if(outOfRangeEnemies.size() == 0) {
-                    if(archonEnemies.size() > 0) {
-                        return getCheapestEnemy(archonEnemies);
-                    } else {
-                        return getCheapestEnemy(outOfRangeArchonEnemies);
-                    }
-                } else {
-                    return getCheapestEnemy(outOfRangeEnemies);
-                }
-            }
-            //return null;
+            // if an enemy is just 1 or 2 hops a way, kill him but still come back
+            if(outOfRangeEnemies.size() > 0)
+                return getCheapestEnemy(outOfRangeEnemies);
+            if(archonEnemies.size() > 0)
+                return getCheapestEnemy(archonEnemies);
+            return getCheapestEnemy(outOfRangeArchonEnemies);
         }
 
         /**

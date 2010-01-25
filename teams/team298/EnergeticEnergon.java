@@ -190,7 +190,7 @@ public class EnergeticEnergon extends Base {
      * Returns true if the flux level is > 300
      */
     public boolean isFluxFull() {
-        return controller.getFlux() > 400;
+        return controller.getFlux() > 200;
     }
 
     /**

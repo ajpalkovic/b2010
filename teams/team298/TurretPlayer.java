@@ -48,6 +48,8 @@ public class TurretPlayer extends AttackPlayer {
         if(enemy != null) {
             navigation.faceLocation(enemy.location);
 
+            //deploy();
+            
             if(!controller.canAttackSquare(enemy.location) && canMove) {
                 navigation.changeToLocationGoal(enemy.location, false);
                 navigation.moveOnce(true);
@@ -61,6 +63,34 @@ public class TurretPlayer extends AttackPlayer {
         } else {
             //navigation.changeToMoveableDirectionGoal(true);
             navigation.moveOnce(true);
+        }
+    }
+
+    public void undeploy() {
+        if(controller.isDeployed()) {
+            try {
+                while(controller.hasActionSet() || controller.getRoundsUntilAttackIdle() > 0 || controller.getRoundsUntilMovementIdle() > 0) {
+                    controller.yield();
+                }
+                controller.undeploy();
+                controller.setIndicatorString(2, "UnDeployed");
+            } catch (Exception e) {
+                pa("----Caught exception while undeploying "+e.toString());
+            }
+        }
+    }
+
+    public void deploy() {
+        if(!controller.isDeployed()) {
+            try {
+                while(controller.hasActionSet() || controller.getRoundsUntilAttackIdle() > 0 || controller.getRoundsUntilMovementIdle() > 0) {
+                    controller.yield();
+                }
+                controller.deploy();
+                controller.setIndicatorString(2, "Deployed");
+            } catch (Exception e) {
+                pa("----Caught exception while deploying "+e.toString());
+            }
         }
     }
 }
