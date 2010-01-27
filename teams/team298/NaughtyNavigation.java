@@ -366,6 +366,9 @@ public class NaughtyNavigation extends Base {
      * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
      */
     public void changeToMoveableDirectionGoal(boolean removePreviousGoals) {
+        if (goal instanceof MoveableDirectionGoal) {
+            return;
+        }
         pushGoal(removePreviousGoals);
         goal = new MoveableDirectionGoal();
     }
@@ -438,8 +441,7 @@ public class NaughtyNavigation extends Base {
             return;
         }
         pushGoal(removePreviousGoals);
-        followArchonGoal = new FollowArchonGoal(archonID);
-        goal = followArchonGoal;
+        goal = new FollowArchonGoal();
     }
 
     class DirectionGoal extends NavigationGoal {
@@ -459,7 +461,7 @@ public class NaughtyNavigation extends Base {
         }
     }
 
-    class MoveableDirectionGoal extends NavigationGoal {
+    class MoveableDirectionGoal extends FollowArchonGoal {
 
         public Direction getDirection() {
             if(player.isArchon) {
@@ -475,7 +477,12 @@ public class NaughtyNavigation extends Base {
                         return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
                     }
                 } else {
-                    return getMoveableArchonDirection(controller.getDirection());
+                    // TODO: Change this to get if archon is leader
+                    if (((ArchonPlayer)(player)).archonNumber == 1) {
+                        return getMoveableArchonDirection(controller.getDirection());
+                    } else {
+                         return archonDirection;
+                    }
                 }
             }
             else {
@@ -572,11 +579,11 @@ public class NaughtyNavigation extends Base {
     class FollowArchonGoal extends NavigationGoal {
 
         public MapLocation archonLocation;
-        public int archonID;
+        public int archonID = -1;
         public Direction archonDirection;
 
-        public FollowArchonGoal(int archonID) {
-            this.archonID = archonID;
+        public FollowArchonGoal() {
+            followArchonGoal = this;
         }
 
         public Direction getDirection() {
@@ -590,6 +597,9 @@ public class NaughtyNavigation extends Base {
         }
 
         public void updateArchonGoal(MapLocation location, int archonID) {
+            if (this.archonID == -1) {
+                this.archonID = archonID;
+            }
             if (archonID == this.archonID) {
                 if (archonLocation == null) {
                     archonLocation = location;

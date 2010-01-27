@@ -142,8 +142,12 @@ public class NovaPlayer extends Base {
             if(archonLeader < 0 || idOfSendingArchon == archonLeader) {
                 hasReceivedUniqueMsg = true;
                 archonLeader = idOfSendingArchon;
-                if(!ignoreFollowRequest) navigation.changeToFollowingArchonGoal(archonLeader, true);
-                if(navigation.followArchonGoal != null) navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
+                if(!ignoreFollowRequest && !isArchon) {
+                    navigation.changeToFollowingArchonGoal(archonLeader, true);
+                }
+                if(navigation.followArchonGoal != null) {
+                    navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
+                }
             }
         }
     }
