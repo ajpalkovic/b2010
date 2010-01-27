@@ -48,6 +48,35 @@ public class EnergeticEnergon extends Base {
         }
     }
     
+	public void transferFluxToTower(MapLocation towerLocation) {
+        try {
+            Robot robot = player.controller.senseGroundRobotAtLocation(towerLocation);
+            RobotInfo info = player.controller.senseRobotInfo(robot);
+            if(robot == null) {
+            	return;
+            } else {
+           		if (player.controller.getLocation().isAdjacentTo(towerLocation)) {
+           			// Check to make sure we don't transfer more flux than the Wout has, and the tower can receive.
+           			double maxTransfer = info.maxEnergon - info.energonLevel;
+           			double available = player.controller.getFlux();
+           			if (maxTransfer > available) {
+           				maxTransfer = available;
+           			}
+           			if (maxTransfer > 10) {
+           				player.controller.transferFlux(maxTransfer, towerLocation, RobotLevel.ON_GROUND);
+           				System.out.println("Transferred " + maxTransfer + " flux to a tower...");
+           			}
+           		} else {
+           			// Wout was not adjacent to the tower, better luck next time.
+           			return;
+           		}
+            }
+        } catch (Exception e) {
+            pa("---Caught exception in transferFluxToTower");
+            e.printStackTrace();
+        }    	
+    }
+    
     public void addRequest(MapLocation location, boolean isAirUnit, int amount) {
         requests.add(new EnergonTransferRequest(location, isAirUnit, amount));
     }
