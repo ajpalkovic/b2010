@@ -57,7 +57,7 @@ public class EnergeticEnergon extends Base {
             } else {
            		if (player.controller.getLocation().isAdjacentTo(towerLocation)) {
            			// Check to make sure we don't transfer more flux than the Wout has, and the tower can receive.
-           			double maxTransfer = info.maxEnergon - info.energonLevel;
+           			double maxTransfer = (info.maxEnergon * ENERGON_TO_FLUX_CONVERSION) - (info.energonLevel * ENERGON_TO_FLUX_CONVERSION);
            			double available = player.controller.getFlux();
            			if (maxTransfer > available) {
            				maxTransfer = available;
