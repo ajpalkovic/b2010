@@ -64,7 +64,7 @@ public class EnergeticEnergon extends Base {
            			}
            			if (maxTransfer > 10) {
            				player.controller.transferFlux(maxTransfer, towerLocation, RobotLevel.ON_GROUND);
-           				System.out.println("Transferred " + maxTransfer + " flux to a tower...");
+           				//System.out.println("Transferred " + maxTransfer + " flux to a tower...");
            			}
            		} else {
            			// Wout was not adjacent to the tower, better luck next time.
