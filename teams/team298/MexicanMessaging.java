@@ -30,8 +30,8 @@ public class MexicanMessaging extends Base {
      * The first two parameters are the message type (from BroadcastMessage.*) and the recipient id (BroadcastMessage.everyone for everyone)
      * Add message accepts an array of ints, strings, and MapLocations which will be sent along with the message.
      */
-    public boolean sendTowerBuildLocationRequest() {
-        return addMessage(BroadcastMessage.towerBuildLocationRequest, BroadcastMessage.everyone, null, null, null);
+    public boolean sendTowerBuildLocationRequest(int recipientRobotID) {
+        return addMessage(BroadcastMessage.towerBuildLocationRequest, recipientRobotID, null, null, null);
     }
 
     public boolean sendTowerBuildLocationResponse(MapLocation[] locations) {

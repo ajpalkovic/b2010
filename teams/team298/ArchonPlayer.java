@@ -138,17 +138,28 @@ public class ArchonPlayer extends NovaPlayer {
         ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
         if(towers.size() > 0) {
             //there are teles in range, ask them where to build
-            messaging.sendTowerBuildLocationRequest();
-            setGoal(Goal.askingForTowerLocation);
-            return;
+        	try{
+        		int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
+        		messaging.sendTowerBuildLocationRequest(towerID);
+        		setGoal(Goal.askingForTowerLocation);
+        		return;
+        	} catch (Exception e) {
+        		pa("Cannot sense robot at location");
+        	}
+            
         }
 
         towers = sensing.senseAlliedTowerLocations();
         if(towers.size() > 0) {
             //no teles in range, but there are other towers.  they should be talking to the tele and should know the status of where to build
-            messaging.sendTowerBuildLocationRequest();
-            setGoal(Goal.askingForTowerLocation);
-            return;
+        	try{            	
+        		int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
+        		messaging.sendTowerBuildLocationRequest(towerID);
+        		setGoal(Goal.askingForTowerLocation);
+        		return;
+        	} catch (Exception e) {
+        		pa("Cannot sense robot at location");
+        	}
         }
 
 

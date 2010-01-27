@@ -49,6 +49,19 @@ public class WoutPlayer extends AttackPlayer {
         } else {
             navigation.moveOnce(false);
         }
+        
+        // Transfer Flux to towers if they are nearby.
+        ArrayList<MapLocation> towers = sensing.senseAlliedTowerLocations();
+        MapLocation transferTarget = null;
+        for (MapLocation towerLoc : towers) {
+        	if (controller.getLocation().isAdjacentTo(towerLoc)) {
+        		transferTarget = towerLoc;
+        		break;
+        	}
+        }
+        if (transferTarget != null) {
+        	energon.transferFluxToTower(transferTarget);
+        }
 
         messaging.sendMessageForEnemyRobots();
 
