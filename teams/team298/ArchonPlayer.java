@@ -40,9 +40,11 @@ public class ArchonPlayer extends NovaPlayer {
                 }
 
                 //add a small delay to archon movement so the other dudes can keep up
-                if(moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0) {
-                    navigation.moveOnce(true);
-                    moveTurns = 0;
+                if(controller.getRoundsUntilMovementIdle() == 0) {
+                    if(archonNumber > 1 || moveTurns >= minMoveTurns) {
+                        navigation.moveOnce(true);
+                        moveTurns = 0;
+                    }
                 }
 
                 //try to spawn a new dude every turn
@@ -225,6 +227,7 @@ public class ArchonPlayer extends NovaPlayer {
         } catch(Exception e) {
             System.out.println("----Caught Exception in senseArchonNumber.  Exception: " + e.toString());
         }
+        hasReceivedUniqueMsg = true;
         System.out.println("Number: " + min);
     }
 

@@ -272,6 +272,7 @@ public class NaughtyNavigation extends Base {
         if (faceDirection(dir) != Status.success) {
             return Status.fail;
         }
+
         return moveOnce();
     }
 
@@ -469,6 +470,8 @@ public class NaughtyNavigation extends Base {
                 if(enemies.size() > 0) {
                     MapLocation closest = findClosest(enemies);
                     int distance = closest.distanceSquaredTo(controller.getLocation());
+                    
+                    // TODO: send message that unit is attacking somebody
                     if(distance >= 15 && distance <= 20) {
                         return null;
                     } else if(distance > 20) {
