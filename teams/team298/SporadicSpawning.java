@@ -93,7 +93,7 @@ public class SporadicSpawning extends Base {
         }
 
         // each archon should keep .3 for itself?
-        return energonProduction > energonCost + (energonProduction * .2);
+        return energonProduction > energonCost + (energonProduction * .4);
     }
 
     /**
@@ -218,7 +218,7 @@ public class SporadicSpawning extends Base {
     class AttackingSpawnMode extends SpawnMode {
         
         public RobotType getNextRobotSpawnType() {
-            return previousSpawnType == null || previousSpawnType == RobotType.TURRET ? RobotType.WOUT : RobotType.TURRET;
+            return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
         }
     }
 

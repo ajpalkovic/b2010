@@ -88,7 +88,9 @@ public class NovaPlayer extends Base {
         while(true) {
             int startTurn = Clock.getRoundNum();
             controller.setIndicatorString(0, controller.getLocation().toString());
+            int b = Clock.getBytecodeNum(), t = Clock.getRoundNum();
             messaging.parseMessages();
+            //printBytecode(t, b, "Parse Messages: ");
 
             if(!isArchon && !isTower && energon.isEnergonLow()) messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
 

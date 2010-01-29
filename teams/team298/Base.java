@@ -21,6 +21,13 @@ public class Base {
         robot = controller.getRobot();
     }
 
+    public void printBytecode(int round, int bytecode, String message) {
+        int count = 6000 - bytecode;
+        count += (Clock.getRoundNum()-round)*6000;
+        count -= (6000-Clock.getBytecodeNum());
+        pa(message+count);
+    }
+
     public void pr(String s) {
         if(false) {
             return;

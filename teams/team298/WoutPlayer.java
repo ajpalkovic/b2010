@@ -28,7 +28,7 @@ public class WoutPlayer extends AttackPlayer {
     };
 
     public WoutPlayer(RobotController controller) {
-        super(controller);
+        super(controller);	
     }
 
     public void step() {
@@ -50,7 +50,7 @@ public class WoutPlayer extends AttackPlayer {
             navigation.moveOnce(false);
         }
 
-        messaging.sendMessageForEnemyRobots();
+        //messaging.sendMessageForEnemyRobots();
 
         processEnemies();
         sortEnemies();

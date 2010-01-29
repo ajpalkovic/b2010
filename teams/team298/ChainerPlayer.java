@@ -46,21 +46,78 @@ public class ChainerPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
-            navigation.faceLocation(enemy.location);
+            int t = Clock.getRoundNum(), b = Clock.getBytecodeNum();
+            MapLocation enemyLocation = getChainerAttackLocation(enemy);
+            //printBytecode(t, b, "Get Location: ");
+            if(enemyLocation == null) {
+                //p("Null location");
+                enemyLocation = enemy.location;
+            }
+            navigation.faceLocation(enemyLocation);
 
-            if(!controller.canAttackSquare(enemy.location) && canMove) {
-                navigation.changeToLocationGoal(enemy.location, false);
+            if(!controller.canAttackSquare(enemyLocation) && canMove) {
+                navigation.changeToLocationGoal(enemyLocation, false);
                 navigation.moveOnce(true);
                 navigation.popGoal();
                 return;
             }
-            int status = executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+            int status = executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
             //if(status == Status.success) p("take that bitch");
             processEnemies();
-            attackLocation = enemy.location;
+            attackLocation = enemyLocation;
         } else {
             //navigation.changeToMoveableDirectionGoal(true);
             navigation.moveOnce(true);
         }
+    }
+
+    public MapLocation getChainerAttackLocation(EnemyInfo enemy) {
+        ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
+        ArrayList<RobotInfo> allies = sensing.senseAlliedRobotInfoInSensorRange();
+
+        boolean inAir = enemy.type == RobotType.ARCHON;
+
+        MapLocation best = null, location;
+        int alliesHit = Integer.MAX_VALUE, enemiesHit = Integer.MIN_VALUE;
+        int minAlliesHit = Integer.MAX_VALUE, minEnemiesHit = Integer.MIN_VALUE;
+
+        for(int x = -1; x <= 1; x++) {
+            for(int y = -1; y <= 1; y++) {
+                location = new MapLocation(enemy.location.getX()+x, enemy.location.getY()+y);
+                if(location.distanceSquaredTo(controller.getLocation()) > 9) continue;
+                
+                alliesHit = 0;
+                enemiesHit = 0;
+
+                for(RobotInfo e : enemies) {
+                    if(inAir == (e.type == RobotType.ARCHON)) {
+                        if(e.location.distanceSquaredTo(location) <= 2) {
+                            enemiesHit++;
+                        }
+                    }
+                }
+                for(RobotInfo ally : allies) {
+                    if(inAir == (ally.type == RobotType.ARCHON)) {
+                        if(ally.location.distanceSquaredTo(location) <= 2) {
+                            alliesHit++;
+                        }
+                    }
+                }
+
+                if(alliesHit < minAlliesHit) {
+                    best = location;
+                    minAlliesHit = alliesHit;
+                    minEnemiesHit = enemiesHit;
+                } else if(alliesHit == minAlliesHit) {
+                    if(enemiesHit > minEnemiesHit) {
+                        best = location;
+                        minAlliesHit = alliesHit;
+                        minEnemiesHit = enemiesHit;
+                    }
+                }
+            }
+        }
+
+        return best;
     }
 }
