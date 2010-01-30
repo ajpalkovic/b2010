@@ -223,7 +223,7 @@ public class EnergeticEnergon extends Base {
      */
     public boolean isEnergonLow() {
         double currentLevel = controller.getEnergonLevel(), currentReserve = controller.getEnergonReserve();
-        return (currentReserve == 0 && currentLevel < lowEnergonLevel);
+        return (currentReserve < 3 && currentLevel < lowEnergonLevel);
     }
 
     public boolean isEnergonLow(RobotInfo info) {
