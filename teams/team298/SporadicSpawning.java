@@ -229,7 +229,7 @@ public class SporadicSpawning extends Base {
     }
 
     class OldSpawnMode extends SpawnMode {
-        public double goalChainers = -0.2, goalTurrets = .6, goalSoldiers = -0.2, goalWouts = .4;
+        public double goalChainers = 0.6, goalTurrets = -0.2, goalSoldiers = -0.2, goalWouts = 0.4;
         
         public RobotType getNextRobotSpawnType() {
             ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();

@@ -46,15 +46,23 @@ public class ChainerPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
+            //if the closest enemy is out of range, lets just move towards them first
+            if(controller.getLocation().distanceSquaredTo(enemy.location) > 9) {
+                navigation.changeToLocationGoal(enemy.location, false);
+                navigation.moveOnce(true);
+                navigation.popGoal();
+                return;
+            }
+
+
             int t = Clock.getRoundNum(), b = Clock.getBytecodeNum();
             MapLocation enemyLocation = getChainerAttackLocation(enemy);
             //printBytecode(t, b, "Get Location: ");
-            if(enemyLocation == null) {
-                //p("Null location");
-                enemyLocation = enemy.location;
-            }
+            
+            //we werent able to find a location in range that wouldnt hit our dudes as well
+            if(enemyLocation == null) return;
+            
             navigation.faceLocation(enemyLocation);
-
             if(!controller.canAttackSquare(enemyLocation) && canMove) {
                 navigation.changeToLocationGoal(enemyLocation, false);
                 navigation.moveOnce(true);
@@ -88,6 +96,15 @@ public class ChainerPlayer extends AttackPlayer {
                 
                 alliesHit = 0;
                 enemiesHit = 0;
+                
+                for(RobotInfo ally : allies) {
+                    if(inAir == (ally.type == RobotType.ARCHON)) {
+                        if(ally.location.distanceSquaredTo(location) <= 2) {
+                            alliesHit++;
+                        }
+                    }
+                }
+                if(alliesHit > 1) continue;
 
                 for(RobotInfo e : enemies) {
                     if(inAir == (e.type == RobotType.ARCHON)) {
@@ -96,14 +113,7 @@ public class ChainerPlayer extends AttackPlayer {
                         }
                     }
                 }
-                for(RobotInfo ally : allies) {
-                    if(inAir == (ally.type == RobotType.ARCHON)) {
-                        if(ally.location.distanceSquaredTo(location) <= 2) {
-                            alliesHit++;
-                        }
-                    }
-                }
-
+                
                 if(alliesHit < minAlliesHit) {
                     best = location;
                     minAlliesHit = alliesHit;
