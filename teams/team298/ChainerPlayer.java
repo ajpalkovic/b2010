@@ -65,7 +65,7 @@ public class ChainerPlayer extends AttackPlayer {
             navigation.faceLocation(enemyLocation);
             if(!controller.canAttackSquare(enemyLocation) && canMove) {
                 navigation.changeToLocationGoal(enemyLocation, false);
-                navigation.moveOnce(true);
+                navigation.moveOnce(false);
                 navigation.popGoal();
                 return;
             }

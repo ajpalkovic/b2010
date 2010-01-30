@@ -265,13 +265,13 @@ public abstract class AttackPlayer extends NovaPlayer {
 
             if(inRangeWithoutTurningEnemies.size() > 0)
                 return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(archonEnemies.size() > 0)
+                return getCheapestEnemy(archonEnemies);
             if(inRangeEnemies.size() > 0)
                 return getCheapestEnemy(inRangeEnemies);
             // if an enemy is just 1 or 2 hops a way, kill him but still come back
             if(outOfRangeEnemies.size() > 0)
                 return getCheapestEnemy(outOfRangeEnemies);
-            if(archonEnemies.size() > 0)
-                return getCheapestEnemy(archonEnemies);
             return getCheapestEnemy(outOfRangeArchonEnemies);
         }
 

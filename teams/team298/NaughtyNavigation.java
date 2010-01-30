@@ -57,10 +57,16 @@ public class NaughtyNavigation extends Base {
     }
 
     public MapLocation findClosest(MapLocation[] locations) {
-        MapLocation closest = null, current = controller.getLocation();
+        return findClosest(locations, 0);
+    }
+
+    public MapLocation findClosest(MapLocation[] locations, int start) {
+        MapLocation closest = null, current = controller.getLocation(), location;
         int min = Integer.MAX_VALUE, distance;
 
-        for (MapLocation location : locations) {
+        for(int c = start; c < locations.length; c++) {
+            location = locations[c];
+            
             if (location == null) {
                 continue;
             }
@@ -460,22 +466,44 @@ public class NaughtyNavigation extends Base {
     }
 
     class MoveableDirectionGoal extends NavigationGoal {
+        public Direction previousDirection;
+        public MapLocation closest;
+        public int enemiesLastSeen;
+        public final int tolerance = 20;
+        public ArchonPlayer archonPlayer;
 
+        public MoveableDirectionGoal() {
+            super();
+            previousDirection = controller.getDirection();
+            enemiesLastSeen = 0;
+            if(player.isArchon) {
+                archonPlayer = (ArchonPlayer) player;
+            }
+        }
         public Direction getDirection() {
             if(player.isArchon) {
                 ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
+                closest = null;
                 if(enemies.size() > 0) {
-                    MapLocation closest = findClosest(enemies);
+                    enemiesLastSeen = Clock.getRoundNum();
+                    closest = findClosest(enemies);
+                } else if(archonPlayer.closestEnemySeen+archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
+                    closest = archonPlayer.closestEnemy;
+                }
+
+                if(closest != null) {
                     int distance = closest.distanceSquaredTo(controller.getLocation());
-                    if(distance >= 15 && distance <= 20) {
+                    if(distance >= 14 && distance <= 16) {
                         return null;
-                    } else if(distance > 20) {
-                        return getMoveableArchonDirection(controller.getLocation().directionTo(closest));
+                    } else if(distance > 18) {
+                        return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closest));
                     } else {
                         return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
                     }
+                } else if(enemiesLastSeen+tolerance > Clock.getRoundNum()) {
+                    return previousDirection;
                 } else {
-                    return getMoveableArchonDirection(controller.getDirection());
+                    return previousDirection = getMoveableArchonDirection(previousDirection);
                 }
             }
             else {
