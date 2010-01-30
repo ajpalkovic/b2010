@@ -194,55 +194,6 @@ public abstract class AttackPlayer extends NovaPlayer {
         return Status.success;
     }
 
-    public MapLocation findBestLocation(MapLocation location) {
-        return null;
-    }
-
-    /**
-     * Returns ArrayList of MapData where this unit can attack this location from.
-     */
-    public ArrayList<MapLocation> getAttackLocations(MapLocation enemyLocation) {
-        ArrayList<MapLocation> ableSpots = new ArrayList<MapLocation>();
-        RobotType type = controller.getRobotType();
-        //
-        int x = enemyLocation.getX(), y = enemyLocation.getY();
-        int maxDistance = type.attackRadiusMaxSquared();
-        int minDistance = type.attackRadiusMinSquared();
-        for(int i = x - maxDistance; i <= x + maxDistance; i++) {
-            if(i <= x - minDistance && i >= x + minDistance) {
-                continue;
-            } else {
-                for(int j = y - maxDistance; j < y + maxDistance; j++) {
-                    if(j <= y - minDistance && j >= y + minDistance) {
-                        ableSpots.add(new MapLocation(i, j));
-                    }
-                }
-            }
-        }
-        return ableSpots;
-    }
-
-    /*
-     * Represents a pending AttackRequest
-     * AttackRequest is created when a
-     */
-    class AttackRequest {//i hate having the { up here, but I will do it for code uniformity like up there ^^^^^^
-
-        public MapLocation unitLocation, enemyLocation;
-        public int partyID, size = 0;
-        MapLocation location;
-
-        public void defend() {
-        }
-
-        public AttackRequest(int requestId, MapLocation unitLocation, MapLocation enemyLocation, int initSize) {
-            this.partyID = requestId;
-            this.unitLocation = unitLocation;
-            this.enemyLocation = enemyLocation;
-            size = initSize;
-        }
-    }
-
     public void changeToDefaultAttackMode() {
         if(!(mode instanceof DefaultAttackMode)) {
             mode = new DefaultAttackMode();
