@@ -148,6 +148,7 @@ public abstract class AttackPlayer extends NovaPlayer {
             distance = controller.getLocation().distanceSquaredTo(location);
             this.info = info;
             value = (int) energon * distance;
+            if(this.type == RobotType.ARCHON) value /= 5;
         }
 
         public EnemyInfo(MapLocation location, int energonLevel, String type) {
@@ -158,6 +159,11 @@ public abstract class AttackPlayer extends NovaPlayer {
             this.energon = energonLevel;
             distance = controller.getLocation().distanceSquaredTo(location);
             value = (int) energon * distance;
+            if(this.type == RobotType.ARCHON) value /= 5;
+        }
+
+        public String toString() {
+            return location+" "+type;
         }
     }
 

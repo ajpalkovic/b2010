@@ -46,10 +46,12 @@ public class ChainerPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
+            //p(enemy.toString());
+            
             //if the closest enemy is out of range, lets just move towards them first
             if(controller.getLocation().distanceSquaredTo(enemy.location) > 9) {
                 navigation.changeToLocationGoal(enemy.location, false);
-                navigation.moveOnce(true);
+                navigation.moveOnce(false);
                 navigation.popGoal();
                 return;
             }
@@ -61,8 +63,13 @@ public class ChainerPlayer extends AttackPlayer {
             
             //we werent able to find a location in range that wouldnt hit our dudes as well
             if(enemyLocation == null) return;
-            
             navigation.faceLocation(enemyLocation);
+
+            //now we are facing the location, lets make sure we arent gonna hit our dudes
+            enemyLocation = getChainerAttackLocation(enemy);
+            if(enemyLocation == null) return;
+            navigation.faceLocation(enemyLocation);
+            
             if(!controller.canAttackSquare(enemyLocation) && canMove) {
                 navigation.changeToLocationGoal(enemyLocation, false);
                 navigation.moveOnce(false);
