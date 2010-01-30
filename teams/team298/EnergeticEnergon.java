@@ -223,7 +223,7 @@ public class EnergeticEnergon extends Base {
      */
     public boolean isFluxFull() {
         if(sensing.senseEnemyRobotInfoInSensorRange().size() > 0) return controller.getFlux() > 200;
-        return controller.getFlux() > 500;
+        return controller.getFlux() > 800;
     }
 
     /**
@@ -246,7 +246,7 @@ public class EnergeticEnergon extends Base {
      */
     public void processEnergonTransferRequests() {
         double amount = controller.getEnergonLevel();
-        double maxToGive = amount - 5;
+        double maxToGive = amount - 10;
         if(maxToGive < 0) return;
 
         if(player.isArchon) {

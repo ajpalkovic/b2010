@@ -88,7 +88,7 @@ public class SporadicSpawning extends Base {
         double energonProduction = 1;
         for(RobotInfo robot : air) {
             if(robot.team.equals(player.team)) {
-                energonProduction += 1;
+                energonProduction += 0.8;
             }
         }
 
@@ -173,6 +173,7 @@ public class SporadicSpawning extends Base {
             if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), isAirUnit)) {
                 previousSpawnType = robot;
                 controller.spawn(robot);
+                //p("Spawned "+robot);
                 controller.yield();
 
                 // send data
@@ -201,7 +202,7 @@ public class SporadicSpawning extends Base {
     }
 
     public void changeModeToAttacking() {
-        mode = new AttackingSpawnMode();
+        if(!(mode instanceof AttackingSpawnMode)) mode = new AttackingSpawnMode();
     }
 
     /**
@@ -249,12 +250,75 @@ public class SporadicSpawning extends Base {
     }
 
     class AttackingSpawnMode extends SpawnMode {
-        
+        public int[] numWouts;
+        public int index;
+
+        public int mostWouts, mostWoutsTurn;
+
+        public Hashtable<Integer, Integer> robotTable;
+        public LinkedList<Integer> robotList;
+        public final int tolerance = 40;
+
+        public AttackingSpawnMode() {
+            super();
+            numWouts = new int[30];
+            index = 0;
+            robotTable = new Hashtable<Integer, Integer>();
+            robotList = new LinkedList<Integer>();
+        }
+
         public RobotType getNextRobotSpawnType() {
-            senseRobotCount();
-            if(woutCount > 2) {
+            ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
+            int round = Clock.getRoundNum(), id, result;
+            for(RobotInfo robot : robots) {
+                if(robot.team == player.team) {
+                    if(robot.type == RobotType.WOUT) {
+                        id = robot.id;
+                        if(robotTable.containsKey(id)) {
+                            result = robotTable.get(id);
+                            if(result+tolerance < round) {
+                                robotList.add(id);
+                            }
+                            robotTable.put(id, round);
+                        } else {
+                            robotList.add(id);
+                            robotTable.put(id, round);
+                        }
+                    }
+                }
+            }
+            Iterator<Integer> i = robotList.iterator();
+            int robot;
+            while(i.hasNext()) {
+                robot = i.next();
+                if(robotTable.get(robot)+tolerance < round) {
+                    i.remove();
+                }
+            }
+            
+            //senseRobotCount();
+            /*numWouts[index] = woutCount;
+            index = (index+1) % numWouts.length;
+            
+            int sum = 0;
+            for(int c = 0; c < numWouts.length; c++) {
+                sum += numWouts[c];
+            }
+            int average = sum / numWouts.length;*/
+
+
+            if(mostWoutsTurn+40 > Clock.getRoundNum() || woutCount > mostWouts) {
+                mostWouts = woutCount;
+                mostWoutsTurn = Clock.getRoundNum();
+            }
+
+            
+            //p(woutCount+" "+sum+" "+average+" "+index);
+            if(robotList.size() > 1) {
+                //p("Returning Chainer");
                 return RobotType.CHAINER;
             }
+            //p("Returning Wout");
             return RobotType.WOUT;
             //return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
         }

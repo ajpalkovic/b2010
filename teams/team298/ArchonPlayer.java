@@ -17,7 +17,10 @@ public class ArchonPlayer extends NovaPlayer {
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
     public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
-    public int turnsWaitedForTowerSpawnLocationMessage = 0;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0;
+    boolean attacking;
+    public MapLocation closestEnemy;
+    public int closestEnemySeen, closestEnemyTolerance=10;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -39,21 +42,27 @@ public class ArchonPlayer extends NovaPlayer {
                     spawning.changeModeToAttacking();
                 }
 
+                attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 2;
+
                 //add a small delay to archon movement so the other dudes can keep up
-                if(moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0) {
+                if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
                     navigation.moveOnce(true);
                     moveTurns = 0;
                 }
 
                 //try to spawn a new dude every turn
-                int status = spawning.spawnRobot();
-                if (status == Status.success) {
-                    try {
-                        messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
-                    } catch (Exception e) {
-                        pa("----Exception Caught in sendFollowRequest()");
+                if(turnsSinceLastSpawn > 2) {
+                    int status = spawning.spawnRobot();
+                    if (status == Status.success) {
+                        turnsSinceLastSpawn = -1;
+                        try {
+                            messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
+                        } catch (Exception e) {
+                            pa("----Exception Caught in sendFollowRequest()");
+                        }
                     }
                 }
+                turnsSinceLastSpawn++;
 
                 //try to spawn a tower every turn
                 sensing.senseAlliedTeleporters();
@@ -123,6 +132,11 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 break;
         }
+    }
+
+    public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
+        closestEnemySeen = Clock.getRoundNum();
+        closestEnemy = navigation.findClosest(locations, locationStart);
     }
 
     public void towerBuildLocationResponseCallback(MapLocation[] locations) {
