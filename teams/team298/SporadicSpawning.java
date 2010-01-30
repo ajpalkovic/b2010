@@ -223,14 +223,19 @@ public class SporadicSpawning extends Base {
 
             for(RobotInfo robot : robots) {
                 if(robot.team == player.team) {
-                    if(robot.type == RobotType.WOUT) {
-                        woutCount++;
-                    } else if(robot.type == RobotType.CHAINER) {
-                        chainerCount++;
-                    } else if(robot.type == RobotType.SOLDIER) {
-                        soldierCount++;
-                    } else if(robot.type == RobotType.TURRET) {
-                        turretCount++;
+                    switch(robot.type) {
+                        case WOUT:
+                            woutCount++;
+                            break;
+                        case CHAINER:
+                            chainerCount++;
+                            break;
+                        case SOLDIER:
+                            soldierCount++;
+                            break;
+                        case TURRET:
+                            turretCount++;
+                            break;
                     }
                 }
             }
