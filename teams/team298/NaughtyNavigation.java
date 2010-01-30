@@ -538,7 +538,7 @@ public class NaughtyNavigation extends Base {
                 MapLocation location = controller.getLocation();
                 MapLocation newLocation = new MapLocation(location.getX()+dx, location.getY()+dy);
                 try {
-                    if(controller.senseFluxAtLocation(newLocation) > 1) {
+                    if(controller.senseFluxAtLocation(newLocation) > 5) {
                         //p("Going straight: "+newLocation);
                         return getMoveableDirection(currentDirection);
                     }

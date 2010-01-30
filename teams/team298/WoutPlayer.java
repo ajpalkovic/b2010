@@ -69,8 +69,13 @@ public class WoutPlayer extends AttackPlayer {
         sortEnemies();
         EnemyInfo enemy = mode.getEnemyToAttack();
 
-        if(enemy != null && enemy.location.distanceSquaredTo(controller.getLocation()) <= 2) {
-            executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+        if(enemy != null) {
+            turnsSinceEnemiesSeen = 0;
+            if(enemy.location.distanceSquaredTo(controller.getLocation()) <= 2) {
+                executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+            }
+        } else {
+            turnsSinceEnemiesSeen++;
         }
 
     }

@@ -180,16 +180,7 @@ public class EnergeticEnergon extends Base {
         double maxReserve = GameConstants.ENERGON_RESERVE_SIZE;
         double eventualLevel = currentLevel + currentReserve;
 
-        if(currentReserve >= maxReserve - 1) {
-            return -1;
-        }
-
-        if(eventualLevel >= maxLevel - 1) {
-            return -1;
-        }
-
         double transferAmount = maxReserve - currentReserve;
-
         eventualLevel += transferAmount;
         if(eventualLevel >= maxLevel) {
             transferAmount -= (eventualLevel - maxLevel);
@@ -222,8 +213,9 @@ public class EnergeticEnergon extends Base {
      * Returns true if the flux level is > 300
      */
     public boolean isFluxFull() {
-        if(sensing.senseEnemyRobotInfoInSensorRange().size() > 0) return controller.getFlux() > 200;
-        return controller.getFlux() > 800;
+        int limit = Math.min(200+(int)(player.turnsSinceEnemiesSeen*player.turnsSinceEnemiesSeen*0.1), 2000);
+        //p(limit+"");
+        return controller.getFlux() > limit;
     }
 
     /**
