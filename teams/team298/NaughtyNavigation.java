@@ -534,7 +534,7 @@ public class NaughtyNavigation extends Base {
 
                 //p("MIN: "+min[0]+", "+min[1]+", "+min[2]);
 
-                if(minAmount > 1) {
+                if(minAmount > 5) {
                     location = new MapLocation(location.getX()+min[0], location.getY()+min[1]);
                     //p("Returning: "+getMoveableDirection(controller.getLocation().directionTo(location)));
                     return getMoveableDirection(controller.getLocation().directionTo(location));

@@ -213,12 +213,50 @@ public class SporadicSpawning extends Base {
          * Returns the type of robot that should be spawned next.
          */
         public abstract RobotType getNextRobotSpawnType();
+
+        public int woutCount, chainerCount, turretCount, archonCount, soldierCount, totalCount;
+        public double woutPercent, turretPercent, chainerPercent, soldierPercent;
+
+        public void senseRobotCount() {
+            ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
+            woutCount = chainerCount = turretCount = archonCount = soldierCount = 0;
+
+            for(RobotInfo robot : robots) {
+                if(robot.team == player.team) {
+                    if(robot.type == RobotType.WOUT) {
+                        woutCount++;
+                    } else if(robot.type == RobotType.CHAINER) {
+                        chainerCount++;
+                    } else if(robot.type == RobotType.SOLDIER) {
+                        soldierCount++;
+                    } else if(robot.type == RobotType.TURRET) {
+                        turretCount++;
+                    }
+                }
+            }
+            archonCount = sensing.senseArchonLocations().length;
+            totalCount = chainerCount+soldierCount+woutCount+turretCount;
+        }
+
+        public void senseRobotPercents() {
+            senseRobotCount();
+
+            woutPercent = ((double) woutCount) / ((double) totalCount);
+            turretPercent = ((double) turretCount) / ((double) totalCount);
+            chainerPercent = ((double) chainerCount) / ((double) totalCount);
+            soldierPercent = ((double) soldierCount) / ((double) totalCount);
+        }
     }
 
     class AttackingSpawnMode extends SpawnMode {
         
         public RobotType getNextRobotSpawnType() {
-            return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
+            senseRobotCount();
+            if(woutCount > 2) {
+                return RobotType.CHAINER;
+            }
+            return RobotType.WOUT;
+            //return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
         }
     }
 
@@ -232,36 +270,9 @@ public class SporadicSpawning extends Base {
         public double goalChainers = 0.6, goalTurrets = -0.2, goalSoldiers = -0.2, goalWouts = 0.4;
         
         public RobotType getNextRobotSpawnType() {
-            ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
-            ArrayList<RobotInfo> chainers = new ArrayList<RobotInfo>(),
-                    turrets = new ArrayList<RobotInfo>(),
-                    soldiers = new ArrayList<RobotInfo>(),
-                    wouts = new ArrayList<RobotInfo>();
 
-            for(RobotInfo robot : robots) {
-                if(robot.team == player.team) {
-                    if(robot.type == RobotType.WOUT) {
-                        wouts.add(robot);
-                    } else if(robot.type == RobotType.CHAINER) {
-                        chainers.add(robot);
-                    } else if(robot.type == RobotType.SOLDIER) {
-                        soldiers.add(robot);
-                    } else if(robot.type == RobotType.TURRET) {
-                        turrets.add(robot);
-                    }
-                }
-            }
-
-            int total = chainers.size() + soldiers.size() + wouts.size() + turrets.size();
-            if(total == 0) {
-                return RobotType.WOUT;
-            }
-
-            double woutPercent = (double) wouts.size() / total;
-            double turretPercent = (double) turrets.size() / total;
-            double chainerPercent = (double) chainers.size() / total;
-            double soldierPercent = (double) soldiers.size() / total;
-
+            senseRobotPercents();
+            
             double woutDifference = goalWouts - woutPercent;
             double cannonDifference = goalTurrets - turretPercent;
             double channelerDifference = goalChainers - chainerPercent;
