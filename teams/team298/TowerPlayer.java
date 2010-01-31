@@ -13,6 +13,7 @@ public class TowerPlayer extends NovaPlayer {
     }
 
     public void towerBuildLocationRequestCallback() {
+        if(controller.getFlux() <= 1) return;
         if(idealLocations != null) {
             messaging.sendTowerBuildLocationResponse(idealLocations);
         }
@@ -47,5 +48,9 @@ public class TowerPlayer extends NovaPlayer {
         if(bottom) idealLocations[++index] = bottomLoc;
         if(left) idealLocations[++index] = leftLoc;
         if(right) idealLocations[++index] = rightLoc;
+    }
+
+    public void moveMessageCallback(MapLocation location) {
+        
     }
 }
