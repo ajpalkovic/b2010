@@ -17,7 +17,7 @@ public class ArchonPlayer extends NovaPlayer {
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
     public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
-    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0;
     boolean attacking;
     public MapLocation closestEnemy;
     public int closestEnemySeen, closestEnemyTolerance = 10;
@@ -78,7 +78,7 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.askingForTowerLocation:
                 turnsWaitedForTowerSpawnLocationMessage++;
                 if(turnsWaitedForTowerSpawnLocationMessage > 5) {
-                    spawnTeleporter();
+                    checkKnownTowerLocations();
                 }
 
                 if(idealTowerSpawnLocations != null) {
@@ -86,7 +86,6 @@ public class ArchonPlayer extends NovaPlayer {
                     if(idealTowerSpawnLocations.length > 0) {
                         towerSpawnLocation = spawning.getTowerSpawnLocation(idealTowerSpawnLocations);
                         towerSpawnFromLocation = towerSpawnLocation.subtract(controller.getLocation().directionTo(towerSpawnLocation));
-                        navigation.changeToLocationGoal(towerSpawnFromLocation, true);
                         navigation.changeToLocationGoal(towerSpawnFromLocation, true);
                         setGoal(Goal.movingToTowerSpawnLocation);
                     }
@@ -122,11 +121,21 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
                     navigation.faceLocation(towerSpawnLocation);
-                    if(spawning.spawnTower(RobotType.AURA) != Status.success) {
-                        placeTower();
+                    if(navigation.isLocationFree(towerSpawnLocation, false)) {
+                        if(spawning.spawnTower(RobotType.AURA) != Status.success) {
+                            placeTower();
+                        } else {
+                            setGoal(Goal.collectingFlux);
+                        }
                     } else {
-                        setGoal(Goal.collectingFlux);
+                        if(turnsWaitedForMove > 5) {
+                            placeTower();
+                        } else {
+                            messaging.sendMove(towerSpawnLocation);
+                            turnsWaitedForMove++;
+                        }
                     }
+
                 } else {
                     navigation.moveOnce(false);
                 }
@@ -148,17 +157,25 @@ public class ArchonPlayer extends NovaPlayer {
         turnsWaitedForTowerSpawnLocationMessage = 0;
         towerSpawnFromLocation = null;
         towerSpawnLocation = null;
+        turnsWaitedForMove = 0;
 
         ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
+        int towerID = BroadcastMessage.everyone;
+        MapLocation location;
+        Robot robot;
         if(towers.size() > 0) {
             //there are teles in range, ask them where to build
             try {
-                int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
+                location = navigation.findClosest(towers);
+                if(controller.canSenseSquare(location) && location != null) {
+                    robot = controller.senseGroundRobotAtLocation(location);
+                    if(robot != null) towerID = robot.getID();
+                }
                 messaging.sendTowerBuildLocationRequest(towerID);
                 setGoal(Goal.askingForTowerLocation);
                 return;
             } catch(Exception e) {
-                pa("Cannot sense robot at location");
+                pa("----Caught exception in place tower. "+e.toString());
             }
 
         }
@@ -167,17 +184,27 @@ public class ArchonPlayer extends NovaPlayer {
         if(towers.size() > 0) {
             //no teles in range, but there are other towers.  they should be talking to the tele and should know the status of where to build
             try {
-                int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
+                location = navigation.findClosest(towers);
+                if(controller.canSenseSquare(location) && location != null) {
+                    robot = controller.senseGroundRobotAtLocation(location);
+                    if(robot != null) towerID = robot.getID();
+                }
                 messaging.sendTowerBuildLocationRequest(towerID);
                 setGoal(Goal.askingForTowerLocation);
                 return;
             } catch(Exception e) {
-                pa("Cannot sense robot at location");
+                pa("----Caught exception in place tower. "+e.toString());
             }
         }
 
+        //no towers in range, lets just ask everyone
+        messaging.sendTowerBuildLocationRequest(BroadcastMessage.everyone);
+        setGoal(Goal.askingForTowerLocation);
+        return;
+    }
 
-        towers = sensing.senseKnownAlliedTowerLocations();
+    public void checkKnownTowerLocations() {
+        ArrayList<MapLocation> towers = sensing.senseKnownAlliedTowerLocations();
         if(towers.size() > 0) {
             //we remember that there used to be a tower here, so lets try going there.  once we get there, we can ask again
             MapLocation closest = navigation.findClosest(towers);
