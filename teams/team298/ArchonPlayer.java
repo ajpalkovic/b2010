@@ -201,7 +201,17 @@ public class ArchonPlayer extends NovaPlayer {
         controller.setIndicatorString(2, towerSpawnFromLocation.toString());
         setGoal(Goal.placingTeleporter);
     }
-
+    public void newUnit(int senderID, MapLocation location, String robotType) {
+    	if (RobotType.valueOf(robotType).isBuilding()){    	
+    		if (sensing.knownAlliedTowerLocations == null)
+    			sensing.senseAlliedTowerLocations();
+    		
+    		if (!sensing.knownAlliedTowerLocations.containsKey(senderID)){
+    			sensing.knownAlliedTowerLocations.put(new Integer(senderID), location);
+    			sensing.knownAlliedTowerIDs.put(location.getX() + "," + location.getY(), senderID);    			
+    		}
+    	}
+    }
     public void boot() {
         sensing.senseAllTiles();
         team = controller.getTeam();
