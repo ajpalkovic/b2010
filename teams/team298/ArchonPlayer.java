@@ -20,7 +20,7 @@ public class ArchonPlayer extends NovaPlayer {
     public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0;
     boolean attacking;
     public MapLocation closestEnemy;
-    public int closestEnemySeen, closestEnemyTolerance=10;
+    public int closestEnemySeen, closestEnemyTolerance = 10;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -53,11 +53,11 @@ public class ArchonPlayer extends NovaPlayer {
                 //try to spawn a new dude every turn
                 if(turnsSinceLastSpawn > 2) {
                     int status = spawning.spawnRobot();
-                    if (status == Status.success) {
+                    if(status == Status.success) {
                         turnsSinceLastSpawn = -1;
                         try {
                             messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
-                        } catch (Exception e) {
+                        } catch(Exception e) {
                             pa("----Exception Caught in sendFollowRequest()");
                         }
                     }
@@ -152,28 +152,28 @@ public class ArchonPlayer extends NovaPlayer {
         ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
         if(towers.size() > 0) {
             //there are teles in range, ask them where to build
-        	try{
-        		int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
-        		messaging.sendTowerBuildLocationRequest(towerID);
-        		setGoal(Goal.askingForTowerLocation);
-        		return;
-        	} catch (Exception e) {
-        		pa("Cannot sense robot at location");
-        	}
-            
+            try {
+                int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
+                messaging.sendTowerBuildLocationRequest(towerID);
+                setGoal(Goal.askingForTowerLocation);
+                return;
+            } catch(Exception e) {
+                pa("Cannot sense robot at location");
+            }
+
         }
 
         towers = sensing.senseAlliedTowerLocations();
         if(towers.size() > 0) {
             //no teles in range, but there are other towers.  they should be talking to the tele and should know the status of where to build
-        	try{            	
-        		int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
-        		messaging.sendTowerBuildLocationRequest(towerID);
-        		setGoal(Goal.askingForTowerLocation);
-        		return;
-        	} catch (Exception e) {
-        		pa("Cannot sense robot at location");
-        	}
+            try {
+                int towerID = controller.senseGroundRobotAtLocation(navigation.findClosest(towers)).getID();
+                messaging.sendTowerBuildLocationRequest(towerID);
+                setGoal(Goal.askingForTowerLocation);
+                return;
+            } catch(Exception e) {
+                pa("Cannot sense robot at location");
+            }
         }
 
 
@@ -208,9 +208,7 @@ public class ArchonPlayer extends NovaPlayer {
         senseArchonNumber();
         setGoal(Goal.attackingEnemyArchons);
         if(archonNumber == 1) {
-
         } else {
-
         }
 
     }
@@ -242,7 +240,7 @@ public class ArchonPlayer extends NovaPlayer {
     public void senseNewTiles() {
         sensing.senseDeltas(verticalDeltas, horizontalDeltas, diagonalDeltas);
     }
-    
+
     public boolean pathStepTakenCallback() {
         senseNewTiles();
         messaging.sendFollowRequest(controller.getLocation(), BroadcastMessage.everyone);
