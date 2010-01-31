@@ -15,6 +15,7 @@ public class NovaPlayer extends Base {
     public int followingArchonNumber = -1;
     public int archonLeader = -1;
     public boolean hasReceivedUniqueMsg, ignoreFollowRequest = false;
+    public int turnsSinceEnemiesSeen = 0;
 
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
