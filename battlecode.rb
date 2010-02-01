@@ -27,7 +27,7 @@ save-file=#{path}
 lastVersion=1.1.12
 host=
 lockstep=false"
-puts text
+#puts text
   File.open("#{ROOT}.battlecode.ui", "w+") do |f|
     f.write text
   end
