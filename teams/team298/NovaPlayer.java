@@ -93,7 +93,7 @@ public class NovaPlayer extends Base {
             messaging.parseMessages();
             //printBytecode(t, b, "Parse Messages: ");
 
-            if(!isArchon && !isTower && energon.isEnergonLow()) messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
+            if(!isArchon && !isTower && energon.isEnergonSortaLow()) messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
 
             if(isArchon) {
                 energon.processEnergonTransferRequests();

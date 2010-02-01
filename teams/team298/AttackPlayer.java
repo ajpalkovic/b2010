@@ -11,6 +11,7 @@ public abstract class AttackPlayer extends NovaPlayer {
     public int noEnemiesCount = 0, maxDistanceAway = 3;
     public boolean movingToAttack = false;
     public MapLocation attackLocation;
+    public int range, minRange;
 
     public AttackMode mode;
 
@@ -18,6 +19,9 @@ public abstract class AttackPlayer extends NovaPlayer {
         super(controller);
         enemies = new ArrayList<EnemyInfo>();
         mode = new DefaultAttackMode();
+
+        range = controller.getRobotType().attackRadiusMaxSquared();
+        minRange = controller.getRobotType().attackRadiusMinSquared();
     }
 
     /**
@@ -95,8 +99,6 @@ public abstract class AttackPlayer extends NovaPlayer {
         outOfRangeEnemies = new ArrayList<EnemyInfo>();
         archonEnemies = new ArrayList<EnemyInfo>();
         outOfRangeArchonEnemies = new ArrayList<EnemyInfo>();
-
-        int range = controller.getRobotType().attackRadiusMaxSquared(), minRange = controller.getRobotType().attackRadiusMinSquared();
 
         for(int c = 0; c < enemies.size(); c++) {
             EnemyInfo current = enemies.get(c);
@@ -206,31 +208,14 @@ public abstract class AttackPlayer extends NovaPlayer {
         }
     }
 
+    public void changeToSoldierAttackMode() {
+        if(!(mode instanceof SoldierAttackMode)) {
+            mode = new SoldierAttackMode();
+        }
+    }
+
     abstract class AttackMode {
         public abstract EnemyInfo getEnemyToAttack();
-    }
-    
-    class DefaultAttackMode extends AttackMode {
-        /**
-         * This method figures out which enemy to attack.
-         * It will first attack in range enemies, and then it will attack archons.
-         */
-        public EnemyInfo getEnemyToAttack() {
-            if(enemies.size() == 0) {
-                return null;
-            }
-
-            if(inRangeWithoutTurningEnemies.size() > 0)
-                return getCheapestEnemy(inRangeWithoutTurningEnemies);
-            if(archonEnemies.size() > 0)
-                return getCheapestEnemy(archonEnemies);
-            if(inRangeEnemies.size() > 0)
-                return getCheapestEnemy(inRangeEnemies);
-            // if an enemy is just 1 or 2 hops a way, kill him but still come back
-            if(outOfRangeEnemies.size() > 0)
-                return getCheapestEnemy(outOfRangeEnemies);
-            return getCheapestEnemy(outOfRangeArchonEnemies);
-        }
 
         /**
          * EnemyInfo stores a heuristic in it.
@@ -256,6 +241,52 @@ public abstract class AttackPlayer extends NovaPlayer {
                 }
             }
             return min;
+        }
+    }
+    
+    class DefaultAttackMode extends AttackMode {
+        /**
+         * This method figures out which enemy to attack.
+         * It will first attack in range enemies, and then it will attack archons.
+         */
+        public EnemyInfo getEnemyToAttack() {
+            if(enemies.size() == 0) {
+                return null;
+            }
+
+            if(inRangeWithoutTurningEnemies.size() > 0)
+                return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(archonEnemies.size() > 0)
+                return getCheapestEnemy(archonEnemies);
+            if(inRangeEnemies.size() > 0)
+                return getCheapestEnemy(inRangeEnemies);
+            // if an enemy is just 1 or 2 hops a way, kill him but still come back
+            if(outOfRangeEnemies.size() > 0)
+                return getCheapestEnemy(outOfRangeEnemies);
+            return getCheapestEnemy(outOfRangeArchonEnemies);
+        }
+    }
+
+    class SoldierAttackMode extends AttackMode {
+        /**
+         * This method figures out which enemy to attack.
+         * It will first attack in range enemies, and then it will attack archons.
+         */
+        public EnemyInfo getEnemyToAttack() {
+            if(enemies.size() == 0) {
+                return null;
+            }
+
+            if(archonEnemies.size() > 0)
+                return getCheapestEnemy(archonEnemies);
+            if(inRangeWithoutTurningEnemies.size() > 0)
+                return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(inRangeEnemies.size() > 0)
+                return getCheapestEnemy(inRangeEnemies);
+            // if an enemy is just 1 or 2 hops a way, kill him but still come back
+            if(outOfRangeEnemies.size() > 0)
+                return getCheapestEnemy(outOfRangeEnemies);
+            return getCheapestEnemy(outOfRangeArchonEnemies);
         }
     }
 }

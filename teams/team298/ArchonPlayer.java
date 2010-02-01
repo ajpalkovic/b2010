@@ -20,7 +20,7 @@ public class ArchonPlayer extends NovaPlayer {
     public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0;
     boolean attacking;
     public MapLocation closestEnemy;
-    public int closestEnemySeen, closestEnemyTolerance = 10;
+    public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -31,6 +31,7 @@ public class ArchonPlayer extends NovaPlayer {
     public void step() {
         // reevaluate goal here?
         //sensing.senseAllTiles();
+
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
@@ -41,8 +42,9 @@ public class ArchonPlayer extends NovaPlayer {
                     navigation.changeToMoveableDirectionGoal(true);
                     spawning.changeModeToAttacking();
                 }
+                energon.transferFluxBetweenArchons();
 
-                attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 2;
+                attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
                 //add a small delay to archon movement so the other dudes can keep up
                 if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
