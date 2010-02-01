@@ -13,7 +13,7 @@ public class EnergeticEnergon extends Base {
     public ArrayList<EnergonTransferRequest> requests;
     public ArrayList<LowAllyRequest> lowAllyRequests;
     public int lowAllyRequestsTurn = 0;
-    public double lowEnergonLevel;
+    public double lowEnergonLevel, sortaLowEnergonLevel;
 
     public EnergeticEnergon(NovaPlayer player) {
         super(player);
@@ -25,6 +25,7 @@ public class EnergeticEnergon extends Base {
         requests = new ArrayList<EnergonTransferRequest>();
         lowAllyRequests = new ArrayList<LowAllyRequest>();
         lowEnergonLevel = controller.getRobotType().maxEnergon() * .3;
+        sortaLowEnergonLevel = controller.getRobotType().maxEnergon() * .5;
     }
 
     public void transferFluxBetweenArchons() {
@@ -248,9 +249,12 @@ public class EnergeticEnergon extends Base {
         return (currentReserve < 3 && currentLevel < lowEnergonLevel);
     }
 
-    public boolean isEnergonLow(RobotInfo info) {
-        double currentLevel = info.energonLevel, currentReserve = info.energonReserve;
-        return (currentReserve == 0 && currentLevel < info.maxEnergon * .3);
+    /**
+     * Returns true if the energon level plus energon reserve is less than the starting energon level
+     */
+    public boolean isEnergonSortaLow() {
+        double currentLevel = controller.getEnergonLevel(), currentReserve = controller.getEnergonReserve();
+        return (currentReserve < 3 && currentLevel < sortaLowEnergonLevel);
     }
 
     /**
