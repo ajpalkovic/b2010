@@ -25,4 +25,5 @@ bin/*
 bin/*/*
 submission.jar
 output.txt
-*output.txt
+output-*.txt
+match-*.rms

@@ -1,28 +1,33 @@
 ROOT = ENV['USERPROFILE']+"/"
 
 def forkAndRun(map, opponent)
-  cmd = "#{File.join(FileUtils.pwd, 'ant.bat')} run > #{File.join(FileUtils.pwd, "#{map}-#{opponent}-output.txt")} &\n"
+  puts "Launching: #{map} #{opponent}"
+  cmd = "#{File.join(FileUtils.pwd, 'ant.bat')} run >& #{File.join(FileUtils.pwd, "output-#{map}-#{opponent}.txt")} &\n"
   output = system "#{cmd}"
   sleep(3)
 end
 
 def updateConfig(map, opponent)
+  path = File.join(FileUtils.pwd, "match-#{map}-#{opponent}.rms")
+  path = path.gsub("/cygdrive/c", "C:")
+  path = path.gsub("\\", "\\\\").gsub(":", "\\:")
   text = "#ui options
 #Sun Jan 31 13:40:18 EST 2010
 file=
 analyzeFile=false
-glclient=true
+glclient=#{ENV['viewport']}
 showMinimap=false
 choice=LOCAL
 MAP=bridge.xml
-save=false
+save=true
 maps=#{map}.xml
 TEAM_B=team298
 TEAM_A=#{opponent}
-save-file=
+save-file=#{path}
 lastVersion=1.1.12
 host=
 lockstep=false"
+puts text
   File.open("#{ROOT}.battlecode.ui", "w+") do |f|
     f.write text
   end
