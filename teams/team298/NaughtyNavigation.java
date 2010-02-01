@@ -304,6 +304,64 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
+     * Turns the robot to face the given direction without yielding.
+     * NOTE: This means that it is possible no action takes place on this turn.
+     */
+    public int simpleTurn(Direction dir) {
+        if (controller.getDirection().equals(dir)) {
+            return Status.success;
+        }
+
+        if(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0) return Status.turnsNotIdle;
+        
+        if (dir == null) {
+            return Status.fail;
+        }
+
+        if (dir.equals(Direction.OMNI)) {
+            return Status.success;
+        }
+
+        try {
+            controller.setDirection(dir);
+            return Status.success;
+        } catch (Exception e) {
+            System.out.println("----Caught Exception in simpleTurn with dir: " + dir.toString() + " Exception: " + e.toString());
+        }
+
+        return Status.fail;
+    }
+
+    /**
+     * Moves forward one time without yielding.
+     * NOTE: This means that it is possible no action takes place on this turn.
+     */
+    public int simpleMove() {
+        if(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0) return Status.turnsNotIdle;
+        try {
+            if (controller.canMove(controller.getDirection())) {
+                controller.moveForward();
+                player.pathStepTakenCallback();
+                return Status.success;
+            }
+            return Status.cantMoveThere;
+        } catch (Exception e) {
+            System.out.println("----Caught Exception in simpleMove dir: " + controller.getDirection().toString() + " Exception: " + e.toString());
+        }
+        return Status.fail;
+    }
+
+    /**
+     * Turns and moves in a given direction without yielding.
+     * NOTE: This means that it is possible no action takes place on this turn.
+     */
+    public int simpleMove(Direction dir) {
+        simpleTurn(dir);
+        return simpleMove();
+    }
+
+
+    /**
      * Returns true if the two squares are next to each other or are equal.
      */
     public boolean isAdjacent(MapLocation start, MapLocation end) {
