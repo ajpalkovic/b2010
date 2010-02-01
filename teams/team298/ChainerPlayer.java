@@ -49,12 +49,18 @@ public class ChainerPlayer extends AttackPlayer {
             //p(enemy.toString());
             
             //if the closest enemy is out of range, lets just move towards them first
-            if(controller.getLocation().distanceSquaredTo(enemy.location) > 9) {
-                navigation.changeToLocationGoal(enemy.location, false);
+            int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
+            if(enemyDistance > 9) {
+                navigation.changeToDirectionGoal(navigation.getMoveableDirection(controller.getLocation().directionTo(enemy.location)), false);
                 navigation.moveOnce(false);
                 navigation.popGoal();
                 return;
             }
+
+            if(enemyDistance > 7) {
+                navigation.simpleMove(controller.getLocation().directionTo(enemy.location));
+            }
+
 
 
             int t = Clock.getRoundNum(), b = Clock.getBytecodeNum();
