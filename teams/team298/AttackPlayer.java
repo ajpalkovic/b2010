@@ -11,6 +11,7 @@ public abstract class AttackPlayer extends NovaPlayer {
     public int noEnemiesCount = 0, maxDistanceAway = 3;
     public boolean movingToAttack = false;
     public MapLocation attackLocation;
+    public int range, minRange;
 
     public AttackMode mode;
 
@@ -18,6 +19,9 @@ public abstract class AttackPlayer extends NovaPlayer {
         super(controller);
         enemies = new ArrayList<EnemyInfo>();
         mode = new DefaultAttackMode();
+
+        range = controller.getRobotType().attackRadiusMaxSquared();
+        minRange = controller.getRobotType().attackRadiusMinSquared();
     }
 
     /**
@@ -95,8 +99,6 @@ public abstract class AttackPlayer extends NovaPlayer {
         outOfRangeEnemies = new ArrayList<EnemyInfo>();
         archonEnemies = new ArrayList<EnemyInfo>();
         outOfRangeArchonEnemies = new ArrayList<EnemyInfo>();
-
-        int range = controller.getRobotType().attackRadiusMaxSquared(), minRange = controller.getRobotType().attackRadiusMinSquared();
 
         for(int c = 0; c < enemies.size(); c++) {
             EnemyInfo current = enemies.get(c);
