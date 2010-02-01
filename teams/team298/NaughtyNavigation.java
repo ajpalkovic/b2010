@@ -553,7 +553,7 @@ public class NaughtyNavigation extends Base {
                     int distance = closest.distanceSquaredTo(controller.getLocation());
                     if(distance >= 14 && distance <= 16) {
                         return null;
-                    } else if(distance > 18) {
+                    } else if(distance > 16) {
                         return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closest));
                     } else {
                         return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));

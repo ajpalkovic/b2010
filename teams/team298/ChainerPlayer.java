@@ -57,7 +57,7 @@ public class ChainerPlayer extends AttackPlayer {
                 return;
             }
 
-            if(enemyDistance > 7) {
+            if(enemyDistance > 5) {
                 navigation.simpleMove(controller.getLocation().directionTo(enemy.location));
             }
 
