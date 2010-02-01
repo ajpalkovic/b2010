@@ -31,6 +31,7 @@ public class ArchonPlayer extends NovaPlayer {
     public void step() {
         // reevaluate goal here?
         //sensing.senseAllTiles();
+
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
@@ -41,6 +42,7 @@ public class ArchonPlayer extends NovaPlayer {
                     navigation.changeToMoveableDirectionGoal(true);
                     spawning.changeModeToAttacking();
                 }
+                energon.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 

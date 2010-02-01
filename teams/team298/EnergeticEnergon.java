@@ -27,6 +27,28 @@ public class EnergeticEnergon extends Base {
         lowEnergonLevel = controller.getRobotType().maxEnergon() * .3;
     }
 
+    public void transferFluxBetweenArchons() {
+        double flux = controller.getFlux();
+        try {
+            if(flux > 0) {
+                MapLocation[] locations = sensing.senseArchonLocations();
+                for(MapLocation location : locations) {
+                    int distance = location.distanceSquaredTo(controller.getLocation());
+                    if(distance > 0 && distance < 3) {
+                        Robot robot = controller.senseAirRobotAtLocation(location);
+                        RobotInfo info = controller.senseRobotInfo(robot);
+                        if(info.flux > flux) {
+                            controller.transferFlux(flux, location, RobotLevel.IN_AIR);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            pa("----Caught exception in transferFluxBetweenArchons");
+        }
+    }
+
     public void transferFlux(MapLocation location) {
         try {
             Robot robot = player.controller.senseAirRobotAtLocation(location);

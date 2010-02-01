@@ -3,3 +3,6 @@ Date,What Changed,Basic,Tele,Ref,Basic,Tele,Ref,Basic,Tele,Ref
 31-Jan,,4202,-1399,1747,-4672,-3095,-4800,1971,-1505,1472
 ,Made chainers try to get w/in 7 of there enemy to keep them on defensive.,3203,-1505,2383,4775,-3835,3864,1578,-3678,-2592
 ,Made archons be much more aggressive,6752,-6088,1714,4567,4663,4775,1417,2361,-2964
+,Made chainers attack from a little farther,3732,-6944,2266,4199,4033,-3420,1445,-3777,-3400
+,Added soldiers,2058,-5578,2236,3539,-4783,-3903,2160,-3560,1615
+,Made archons transfer flux between themselves so we reach 3000 faster,2026,-2948,1861,4298,-4562,3563,1933,-1802,1606
