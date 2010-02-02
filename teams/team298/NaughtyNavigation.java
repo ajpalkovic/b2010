@@ -653,6 +653,16 @@ public class NaughtyNavigation extends Base {
         }
     }
 
+    class FlankingEnemyGoal extends NavigationGoal {
+        public Direction getDirection() {
+            return null;
+        }
+
+        public boolean done() {
+            return false;
+        }
+    }
+
     
     class LocationGoalWithBugPlanning extends BendoverBugging {
 
