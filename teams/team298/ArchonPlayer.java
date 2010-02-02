@@ -161,26 +161,11 @@ public class ArchonPlayer extends NovaPlayer {
         towerSpawnLocation = null;
         turnsWaitedForMove = 0;
 
-        ArrayList<MapLocation> towers = sensing.senseAlliedTeleporters();
+        ArrayList<MapLocation> towers; ////sensing.senseAlliedTeleporters();
         int towerID = BroadcastMessage.everyone;
         MapLocation location;
         Robot robot;
-        if(towers.size() > 0) {
-            //there are teles in range, ask them where to build
-            try {
-                location = navigation.findClosest(towers);
-                if(controller.canSenseSquare(location) && location != null) {
-                    robot = controller.senseGroundRobotAtLocation(location);
-                    if(robot != null) towerID = robot.getID();
-                }
-                messaging.sendTowerBuildLocationRequest(towerID);
-                setGoal(Goal.askingForTowerLocation);
-                return;
-            } catch(Exception e) {
-                pa("----Caught exception in place tower. "+e.toString());
-            }
-
-        }
+        
 
         towers = sensing.senseAlliedTowerLocations();
         if(towers.size() > 0) {
@@ -189,7 +174,7 @@ public class ArchonPlayer extends NovaPlayer {
                 location = navigation.findClosest(towers);
                 if(controller.canSenseSquare(location) && location != null) {
                     robot = controller.senseGroundRobotAtLocation(location);
-                    if(robot != null) towerID = robot.getID();
+                    if(robot != null) towerID = robot.getID(); else pa ("cannot sense robot at " + location);
                 }
                 messaging.sendTowerBuildLocationRequest(towerID);
                 setGoal(Goal.askingForTowerLocation);
@@ -206,12 +191,24 @@ public class ArchonPlayer extends NovaPlayer {
     }
 
     public void checkKnownTowerLocations() {
-        ArrayList<MapLocation> towers = sensing.senseKnownAlliedTowerLocations();
+    	Robot robot = null;
+        
+    	ArrayList<MapLocation> towers = sensing.senseKnownAlliedTowerLocations();
         if(towers.size() > 0) {
             //we remember that there used to be a tower here, so lets try going there.  once we get there, we can ask again
             MapLocation closest = navigation.findClosest(towers);
+            if(controller.canSenseSquare(closest) && closest != null) {
+                try {
+            	robot = controller.senseGroundRobotAtLocation(closest);
+                } catch (Exception e) {;}
+                if(robot == null) {
+                	int id = sensing.knownAlliedTowerIDs.remove(closest.getX() + "," + closest.getY());
+                	sensing.knownAlliedTowerLocations.remove(id);
+                }
+            }
             navigation.changeToLocationGoal(closest, true);
             setGoal(Goal.movingToPreviousTowerLocation);
+            
             return;
         }
 
@@ -229,6 +226,13 @@ public class ArchonPlayer extends NovaPlayer {
         navigation.changeToLocationGoal(towerSpawnFromLocation, true);
         controller.setIndicatorString(2, towerSpawnFromLocation.toString());
         setGoal(Goal.placingTeleporter);
+    }
+    public void towerPingLocationCallback(MapLocation location, int robotID) {
+    	sensing.senseAlliedTowerLocations();
+		if (!sensing.knownAlliedTowerLocations.containsKey(robotID)){
+			sensing.knownAlliedTowerLocations.put(new Integer(robotID), location);
+			sensing.knownAlliedTowerIDs.put(location.getX() + "," + location.getY(), robotID);
+		}
     }
     public void newUnit(int senderID, MapLocation location, String robotType) {
     	if (RobotType.valueOf(robotType).isBuilding()){    	

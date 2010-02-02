@@ -275,7 +275,6 @@ public class SporadicSpawning extends Base {
         public RobotType getNextRobotSpawnType() {
             ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
             int round = Clock.getRoundNum(), id, result;
-            soldierCount = chainerCount = 0;
             for(RobotInfo robot : robots) {
                 if(robot.team == player.team) {
                     if(robot.type == RobotType.WOUT) {
@@ -290,10 +289,6 @@ public class SporadicSpawning extends Base {
                             robotList.add(id);
                             robotTable.put(id, round);
                         }
-                    } else if(robot.type == RobotType.SOLDIER) {
-                        soldierCount++;
-                    } else if(robot.type == RobotType.CHAINER) {
-                        chainerCount++;
                     }
                 }
             }
@@ -326,11 +321,7 @@ public class SporadicSpawning extends Base {
             //p(woutCount+" "+sum+" "+average+" "+index);
             if(robotList.size() > 1) {
                 //p("Returning Chainer");
-                if(soldierCount > 1 || chainerCount < 2) {
-                    return RobotType.CHAINER;
-                }
-                return RobotType.SOLDIER;
-                //return RobotType.CHAINER;
+                return RobotType.CHAINER;
             }
             //p("Returning Wout");
             return RobotType.WOUT;

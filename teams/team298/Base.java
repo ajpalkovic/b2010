@@ -62,6 +62,7 @@ public class Base {
         static final int move = 11; //MOVE BITCH GET OUT DA WAY
         static final int support = 14;
         static final int towerBuildLocationRequest = 15, towerBuildLocationResponse = 16;
+        static final int towerPing = 17;
     }
 
     class Status {
