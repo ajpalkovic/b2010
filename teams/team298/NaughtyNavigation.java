@@ -654,8 +654,35 @@ public class NaughtyNavigation extends Base {
     }
 
     class FlankingEnemyGoal extends NavigationGoal {
+        Direction enemyAvgDirection = null;
+        MapLocation currentEnemyAvgLocation = null;
+        MapLocation newEnemyAvgLocation = null;
+
         public Direction getDirection() {
-            return null;
+            return enemyAvgDirection;
+        }
+
+        public void setAvgLocation(MapLocation[] enemyLocations) {
+            int xVal = 0, yVal = 0;
+            double xAvg = 0, yAvg = 0;
+            for (int i = 0; i < enemyLocations.length; ++i) {
+                xVal += enemyLocations[i].getX();
+                yVal += enemyLocations[i].getY();
+            }
+
+            xAvg = (double)(xVal / enemyLocations.length) * 100;
+            yAvg = (double)(yVal / enemyLocations.length) * 100;
+            if (currentEnemyAvgLocation == null) {
+                currentEnemyAvgLocation = new MapLocation((int)xAvg, (int)yAvg);
+            } else {
+                newEnemyAvgLocation = new MapLocation((int)xAvg, (int)yAvg);
+                setAvgDirection(newEnemyAvgLocation);
+                currentEnemyAvgLocation = newEnemyAvgLocation;
+            }
+        }
+
+        private void setAvgDirection(MapLocation newLocation) {
+            enemyAvgDirection = currentEnemyAvgLocation.directionTo(newLocation);
         }
 
         public boolean done() {
