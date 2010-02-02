@@ -18,6 +18,7 @@ bc.client.use-models=true
 bc.client.renderprefs2d=
 bc.client.renderprefs3d=
 
+bc.dialog.skip=false
 
 # Headless settings - for "ant file"
 bc.game.maps=adobe
