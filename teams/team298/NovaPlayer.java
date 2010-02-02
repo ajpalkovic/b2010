@@ -15,6 +15,7 @@ public class NovaPlayer extends Base {
     public int followingArchonNumber = -1;
     public int archonLeader = -1;
     public boolean hasReceivedUniqueMsg, ignoreFollowRequest = false;
+    public int turnsSinceEnemiesSeen = 0;
 
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
@@ -88,9 +89,11 @@ public class NovaPlayer extends Base {
         while(true) {
             int startTurn = Clock.getRoundNum();
             controller.setIndicatorString(0, controller.getLocation().toString());
+            int b = Clock.getBytecodeNum(), t = Clock.getRoundNum();
             messaging.parseMessages();
+            //printBytecode(t, b, "Parse Messages: ");
 
-            if(!isArchon && !isTower && energon.isEnergonLow()) messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
+            if(!isArchon && !isTower && energon.isEnergonSortaLow()) messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
 
             if(isArchon) {
                 energon.processEnergonTransferRequests();

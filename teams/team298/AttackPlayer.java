@@ -11,6 +11,7 @@ public abstract class AttackPlayer extends NovaPlayer {
     public int noEnemiesCount = 0, maxDistanceAway = 3;
     public boolean movingToAttack = false;
     public MapLocation attackLocation;
+    public int range, minRange;
 
     public AttackMode mode;
 
@@ -18,6 +19,9 @@ public abstract class AttackPlayer extends NovaPlayer {
         super(controller);
         enemies = new ArrayList<EnemyInfo>();
         mode = new DefaultAttackMode();
+
+        range = controller.getRobotType().attackRadiusMaxSquared();
+        minRange = controller.getRobotType().attackRadiusMinSquared();
     }
 
     /**
@@ -96,8 +100,6 @@ public abstract class AttackPlayer extends NovaPlayer {
         archonEnemies = new ArrayList<EnemyInfo>();
         outOfRangeArchonEnemies = new ArrayList<EnemyInfo>();
 
-        int range = controller.getRobotType().attackRadiusMaxSquared(), minRange = controller.getRobotType().attackRadiusMinSquared();
-
         for(int c = 0; c < enemies.size(); c++) {
             EnemyInfo current = enemies.get(c);
 
@@ -148,6 +150,7 @@ public abstract class AttackPlayer extends NovaPlayer {
             distance = controller.getLocation().distanceSquaredTo(location);
             this.info = info;
             value = (int) energon * distance;
+            if(this.type == RobotType.ARCHON) value /= 5;
         }
 
         public EnemyInfo(MapLocation location, int energonLevel, String type) {
@@ -158,6 +161,11 @@ public abstract class AttackPlayer extends NovaPlayer {
             this.energon = energonLevel;
             distance = controller.getLocation().distanceSquaredTo(location);
             value = (int) energon * distance;
+            if(this.type == RobotType.ARCHON) value /= 5;
+        }
+
+        public String toString() {
+            return location+" "+type;
         }
     }
 
@@ -194,86 +202,20 @@ public abstract class AttackPlayer extends NovaPlayer {
         return Status.success;
     }
 
-    public MapLocation findBestLocation(MapLocation location) {
-        return null;
-    }
-
-    /**
-     * Returns ArrayList of MapData where this unit can attack this location from.
-     */
-    public ArrayList<MapLocation> getAttackLocations(MapLocation enemyLocation) {
-        ArrayList<MapLocation> ableSpots = new ArrayList<MapLocation>();
-        RobotType type = controller.getRobotType();
-        //
-        int x = enemyLocation.getX(), y = enemyLocation.getY();
-        int maxDistance = type.attackRadiusMaxSquared();
-        int minDistance = type.attackRadiusMinSquared();
-        for(int i = x - maxDistance; i <= x + maxDistance; i++) {
-            if(i <= x - minDistance && i >= x + minDistance) {
-                continue;
-            } else {
-                for(int j = y - maxDistance; j < y + maxDistance; j++) {
-                    if(j <= y - minDistance && j >= y + minDistance) {
-                        ableSpots.add(new MapLocation(i, j));
-                    }
-                }
-            }
-        }
-        return ableSpots;
-    }
-
-    /*
-     * Represents a pending AttackRequest
-     * AttackRequest is created when a
-     */
-    class AttackRequest {//i hate having the { up here, but I will do it for code uniformity like up there ^^^^^^
-
-        public MapLocation unitLocation, enemyLocation;
-        public int partyID, size = 0;
-        MapLocation location;
-
-        public void defend() {
-        }
-
-        public AttackRequest(int requestId, MapLocation unitLocation, MapLocation enemyLocation, int initSize) {
-            this.partyID = requestId;
-            this.unitLocation = unitLocation;
-            this.enemyLocation = enemyLocation;
-            size = initSize;
-        }
-    }
-
     public void changeToDefaultAttackMode() {
         if(!(mode instanceof DefaultAttackMode)) {
             mode = new DefaultAttackMode();
         }
     }
 
+    public void changeToSoldierAttackMode() {
+        if(!(mode instanceof SoldierAttackMode)) {
+            mode = new SoldierAttackMode();
+        }
+    }
+
     abstract class AttackMode {
         public abstract EnemyInfo getEnemyToAttack();
-    }
-    
-    class DefaultAttackMode extends AttackMode {
-        /**
-         * This method figures out which enemy to attack.
-         * It will first attack in range enemies, and then it will attack archons.
-         */
-        public EnemyInfo getEnemyToAttack() {
-            if(enemies.size() == 0) {
-                return null;
-            }
-
-            if(inRangeWithoutTurningEnemies.size() > 0)
-                return getCheapestEnemy(inRangeWithoutTurningEnemies);
-            if(inRangeEnemies.size() > 0)
-                return getCheapestEnemy(inRangeEnemies);
-            // if an enemy is just 1 or 2 hops a way, kill him but still come back
-            if(outOfRangeEnemies.size() > 0)
-                return getCheapestEnemy(outOfRangeEnemies);
-            if(archonEnemies.size() > 0)
-                return getCheapestEnemy(archonEnemies);
-            return getCheapestEnemy(outOfRangeArchonEnemies);
-        }
 
         /**
          * EnemyInfo stores a heuristic in it.
@@ -299,6 +241,52 @@ public abstract class AttackPlayer extends NovaPlayer {
                 }
             }
             return min;
+        }
+    }
+    
+    class DefaultAttackMode extends AttackMode {
+        /**
+         * This method figures out which enemy to attack.
+         * It will first attack in range enemies, and then it will attack archons.
+         */
+        public EnemyInfo getEnemyToAttack() {
+            if(enemies.size() == 0) {
+                return null;
+            }
+
+            if(inRangeWithoutTurningEnemies.size() > 0)
+                return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(archonEnemies.size() > 0)
+                return getCheapestEnemy(archonEnemies);
+            if(inRangeEnemies.size() > 0)
+                return getCheapestEnemy(inRangeEnemies);
+            // if an enemy is just 1 or 2 hops a way, kill him but still come back
+            if(outOfRangeEnemies.size() > 0)
+                return getCheapestEnemy(outOfRangeEnemies);
+            return getCheapestEnemy(outOfRangeArchonEnemies);
+        }
+    }
+
+    class SoldierAttackMode extends AttackMode {
+        /**
+         * This method figures out which enemy to attack.
+         * It will first attack in range enemies, and then it will attack archons.
+         */
+        public EnemyInfo getEnemyToAttack() {
+            if(enemies.size() == 0) {
+                return null;
+            }
+
+            if(archonEnemies.size() > 0)
+                return getCheapestEnemy(archonEnemies);
+            if(inRangeWithoutTurningEnemies.size() > 0)
+                return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(inRangeEnemies.size() > 0)
+                return getCheapestEnemy(inRangeEnemies);
+            // if an enemy is just 1 or 2 hops a way, kill him but still come back
+            if(outOfRangeEnemies.size() > 0)
+                return getCheapestEnemy(outOfRangeEnemies);
+            return getCheapestEnemy(outOfRangeArchonEnemies);
         }
     }
 }

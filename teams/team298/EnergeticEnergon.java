@@ -13,7 +13,7 @@ public class EnergeticEnergon extends Base {
     public ArrayList<EnergonTransferRequest> requests;
     public ArrayList<LowAllyRequest> lowAllyRequests;
     public int lowAllyRequestsTurn = 0;
-    public double lowEnergonLevel;
+    public double lowEnergonLevel, sortaLowEnergonLevel;
 
     public EnergeticEnergon(NovaPlayer player) {
         super(player);
@@ -25,6 +25,29 @@ public class EnergeticEnergon extends Base {
         requests = new ArrayList<EnergonTransferRequest>();
         lowAllyRequests = new ArrayList<LowAllyRequest>();
         lowEnergonLevel = controller.getRobotType().maxEnergon() * .3;
+        sortaLowEnergonLevel = controller.getRobotType().maxEnergon() * .5;
+    }
+
+    public void transferFluxBetweenArchons() {
+        double flux = controller.getFlux();
+        try {
+            if(flux > 0) {
+                MapLocation[] locations = sensing.senseArchonLocations();
+                for(MapLocation location : locations) {
+                    int distance = location.distanceSquaredTo(controller.getLocation());
+                    if(distance > 0 && distance < 3) {
+                        Robot robot = controller.senseAirRobotAtLocation(location);
+                        RobotInfo info = controller.senseRobotInfo(robot);
+                        if(info.flux > flux) {
+                            controller.transferFlux(flux, location, RobotLevel.IN_AIR);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            pa("----Caught exception in transferFluxBetweenArchons");
+        }
     }
 
     public void transferFlux(MapLocation location) {
@@ -180,16 +203,7 @@ public class EnergeticEnergon extends Base {
         double maxReserve = GameConstants.ENERGON_RESERVE_SIZE;
         double eventualLevel = currentLevel + currentReserve;
 
-        if(currentReserve >= maxReserve - 1) {
-            return -1;
-        }
-
-        if(eventualLevel >= maxLevel - 1) {
-            return -1;
-        }
-
         double transferAmount = maxReserve - currentReserve;
-
         eventualLevel += transferAmount;
         if(eventualLevel >= maxLevel) {
             transferAmount -= (eventualLevel - maxLevel);
@@ -222,8 +236,9 @@ public class EnergeticEnergon extends Base {
      * Returns true if the flux level is > 300
      */
     public boolean isFluxFull() {
-        if(sensing.senseEnemyRobotInfoInSensorRange().size() > 0) return controller.getFlux() > 200;
-        return controller.getFlux() > 500;
+        int limit = Math.min(200+(int)(player.turnsSinceEnemiesSeen*player.turnsSinceEnemiesSeen*0.1), 2000);
+        //p(limit+"");
+        return controller.getFlux() > limit;
     }
 
     /**
@@ -231,12 +246,15 @@ public class EnergeticEnergon extends Base {
      */
     public boolean isEnergonLow() {
         double currentLevel = controller.getEnergonLevel(), currentReserve = controller.getEnergonReserve();
-        return (currentReserve == 0 && currentLevel < lowEnergonLevel);
+        return (currentReserve < 3 && currentLevel < lowEnergonLevel);
     }
 
-    public boolean isEnergonLow(RobotInfo info) {
-        double currentLevel = info.energonLevel, currentReserve = info.energonReserve;
-        return (currentReserve == 0 && currentLevel < info.maxEnergon * .3);
+    /**
+     * Returns true if the energon level plus energon reserve is less than the starting energon level
+     */
+    public boolean isEnergonSortaLow() {
+        double currentLevel = controller.getEnergonLevel(), currentReserve = controller.getEnergonReserve();
+        return (currentReserve < 3 && currentLevel < sortaLowEnergonLevel);
     }
 
     /**
@@ -246,7 +264,7 @@ public class EnergeticEnergon extends Base {
      */
     public void processEnergonTransferRequests() {
         double amount = controller.getEnergonLevel();
-        double maxToGive = amount - 5;
+        double maxToGive = amount - 10;
         if(maxToGive < 0) return;
 
         if(player.isArchon) {

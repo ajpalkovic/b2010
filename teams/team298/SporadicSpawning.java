@@ -88,12 +88,12 @@ public class SporadicSpawning extends Base {
         double energonProduction = 1;
         for(RobotInfo robot : air) {
             if(robot.team.equals(player.team)) {
-                energonProduction += 1;
+                energonProduction += 0.8;
             }
         }
 
         // each archon should keep .3 for itself?
-        return energonProduction > energonCost + (energonProduction * .2);
+        return energonProduction > energonCost + (energonProduction * .4);
     }
 
     /**
@@ -173,6 +173,7 @@ public class SporadicSpawning extends Base {
             if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), isAirUnit)) {
                 previousSpawnType = robot;
                 controller.spawn(robot);
+                //p("Spawned "+robot);
                 controller.yield();
 
                 // send data
@@ -201,7 +202,7 @@ public class SporadicSpawning extends Base {
     }
 
     public void changeModeToAttacking() {
-        mode = new AttackingSpawnMode();
+        if(!(mode instanceof AttackingSpawnMode)) mode = new AttackingSpawnMode();
     }
 
     /**
@@ -213,12 +214,127 @@ public class SporadicSpawning extends Base {
          * Returns the type of robot that should be spawned next.
          */
         public abstract RobotType getNextRobotSpawnType();
+
+        public int woutCount, chainerCount, turretCount, archonCount, soldierCount, totalCount;
+        public double woutPercent, turretPercent, chainerPercent, soldierPercent;
+
+        public void senseRobotCount() {
+            ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
+            woutCount = chainerCount = turretCount = archonCount = soldierCount = 0;
+
+            for(RobotInfo robot : robots) {
+                if(robot.team == player.team) {
+                    switch(robot.type) {
+                        case WOUT:
+                            woutCount++;
+                            break;
+                        case CHAINER:
+                            chainerCount++;
+                            break;
+                        case SOLDIER:
+                            soldierCount++;
+                            break;
+                        case TURRET:
+                            turretCount++;
+                            break;
+                    }
+                }
+            }
+            archonCount = sensing.senseArchonLocations().length;
+            totalCount = chainerCount+soldierCount+woutCount+turretCount;
+        }
+
+        public void senseRobotPercents() {
+            senseRobotCount();
+
+            woutPercent = ((double) woutCount) / ((double) totalCount);
+            turretPercent = ((double) turretCount) / ((double) totalCount);
+            chainerPercent = ((double) chainerCount) / ((double) totalCount);
+            soldierPercent = ((double) soldierCount) / ((double) totalCount);
+        }
     }
 
     class AttackingSpawnMode extends SpawnMode {
-        
+        public int[] numWouts;
+        public int index;
+
+        public int mostWouts, mostWoutsTurn;
+
+        public Hashtable<Integer, Integer> robotTable;
+        public LinkedList<Integer> robotList;
+        public final int tolerance = 40;
+
+        public AttackingSpawnMode() {
+            super();
+            numWouts = new int[30];
+            index = 0;
+            robotTable = new Hashtable<Integer, Integer>();
+            robotList = new LinkedList<Integer>();
+        }
+
         public RobotType getNextRobotSpawnType() {
-            return previousSpawnType == null || previousSpawnType == RobotType.TURRET ? RobotType.WOUT : RobotType.TURRET;
+            ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
+            int round = Clock.getRoundNum(), id, result;
+            soldierCount = chainerCount = 0;
+            for(RobotInfo robot : robots) {
+                if(robot.team == player.team) {
+                    if(robot.type == RobotType.WOUT) {
+                        id = robot.id;
+                        if(robotTable.containsKey(id)) {
+                            result = robotTable.get(id);
+                            if(result+tolerance < round) {
+                                robotList.add(id);
+                            }
+                            robotTable.put(id, round);
+                        } else {
+                            robotList.add(id);
+                            robotTable.put(id, round);
+                        }
+                    } else if(robot.type == RobotType.SOLDIER) {
+                        soldierCount++;
+                    } else if(robot.type == RobotType.CHAINER) {
+                        chainerCount++;
+                    }
+                }
+            }
+            Iterator<Integer> i = robotList.iterator();
+            int robot;
+            while(i.hasNext()) {
+                robot = i.next();
+                if(robotTable.get(robot)+tolerance < round) {
+                    i.remove();
+                }
+            }
+            
+            //senseRobotCount();
+            /*numWouts[index] = woutCount;
+            index = (index+1) % numWouts.length;
+            
+            int sum = 0;
+            for(int c = 0; c < numWouts.length; c++) {
+                sum += numWouts[c];
+            }
+            int average = sum / numWouts.length;*/
+
+
+            if(mostWoutsTurn+40 > Clock.getRoundNum() || woutCount > mostWouts) {
+                mostWouts = woutCount;
+                mostWoutsTurn = Clock.getRoundNum();
+            }
+
+            
+            //p(woutCount+" "+sum+" "+average+" "+index);
+            if(robotList.size() > 1) {
+                //p("Returning Chainer");
+                if(soldierCount > 1 || chainerCount < 2) {
+                    return RobotType.CHAINER;
+                }
+                return RobotType.SOLDIER;
+                //return RobotType.CHAINER;
+            }
+            //p("Returning Wout");
+            return RobotType.WOUT;
+            //return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
         }
     }
 
@@ -229,39 +345,12 @@ public class SporadicSpawning extends Base {
     }
 
     class OldSpawnMode extends SpawnMode {
-        public double goalChainers = -0.2, goalTurrets = .6, goalSoldiers = -0.2, goalWouts = .4;
+        public double goalChainers = 0.6, goalTurrets = -0.2, goalSoldiers = -0.2, goalWouts = 0.4;
         
         public RobotType getNextRobotSpawnType() {
-            ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
-            ArrayList<RobotInfo> chainers = new ArrayList<RobotInfo>(),
-                    turrets = new ArrayList<RobotInfo>(),
-                    soldiers = new ArrayList<RobotInfo>(),
-                    wouts = new ArrayList<RobotInfo>();
 
-            for(RobotInfo robot : robots) {
-                if(robot.team == player.team) {
-                    if(robot.type == RobotType.WOUT) {
-                        wouts.add(robot);
-                    } else if(robot.type == RobotType.CHAINER) {
-                        chainers.add(robot);
-                    } else if(robot.type == RobotType.SOLDIER) {
-                        soldiers.add(robot);
-                    } else if(robot.type == RobotType.TURRET) {
-                        turrets.add(robot);
-                    }
-                }
-            }
-
-            int total = chainers.size() + soldiers.size() + wouts.size() + turrets.size();
-            if(total == 0) {
-                return RobotType.WOUT;
-            }
-
-            double woutPercent = (double) wouts.size() / total;
-            double turretPercent = (double) turrets.size() / total;
-            double chainerPercent = (double) chainers.size() / total;
-            double soldierPercent = (double) soldiers.size() / total;
-
+            senseRobotPercents();
+            
             double woutDifference = goalWouts - woutPercent;
             double cannonDifference = goalTurrets - turretPercent;
             double channelerDifference = goalChainers - chainerPercent;

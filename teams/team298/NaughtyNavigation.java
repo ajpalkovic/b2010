@@ -57,10 +57,16 @@ public class NaughtyNavigation extends Base {
     }
 
     public MapLocation findClosest(MapLocation[] locations) {
-        MapLocation closest = null, current = controller.getLocation();
+        return findClosest(locations, 0);
+    }
+
+    public MapLocation findClosest(MapLocation[] locations, int start) {
+        MapLocation closest = null, current = controller.getLocation(), location;
         int min = Integer.MAX_VALUE, distance;
 
-        for (MapLocation location : locations) {
+        for(int c = start; c < locations.length; c++) {
+            location = locations[c];
+            
             if (location == null) {
                 continue;
             }
@@ -299,6 +305,64 @@ public class NaughtyNavigation extends Base {
     }
 
     /**
+     * Turns the robot to face the given direction without yielding.
+     * NOTE: This means that it is possible no action takes place on this turn.
+     */
+    public int simpleTurn(Direction dir) {
+        if (controller.getDirection().equals(dir)) {
+            return Status.success;
+        }
+
+        if(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0) return Status.turnsNotIdle;
+        
+        if (dir == null) {
+            return Status.fail;
+        }
+
+        if (dir.equals(Direction.OMNI)) {
+            return Status.success;
+        }
+
+        try {
+            controller.setDirection(dir);
+            return Status.success;
+        } catch (Exception e) {
+            System.out.println("----Caught Exception in simpleTurn with dir: " + dir.toString() + " Exception: " + e.toString());
+        }
+
+        return Status.fail;
+    }
+
+    /**
+     * Moves forward one time without yielding.
+     * NOTE: This means that it is possible no action takes place on this turn.
+     */
+    public int simpleMove() {
+        if(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() > 0) return Status.turnsNotIdle;
+        try {
+            if (controller.canMove(controller.getDirection())) {
+                controller.moveForward();
+                player.pathStepTakenCallback();
+                return Status.success;
+            }
+            return Status.cantMoveThere;
+        } catch (Exception e) {
+            System.out.println("----Caught Exception in simpleMove dir: " + controller.getDirection().toString() + " Exception: " + e.toString());
+        }
+        return Status.fail;
+    }
+
+    /**
+     * Turns and moves in a given direction without yielding.
+     * NOTE: This means that it is possible no action takes place on this turn.
+     */
+    public int simpleMove(Direction dir) {
+        simpleTurn(dir);
+        return simpleMove();
+    }
+
+
+    /**
      * Returns true if the two squares are next to each other or are equal.
      */
     public boolean isAdjacent(MapLocation start, MapLocation end) {
@@ -463,30 +527,50 @@ public class NaughtyNavigation extends Base {
     }
 
     class MoveableDirectionGoal extends FollowArchonGoal {
+        public Direction previousDirection;
+        public MapLocation closest;
+        public int enemiesLastSeen;
+        public final int tolerance = 20;
+        public ArchonPlayer archonPlayer;
+
+        public MoveableDirectionGoal() {
+            super();
+            previousDirection = controller.getDirection();
+            enemiesLastSeen = 0;
+            if(player.isArchon) {
+                archonPlayer = (ArchonPlayer) player;
+            }
+        }
 
         public Direction getDirection() {
             if(player.isArchon) {
                 ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
+                closest = null;
                 if(enemies.size() > 0) {
-                    MapLocation closest = findClosest(enemies);
+                    enemiesLastSeen = Clock.getRoundNum();
+                    closest = findClosest(enemies);
+                } else if(archonPlayer.closestEnemySeen+archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
+                    closest = archonPlayer.closestEnemy;
+                }
+
+                if(closest != null) {
                     int distance = closest.distanceSquaredTo(controller.getLocation());
-                    
-                    // TODO: send message that unit is attacking somebody
-                    if(distance >= 15 && distance <= 20) {
+                    if(distance >= 14 && distance <= 16) {
                         return null;
-                    } else if(distance > 20) {
-                        return getMoveableArchonDirection(controller.getLocation().directionTo(closest));
+                    } else if(distance > 16) {
+                        return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closest));
                     } else {
                         return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
                     }
+                } else if(enemiesLastSeen+tolerance > Clock.getRoundNum()) {
+                    return previousDirection;
                 } else {
                     // TODO: Change this to get if archon is leader
                     if (((ArchonPlayer)(player)).archonNumber == 1) {
-                        return getMoveableArchonDirection(controller.getDirection());
+                        return previousDirection = getMoveableArchonDirection(controller.getDirection());
                     } else {
                          return archonDirection;
-                    }
-                }
+                    }                }
             }
             else {
                 return getMoveableArchonDirection(controller.getDirection());
@@ -520,7 +604,7 @@ public class NaughtyNavigation extends Base {
                 MapLocation location = controller.getLocation();
                 MapLocation newLocation = new MapLocation(location.getX()+dx, location.getY()+dy);
                 try {
-                    if(controller.senseFluxAtLocation(newLocation) > 1) {
+                    if(controller.senseFluxAtLocation(newLocation) > 5) {
                         //p("Going straight: "+newLocation);
                         return getMoveableDirection(currentDirection);
                     }
@@ -544,7 +628,7 @@ public class NaughtyNavigation extends Base {
 
                 //p("MIN: "+min[0]+", "+min[1]+", "+min[2]);
 
-                if(minAmount > 1) {
+                if(minAmount > 5) {
                     location = new MapLocation(location.getX()+min[0], location.getY()+min[1]);
                     //p("Returning: "+getMoveableDirection(controller.getLocation().directionTo(location)));
                     return getMoveableDirection(controller.getLocation().directionTo(location));

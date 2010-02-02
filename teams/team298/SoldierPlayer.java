@@ -12,10 +12,16 @@ public class SoldierPlayer extends AttackPlayer {
         super(controller);
     }
 
+    public void boot() {
+        super.boot();
+        changeToSoldierAttackMode();
+    }
+
     public void step() {
         MapLocation location = sensing.senseClosestArchon();
         if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());
+        boolean canMove = true;
 
         //if the robot goes to get energon, then we need to save the followArchon goal for later
         if(prevGoal != null) prevGoal = navigation.goal;
@@ -31,13 +37,13 @@ public class SoldierPlayer extends AttackPlayer {
             } else {
                 navigation.moveOnce(false);
             }
-            return;
+            canMove = false;
+        } else {
+            //restore the follow request goal
+            if(prevGoal != null) navigation.goal = prevGoal;
+            prevGoal = null;
+            ignoreFollowRequest = false;
         }
-
-        //restore the follow request goal
-        if(prevGoal != null) navigation.goal = prevGoal;
-        prevGoal = null;
-        ignoreFollowRequest = false;
 
         //find any enemey to attack.  mode.getEnemeyToAttack could return an out of range enemy too
         processEnemies();
@@ -45,18 +51,19 @@ public class SoldierPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
-            navigation.faceLocation(enemy.location);
+            MapLocation enemyLocation = enemy.location;
+            navigation.faceLocation(enemyLocation);
 
-            if(!controller.canAttackSquare(enemy.location)) {
-                navigation.changeToLocationGoal(enemy.location, false);
-                navigation.moveOnce(true);
+            if(!controller.canAttackSquare(enemyLocation) && canMove) {
+                navigation.changeToLocationGoal(enemyLocation, false);
+                navigation.moveOnce(false);
                 navigation.popGoal();
-                processEnemies();
+                return;
             }
-            int status = executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+            int status = executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
             //if(status == Status.success) p("take that bitch");
             processEnemies();
-            attackLocation = enemy.location;
+            attackLocation = enemyLocation;
         } else {
             //navigation.changeToMoveableDirectionGoal(true);
             navigation.moveOnce(true);

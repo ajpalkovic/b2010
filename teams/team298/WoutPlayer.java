@@ -28,7 +28,7 @@ public class WoutPlayer extends AttackPlayer {
     };
 
     public WoutPlayer(RobotController controller) {
-        super(controller);
+        super(controller);	
     }
 
     public void step() {
@@ -63,14 +63,19 @@ public class WoutPlayer extends AttackPlayer {
         	energon.transferFluxToTower(transferTarget);
         }*/
 
-        messaging.sendMessageForEnemyRobots();
+        //messaging.sendMessageForEnemyRobots();
 
         processEnemies();
         sortEnemies();
         EnemyInfo enemy = mode.getEnemyToAttack();
 
-        if(enemy != null && enemy.location.distanceSquaredTo(controller.getLocation()) <= 2) {
-            executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+        if(enemy != null) {
+            turnsSinceEnemiesSeen = 0;
+            if(enemy.location.distanceSquaredTo(controller.getLocation()) <= 2) {
+                executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+            }
+        } else {
+            turnsSinceEnemiesSeen++;
         }
 
     }
