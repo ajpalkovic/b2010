@@ -70,7 +70,14 @@ public class ArchonPlayer extends NovaPlayer {
                 sensing.senseAlliedTeleporters();
                 if(spawning.canSupportTower(RobotType.TELEPORTER)) {
                     //System.out.println("Can support it");
-                    placeTower();
+                	ArrayList<RobotInfo> robots =  sensing.senseGroundRobotInfo();
+                	for (RobotInfo robot : robots){
+                		if (robot.type == RobotType.WOUT){
+                			if (robot.location.isAdjacentTo(controller.getLocation())){
+                				energon.fluxUpWout(robot.location);
+                			}
+                		}
+                	}
                 }
 
                 messaging.sendMessageForEnemyRobots();
@@ -123,6 +130,8 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.movingToTowerSpawnLocation:
                 if(navigation.goal.done()) {
                     navigation.faceLocation(towerSpawnLocation);
+                    if (controller.getLocation().directionTo(towerSpawnLocation).isDiagonal())
+                    	navigation.moveOnce(false);
                     if(navigation.isLocationFree(towerSpawnLocation, false)) {
                         if(spawning.spawnTower(RobotType.AURA) != Status.success) {
                             placeTower();

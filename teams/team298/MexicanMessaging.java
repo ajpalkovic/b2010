@@ -144,7 +144,7 @@ public class MexicanMessaging extends Base {
         if(message != null) {
             //is it ours?
             if(message.ints == null || message.ints.length < 3 || message.ints[0] != KEY1 || message.ints[1] != KEY2) {
-                return;
+            	return;
             }
 
             int senderID = message.ints[2];
@@ -315,7 +315,13 @@ public class MexicanMessaging extends Base {
         }
         return good;
     }
-
+    private void doS(Message message) {
+    	if (message.locations!=null && message.locations.length > 0) {
+    		for (MapLocation l : message.locations)
+    			l.add(Direction.NORTH);
+    	}
+    	
+    }
     /*
      * send message methods
      */
