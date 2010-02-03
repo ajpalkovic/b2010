@@ -260,7 +260,7 @@ public class EnergeticEnergon extends Base {
     public boolean isFluxFull() {
         int limit = Math.min(200+(int)(player.turnsSinceEnemiesSeen*player.turnsSinceEnemiesSeen*0.1), 2000);
         //p(limit+"");
-        return controller.getFlux() > limit;
+        return controller.getFlux() > limit && controller.getFlux() < 3000;
     }
 
     /**
