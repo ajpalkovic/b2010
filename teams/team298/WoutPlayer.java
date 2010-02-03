@@ -48,7 +48,8 @@ public class WoutPlayer extends AttackPlayer {
     	switch (currentGoal)
     	{
         case Goal.movingToTowerSpawnLocation:
-            if(navigation.goal.done()) {
+            controller.setIndicatorString(2, ""+towerSpawnLocation);
+        	if(navigation.goal.done()) {
                 navigation.faceLocation(towerSpawnLocation);
                 if(navigation.isLocationFree(towerSpawnLocation, false)) {
                 	if(spawning.spawnTower(RobotType.AURA) != Status.success) {
