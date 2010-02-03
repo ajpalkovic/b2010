@@ -11,6 +11,7 @@ public class NaughtyNavigation extends Base {
     public SensationalSensing sensing;
     public NavigationGoal goal;
     public FollowArchonGoal followArchonGoal;
+    public FlankingEnemyGoal flankingEnemyGoal;
     public LinkedList<NavigationGoal> goalStack;
 
     public NaughtyNavigation(NovaPlayer player) {
@@ -19,6 +20,7 @@ public class NaughtyNavigation extends Base {
         messaging = player.messaging;
         goal = null;
         followArchonGoal = null;
+        flankingEnemyGoal = null;
         goalStack = new LinkedList<NavigationGoal>();
     }
 
@@ -509,6 +511,15 @@ public class NaughtyNavigation extends Base {
         goal = new FollowArchonGoal();
     }
 
+    public boolean changeToFlankingEnemyGoal(ArrayList<MapLocation> enemyLocations, boolean removePreviousGoals) {
+        if (goal instanceof FlankingEnemyGoal) {
+            return false;
+        }
+        pushGoal(removePreviousGoals);
+        goal = new FlankingEnemyGoal(enemyLocations);
+        return true;
+    }
+
     class DirectionGoal extends NavigationGoal {
 
         public Direction direction;
@@ -741,21 +752,27 @@ public class NaughtyNavigation extends Base {
         Direction enemyAvgDirection = null;
         MapLocation currentEnemyAvgLocation = null;
         MapLocation newEnemyAvgLocation = null;
+        ArrayList<MapLocation> enemyLocations = null;
+
+        public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
+            flankingEnemyGoal = this;
+            setAvgLocation(enemyLocations);
+        }
 
         public Direction getDirection() {
             return enemyAvgDirection;
         }
 
-        public void setAvgLocation(MapLocation[] enemyLocations) {
+        public void setAvgLocation(ArrayList<MapLocation> enemyLocations) {
             int xVal = 0, yVal = 0;
             double xAvg = 0, yAvg = 0;
-            for (int i = 0; i < enemyLocations.length; ++i) {
-                xVal += enemyLocations[i].getX();
-                yVal += enemyLocations[i].getY();
+            for (int i = 0; i < enemyLocations.size(); ++i) {
+                xVal += enemyLocations.get(i).getX();
+                yVal += enemyLocations.get(i).getY();
             }
 
-            xAvg = (double)(xVal / enemyLocations.length) * 100;
-            yAvg = (double)(yVal / enemyLocations.length) * 100;
+            xAvg = (double)(xVal / enemyLocations.size()) * 100;
+            yAvg = (double)(yVal / enemyLocations.size()) * 100;
             if (currentEnemyAvgLocation == null) {
                 currentEnemyAvgLocation = new MapLocation((int)xAvg, (int)yAvg);
             } else {

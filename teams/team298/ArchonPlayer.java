@@ -17,15 +17,19 @@ public class ArchonPlayer extends NovaPlayer {
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
     public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
+    public ArrayList<MapLocation> enemyLocations;
     public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0;
     boolean attacking;
+    boolean attackingInitialized;
     public MapLocation closestEnemy;
+    public MapLocation currentEnemy;
     public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
         minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 5;
+        enemyLocations = new ArrayList<MapLocation>();
     }
 
     public void step() {
@@ -39,12 +43,31 @@ public class ArchonPlayer extends NovaPlayer {
                     spawning.changeModeToCollectingFlux();
                     navigation.changeToMoveableDirectionGoal(true);
                 } else {
-                    navigation.changeToMoveableDirectionGoal(true);
+                    //avigation.changeToMoveableDirectionGoal(true);
                     spawning.changeModeToAttacking();
                 }
                 energon.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
+
+                // Arbitrary archonNumber hardcoded for now.
+                if (attacking && this.archonNumber == 3) {
+                    if (sensing.senseEnemyRobotInfoInSensorRange().size() > 0) {
+                        pa("Archon #3 attacking, there are " + sensing.senseEnemyRobotInfoInSensorRange().size() + " enemies in his scope");
+                        for (int i = 0; i < sensing.senseEnemyRobotInfoInSensorRange().size(); ++i) {
+                            currentEnemy = sensing.senseEnemyRobotInfoInSensorRange().get(i).location;
+                            enemyLocations.add(currentEnemy);
+                        }
+                        if (!navigation.changeToFlankingEnemyGoal(enemyLocations, true)) {
+                            navigation.flankingEnemyGoal.setAvgLocation(enemyLocations);
+                            pa("Archon #3 has updated FlankingEnemyGoal");
+                        } else {
+                            pa("Archon #3 has successfully set a FlankingEnemyGoal");
+                        }
+                    }
+                } else {
+                    navigation.changeToMoveableDirectionGoal(true);
+                }
 
                 //add a small delay to archon movement so the other dudes can keep up
                 if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
