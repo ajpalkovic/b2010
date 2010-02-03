@@ -49,6 +49,6 @@ public class MapStore {
         TerrainType type = tile.getType();
         map[x % size][y % size] = tile;
         mapType[x % size][y % size] = type;
-        boolMap[x%size][y%size] = type == TerrainType.OFF_MAP || type == TerrainType.VOID;
+        boolMap[x%size][y%size] = type.equals(TerrainType.OFF_MAP) || type.equals(TerrainType.VOID);
     }
 }

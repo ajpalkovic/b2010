@@ -13,7 +13,7 @@ public abstract class BendoverBugging extends NavigationGoal {
     public boolean tracing, tracingLeft, pathCalculated, bugging, isAirRobot;
     public MapLocation[] path;
     public RobotController robotController;
-    public boolean debug = false;
+    public boolean debug = true;
 
     public abstract MapLocation getGoal();
 
@@ -58,7 +58,7 @@ public abstract class BendoverBugging extends NavigationGoal {
                 return getNextPathDirection(false);
             }
         } else {
-            planPath();
+            //planPath();
             return getNextPathDirection(false);
         }
     }
@@ -214,6 +214,7 @@ public abstract class BendoverBugging extends NavigationGoal {
 
             //try to go straight from start to goal
             if(canGo(start, goal)) {
+                if(debug) System.out.println("Optimizing out: "+start+" "+path[waypointIndex]+" "+goal);
                 path[waypointIndex] = null;
                 osize--;
             } else {
