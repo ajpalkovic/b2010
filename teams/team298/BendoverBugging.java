@@ -120,18 +120,18 @@ public abstract class BendoverBugging extends NavigationGoal {
      */
     public boolean canMove(int x, int y) {
         if(terrain[x % size][y % size]) return false;
-        /*try {
+        try {
             MapLocation location = new MapLocation(x, y);
             if(robotController.canSenseSquare(location)) {
                 if(isAirRobot) {
                     return robotController.senseAirRobotAtLocation(location) != null;
                 } else {
-                    return robotController.senseGroundRobotAtLocation(goal) != null;
+                    return robotController.senseGroundRobotAtLocation(location) != null;
                 }
             }
         } catch (Exception e) {
             System.out.println("----Caught exception in canMove "+e.toString());
-        }*/
+        }
         return true;
     }
 
@@ -166,6 +166,7 @@ public abstract class BendoverBugging extends NavigationGoal {
             }
 
             dir = getNextDirection();
+            if(dir == null) break;
 
             current = current.add(dir);
 
