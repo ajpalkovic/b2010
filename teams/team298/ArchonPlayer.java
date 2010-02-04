@@ -45,7 +45,10 @@ public class ArchonPlayer extends NovaPlayer {
                 energon.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
-
+                MapLocation[] archons = sensing.senseArchonLocations();
+                MapLocation closest = navigation.findClosest(archons);
+                if (closest!=null && closest.distanceSquaredTo(controller.getLocation()) > 36)
+                	navigation.changeToLocationGoal(navigation.findFurthest(new ArrayList<MapLocation>(Arrays.asList(archons))), false);
                 //add a small delay to archon movement so the other dudes can keep up
                 if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
                     navigation.moveOnce(true);
@@ -70,13 +73,23 @@ public class ArchonPlayer extends NovaPlayer {
                 sensing.senseAlliedTeleporters();
                 if(spawning.canSupportTower(RobotType.TELEPORTER)) {
                     //System.out.println("Can support it");
-                	ArrayList<RobotInfo> robots =  sensing.senseGroundRobotInfo();
-                	for (RobotInfo robot : robots){
-                		if (robot.type == RobotType.WOUT){
-                			if (robot.location.isAdjacentTo(controller.getLocation())){
-                				energon.fluxUpWout(robot.location);
-                			}
-                		}
+                	if (attacking) {
+                		ArrayList<RobotInfo> robots =  sensing.senseGroundRobotInfo();
+                    	for (RobotInfo robot : robots){
+                    		if (robot.type == RobotType.WOUT){
+                    			if (robot.location.isAdjacentTo(controller.getLocation())){
+                    				energon.fluxUpWout(robot.location);
+                    				sensing.senseAlliedTeleporters();
+                    				if (!sensing.knownAlliedTowerLocations.isEmpty()){
+                    					MapLocation loc = navigation.findClosest(new ArrayList<MapLocation>(sensing.knownAlliedTowerLocations.values()));
+                    					messaging.sendTowerPing(sensing.knownAlliedTowerIDs.get(loc.getX() +","+loc.getY()), loc);
+                    				}
+                    			}
+                    		}
+                    	}
+                	} else
+                	{
+                		placeTower();
                 	}
                 }
 

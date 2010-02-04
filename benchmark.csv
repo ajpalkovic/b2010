@@ -8,4 +8,8 @@ Date,What Changed,Basic,Tele,Ref,Basic,Tele,Ref,Basic,Tele,Ref
 ,Made archons transfer flux between themselves so we reach 3000 faster,2026,-2948,1861,4298,-4562,3563,1933,-1802,1606
 ,Made units send a low energon message more often.,2167,5868,2225,4378,-4285,-4570,2015,7445,1905
 ,"Added Kory's ""better"" tower code.",1475,2386,1718*,3982,4780,-3379,1873,-4500,-2527
+<<<<<<< HEAD
 ,,2167,5868,2225,4378,-4285,-4570,2015,7445,1905
+=======
+,Fixed wout bugging issues / switched to using wouts to spawn towers.,2601,-1784,-3187,4800,-3634,-3443,2865,3900,-2693
+>>>>>>> 0cee52944926a0fce1e19b35921afac47609a72a
