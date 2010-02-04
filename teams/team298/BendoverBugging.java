@@ -13,7 +13,7 @@ public abstract class BendoverBugging extends NavigationGoal {
     public boolean tracing, tracingLeft, pathCalculated, bugging, isAirRobot;
     public MapLocation[] path;
     public RobotController robotController;
-    public boolean debug = true;
+    public static final boolean debug = false;
 
     public abstract MapLocation getGoal();
 
@@ -119,19 +119,40 @@ public abstract class BendoverBugging extends NavigationGoal {
      * This method is used for path planning, when we cant sense far enough away.
      */
     public boolean canMove(int x, int y) {
+        if(debug) System.out.println("Can Move: "+x+" "+y+" "+terrain[x % size][y % size]);
         if(terrain[x % size][y % size]) return false;
         try {
             MapLocation location = new MapLocation(x, y);
             if(robotController.canSenseSquare(location)) {
                 if(isAirRobot) {
-                    return robotController.senseAirRobotAtLocation(location) != null;
+                    return robotController.senseAirRobotAtLocation(location) == null;
                 } else {
-                    return robotController.senseGroundRobotAtLocation(location) != null;
+                    return robotController.senseGroundRobotAtLocation(location) == null;
                 }
             }
         } catch (Exception e) {
             System.out.println("----Caught exception in canMove "+e.toString());
         }
+        return true;
+    }
+
+    /**
+     * Returns true if we can't see the goal or we can't ever get to the goal.
+     */
+    public boolean isGoalAttainable() {
+        if(terrain[goal.getX() % size][goal.getY() % size]) return false;
+        if(!robotController.canSenseSquare(goal)) return true;
+        if(isAirRobot) return true;
+
+        try {
+            Robot robot = robotController.senseGroundRobotAtLocation(goal);
+            if(robot == null) return true;
+            RobotInfo info = robotController.senseRobotInfo(robot);
+            if(info.type.isBuilding()) return false;
+        } catch (Exception e) {
+            System.out.println("----Caught exception in isGoalAttainable "+e.toString());
+        }
+        
         return true;
     }
 
@@ -154,6 +175,11 @@ public abstract class BendoverBugging extends NavigationGoal {
         currentX = current.getX();
         currentY = current.getY();
 
+        if(!isGoalAttainable()) {
+            System.out.println("GOAL IS NOT ATTAINABLE. "+goal);
+            return;
+        }
+
         while(true) {
             if(current.equals(goal)) {
                 //System.out.println("Arrived");
@@ -166,9 +192,13 @@ public abstract class BendoverBugging extends NavigationGoal {
             }
 
             dir = getNextDirection();
-            if(dir == null) break;
+            if(dir == null) {
+                if(debug) System.out.println("null dir");
+                break;
+            }
 
             current = current.add(dir);
+            if(debug) System.out.println("Current: "+current);
 
             //we only need to store waypoints, which is when the robot changes direction
             if(dir != currentDirection) {
@@ -254,12 +284,16 @@ public abstract class BendoverBugging extends NavigationGoal {
      */
     public Direction getNextDirection() {
         Direction dir = current.directionTo(goal);
+        if(debug) System.out.println("Direction go goal: "+dir);
         int x, y;
         if(tracing) {
+            if(debug) System.out.println("tracing");
             dir = tryToUndoTrace(currentDirection);
+            if(debug) System.out.println("Try to undo trace retruned: "+dir);
             x = currentX + dir.dx;
             y = currentY + dir.dy;
             if(!canMove(x, y)) {
+                if(debug) System.out.println("Can't move in tryToUndoTrace direction");
                 dir = getInitialTracingDirection(dir);
             }
             return dir;
@@ -267,11 +301,13 @@ public abstract class BendoverBugging extends NavigationGoal {
             x = currentX + dir.dx;
             y = currentY + dir.dy;
             if(canMove(x, y)) {
+                if(debug) System.out.println("Can move in dir to goal");
                 return dir;
             } else {
                 tracing = true;
                 originalDirection = dir;
                 tracingLeft = !(dir == Direction.NORTH || dir == Direction.NORTH_EAST || dir == Direction.EAST || dir == Direction.SOUTH_WEST);
+                if(debug) System.out.println("Tracing left: "+tracingLeft);
                 dir = getInitialTracingDirection(dir);
                 return dir;
             }
@@ -290,6 +326,7 @@ public abstract class BendoverBugging extends NavigationGoal {
             y = currentY + dir.dy;
             if(!canMove(x, y)) {
                 dir = tracingLeft ? dir.rotateLeft() : dir.rotateRight();
+                if(debug) System.out.println("Trying: "+dir);
             } else {
                 return dir;
             }
