@@ -801,24 +801,26 @@ public class NaughtyNavigation extends Base {
 
             for (int i = 0; i < enemyLocations.size(); ++i) {
                 if (distance == 0) {
-                    x1 = enemyLocations.get(i).getX();
-                    y1 = enemyLocations.get(i).getY();
+                    x2 = enemyLocations.get(i).getX();
+                    y2 = enemyLocations.get(i).getY();
                     deltaX = (int)Math.pow((x2 - x1), 2);
                     deltaY = (int)Math.pow((y2 - y1), 2);
                     distance = (int)(Math.sqrt(deltaX + deltaY));
                     nearestLocation = enemyLocations.get(i);
                 } else {
-                    xVal = enemyLocations.get(i).getX();
-                    yVal = enemyLocations.get(i).getY();
-                    newDistance = (int)(Math.sqrt(Math.abs((xVal * xVal) - (yVal * yVal))));
+                    x2 = enemyLocations.get(i).getX();
+                    y2 = enemyLocations.get(i).getY();
+                    deltaX = (int)Math.pow((x2 - x1), 2);
+                    deltaY = (int)Math.pow((y2 - y1), 2);
+                    newDistance = (int)(Math.sqrt(deltaX + deltaY));
                     if (newDistance < distance) {
                         distance = newDistance;
-                        nearestLocation = new MapLocation(xVal, yVal);
+                        nearestLocation = new MapLocation(x2, y2);
                     }
                 }
             }
 
-
+            return nearestLocation;
         }
 
         public boolean done() {
