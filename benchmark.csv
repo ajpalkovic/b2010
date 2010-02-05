@@ -10,3 +10,4 @@ Date,What Changed,Basic,Tele,Ref,Basic,Tele,Ref,Basic,Tele,Ref
 ,"Added Kory's ""better"" tower code.",1475,2386,1718*,3982,4780,-3379,1873,-4500,-2527
 ,Fixed wout bugging issues / switched to using wouts to spawn towers.,2601,-1784,-3187,4800,-3634,-3443,2865,3900,-2693
 ,Made archons only give wouts flux when they are attacking.,1921,-4589,2237,4178,4314,-4800,1563,-2319,3022
+,Fixed archon loop,3974,-5769,2034,4602,4707,3791,1231,2643,1992
