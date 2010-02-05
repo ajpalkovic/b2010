@@ -99,7 +99,7 @@ public class ArchonPlayer extends NovaPlayer {
 
                 if(idealTowerSpawnLocations != null) {
                     //we got the message, lets do something                	
-                	if(idealTowerSpawnLocations.length > 0 && towerSpawnLocation!=null) {
+                	if(idealTowerSpawnLocations.length > 0) {
                         towerSpawnLocation = spawning.getTowerSpawnLocation(idealTowerSpawnLocations);                        
                         towerSpawnFromLocation = towerSpawnLocation.subtract(controller.getLocation().directionTo(towerSpawnLocation));
                         navigation.changeToLocationGoal(towerSpawnFromLocation, true);
