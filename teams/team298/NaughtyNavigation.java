@@ -756,6 +756,7 @@ public class NaughtyNavigation extends Base {
 
         public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
             flankingEnemyGoal = this;
+            this.enemyLocations = enemyLocations;
             setAvgLocation(enemyLocations);
         }
 
@@ -764,6 +765,7 @@ public class NaughtyNavigation extends Base {
         }
 
         public void setAvgLocation(ArrayList<MapLocation> enemyLocations) {
+            this.enemyLocations = enemyLocations;
             int xVal = 0, yVal = 0;
             double xAvg = 0, yAvg = 0;
             for (int i = 0; i < enemyLocations.size(); ++i) {
@@ -784,6 +786,39 @@ public class NaughtyNavigation extends Base {
 
         private void setAvgDirection(MapLocation newLocation) {
             enemyAvgDirection = currentEnemyAvgLocation.directionTo(newLocation);
+        }
+
+        private Direction flank() {
+
+            return null;
+        }
+
+        private MapLocation getNearestEnemy() {
+            MapLocation currentLocation = controller.getLocation(), nearestLocation = null;
+            int x1 = currentLocation.getX();
+            int y1 = currentLocation.getY();
+            int x2 = 0, y2 = 0, deltaX = 0, deltaY = 0, distance = 0, newDistance = 0;
+
+            for (int i = 0; i < enemyLocations.size(); ++i) {
+                if (distance == 0) {
+                    x1 = enemyLocations.get(i).getX();
+                    y1 = enemyLocations.get(i).getY();
+                    deltaX = (int)Math.pow((x2 - x1), 2);
+                    deltaY = (int)Math.pow((y2 - y1), 2);
+                    distance = (int)(Math.sqrt(deltaX + deltaY));
+                    nearestLocation = enemyLocations.get(i);
+                } else {
+                    xVal = enemyLocations.get(i).getX();
+                    yVal = enemyLocations.get(i).getY();
+                    newDistance = (int)(Math.sqrt(Math.abs((xVal * xVal) - (yVal * yVal))));
+                    if (newDistance < distance) {
+                        distance = newDistance;
+                        nearestLocation = new MapLocation(xVal, yVal);
+                    }
+                }
+            }
+
+
         }
 
         public boolean done() {
