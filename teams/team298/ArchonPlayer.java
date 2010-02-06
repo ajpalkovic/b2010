@@ -17,15 +17,19 @@ public class ArchonPlayer extends NovaPlayer {
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
     public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
-    public int turnsLookingForTower = 0, turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0;
+    public ArrayList<MapLocation> enemyLocations;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0, turnsSinceMessageForEnemyRobotsSent = 30, turnsSinceTowerStuffDone = 30, turnsLookingForTower = 0;
     boolean attacking;
+    boolean attackingInitialized;
     public MapLocation closestEnemy;
+    public MapLocation currentEnemy;
     public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
         minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 5;
+        enemyLocations = new ArrayList<MapLocation>();
     }
 
     public void step() {
@@ -35,17 +39,16 @@ public class ArchonPlayer extends NovaPlayer {
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
-                if(false) {
-                    spawning.changeModeToCollectingFlux();
-                    navigation.changeToMoveableDirectionGoal(true);
-                } else {
-                    navigation.changeToMoveableDirectionGoal(true);
-                    spawning.changeModeToAttacking();
-                }
+                navigation.changeToMoveableDirectionGoal(true);
+                spawning.changeModeToAttacking();
                 energon.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
-                if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
+
+                //add a small delay to archon movement so the other dudes can keep up
+                if(attacking) {
+                    navigation.moveOnce(false);
+                } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
                     navigation.moveOnce(true);
                     moveTurns = 0;
                 }
@@ -53,7 +56,8 @@ public class ArchonPlayer extends NovaPlayer {
                 //try to spawn a new dude every turn
                 if(turnsSinceLastSpawn > 2) {
                     int status = spawning.spawnRobot();
-                    if(status == Status.success) {
+                    if(status == Status.cannotSupportUnit) turnsSinceLastSpawn = -1;
+                    else if(status == Status.success) {
                         turnsSinceLastSpawn = -1;
                         try {
                             messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
@@ -64,33 +68,42 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 turnsSinceLastSpawn++;
 
-                //try to spawn a tower every turn
-                sensing.senseAlliedTeleporters();
-                if(spawning.canSupportTower(RobotType.TELEPORTER)) {
-                    //System.out.println("Can support it");
-                	if (attacking) {
-                		ArrayList<RobotInfo> robots =  sensing.senseGroundRobotInfo();
-                    	for (RobotInfo robot : robots){
-                    		if (robot.type == RobotType.WOUT){
-                    			if (robot.location.isAdjacentTo(controller.getLocation())){
-                    				energon.fluxUpWout(robot.location);
-                    				sensing.senseAlliedTeleporters();
-                    				if (sensing.knownAlliedTowerLocations == null)
-                    					sensing.senseAlliedTowers();
-                    				if (!sensing.knownAlliedTowerLocations.isEmpty()){
-                    					MapLocation loc = navigation.findClosest(new ArrayList<MapLocation>(sensing.knownAlliedTowerLocations.values()));
-                    					messaging.sendTowerPing(sensing.knownAlliedTowerIDs.get(loc.getX() +","+loc.getY()), loc);
-                    				}
-                    			}
-                    		}
-                    	}
-                	} else
-                	{
-                		placeTower();
-                	}
+                if(turnsSinceTowerStuffDone < 0) {
+                    //try to spawn a tower every turn
+                    sensing.senseAlliedTeleporters();
+                    if(spawning.canSupportTower(RobotType.TELEPORTER)) {
+                        turnsSinceTowerStuffDone = 1;
+                        //System.out.println("Can support it");
+                        if (attacking) {
+                            ArrayList<RobotInfo> robots =  sensing.senseGroundRobotInfo();
+                            for (RobotInfo robot : robots){
+                                if (robot.type == RobotType.WOUT){
+                                    if (robot.location.isAdjacentTo(controller.getLocation())){
+                                        energon.fluxUpWout(robot.location);
+                                        sensing.senseAlliedTeleporters();
+                                        if (sensing.knownAlliedTowerLocations == null)
+                                            sensing.senseAlliedTowers();
+                                        if (!sensing.knownAlliedTowerLocations.isEmpty()){
+                                            MapLocation loc = navigation.findClosest(new ArrayList<MapLocation>(sensing.knownAlliedTowerLocations.values()));
+                                            messaging.sendTowerPing(sensing.knownAlliedTowerIDs.get(loc.getX() +","+loc.getY()), loc);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            placeTower();
+                        }
+                    } else {
+                        turnsSinceTowerStuffDone = 5;
+                    }
                 }
+                turnsSinceTowerStuffDone--;
 
-                messaging.sendMessageForEnemyRobots();
+                if(turnsSinceMessageForEnemyRobotsSent < 0) {
+                    messaging.sendMessageForEnemyRobots();
+                    turnsSinceMessageForEnemyRobotsSent = 1;
+                }
+                turnsSinceMessageForEnemyRobotsSent--;
 
                 moveTurns++;
                 break;
@@ -292,6 +305,9 @@ public class ArchonPlayer extends NovaPlayer {
         Message[] messages = controller.getAllMessages();
         int min = 1;
         for(Message m : messages) {
+            if (m.ints[0] == 1) {
+                archonLeader = m.ints[1];
+            }
             if(m.ints[0] >= min) {
                 min = m.ints[0] + 1;
             }
@@ -300,12 +316,13 @@ public class ArchonPlayer extends NovaPlayer {
         archonNumber = min;
 
         Message m = new Message();
-        m.ints = new int[] {min};
+        m.ints = new int[] {min, robot.getID()};
         try {
             controller.broadcast(m);
         } catch(Exception e) {
             System.out.println("----Caught Exception in senseArchonNumber.  Exception: " + e.toString());
         }
+        hasReceivedUniqueMsg = true;
         System.out.println("Number: " + min);
     }
 
