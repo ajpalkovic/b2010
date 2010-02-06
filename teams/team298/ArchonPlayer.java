@@ -39,13 +39,8 @@ public class ArchonPlayer extends NovaPlayer {
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
-                if(false) {
-                    spawning.changeModeToCollectingFlux();
-                    navigation.changeToMoveableDirectionGoal(true);
-                } else {
-                    navigation.changeToMoveableDirectionGoal(true);
-                    spawning.changeModeToAttacking();
-                }
+                navigation.changeToMoveableDirectionGoal(true);
+                spawning.changeModeToAttacking();
                 energon.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
