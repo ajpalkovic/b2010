@@ -275,8 +275,10 @@ public class NaughtyNavigation extends Base {
         if(goal.done()) {
             return Status.success;
         }
-
+        
+        //int t = Clock.getRoundNum(), b = Clock.getBytecodeNum();
         Direction dir = goal.getDirection();
+        //printBytecode(t, b, "getDirection: ");
 
         if(faceDirection(dir) != Status.success) {
             return Status.fail;
@@ -585,7 +587,7 @@ public class NaughtyNavigation extends Base {
 
             if(closest != null) {
                 int distance = closest.distanceSquaredTo(controller.getLocation());
-                p(closest.toString()+" "+distance);
+                //p(closest.toString()+" "+distance);
                 if(distance >= 14 && distance <= 16) {
                     return null;
                 } else if(distance > 16) {
