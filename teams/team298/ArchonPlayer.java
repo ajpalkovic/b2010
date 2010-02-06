@@ -17,15 +17,19 @@ public class ArchonPlayer extends NovaPlayer {
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
     public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
+    public ArrayList<MapLocation> enemyLocations;
     public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0;
     boolean attacking;
+    boolean attackingInitialized;
     public MapLocation closestEnemy;
+    public MapLocation currentEnemy;
     public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
         minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 5;
+        enemyLocations = new ArrayList<MapLocation>();
     }
 
     public void step() {
@@ -45,10 +49,7 @@ public class ArchonPlayer extends NovaPlayer {
                 energon.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
-                MapLocation[] archons = sensing.senseArchonLocations();
-                MapLocation closest = navigation.findClosest(archons);
-                if (closest!=null && closest.distanceSquaredTo(controller.getLocation()) > 36)
-                	navigation.changeToLocationGoal(navigation.findFurthest(new ArrayList<MapLocation>(Arrays.asList(archons))), false);
+
                 //add a small delay to archon movement so the other dudes can keep up
                 if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
                     navigation.moveOnce(true);
@@ -285,6 +286,9 @@ public class ArchonPlayer extends NovaPlayer {
         Message[] messages = controller.getAllMessages();
         int min = 1;
         for(Message m : messages) {
+            if (m.ints[0] == 1) {
+                archonLeader = m.ints[1];
+            }
             if(m.ints[0] >= min) {
                 min = m.ints[0] + 1;
             }
@@ -293,12 +297,13 @@ public class ArchonPlayer extends NovaPlayer {
         archonNumber = min;
 
         Message m = new Message();
-        m.ints = new int[] {min};
+        m.ints = new int[] {min, robot.getID()};
         try {
             controller.broadcast(m);
         } catch(Exception e) {
             System.out.println("----Caught Exception in senseArchonNumber.  Exception: " + e.toString());
         }
+        hasReceivedUniqueMsg = true;
         System.out.println("Number: " + min);
     }
 

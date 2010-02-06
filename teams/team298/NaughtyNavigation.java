@@ -11,6 +11,7 @@ public class NaughtyNavigation extends Base {
     public SensationalSensing sensing;
     public NavigationGoal goal;
     public FollowArchonGoal followArchonGoal;
+    public FlankingEnemyGoal flankingEnemyGoal;
     public LinkedList<NavigationGoal> goalStack;
 
     public NaughtyNavigation(NovaPlayer player) {
@@ -19,6 +20,7 @@ public class NaughtyNavigation extends Base {
         messaging = player.messaging;
         goal = null;
         followArchonGoal = null;
+        flankingEnemyGoal = null;
         goalStack = new LinkedList<NavigationGoal>();
     }
 
@@ -278,6 +280,7 @@ public class NaughtyNavigation extends Base {
         if (faceDirection(dir) != Status.success) {
             return Status.fail;
         }
+
         return moveOnce();
     }
 
@@ -430,6 +433,9 @@ public class NaughtyNavigation extends Base {
      * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
      */
     public void changeToMoveableDirectionGoal(boolean removePreviousGoals) {
+        if (goal instanceof MoveableDirectionGoal) {
+            return;
+        }
         pushGoal(removePreviousGoals);
         goal = new MoveableDirectionGoal();
     }
@@ -503,8 +509,16 @@ public class NaughtyNavigation extends Base {
             return;
         }
         pushGoal(removePreviousGoals);
-        followArchonGoal = new FollowArchonGoal(archonID);
-        goal = followArchonGoal;
+        goal = new FollowArchonGoal();
+    }
+
+    public boolean changeToFlankingEnemyGoal(ArrayList<MapLocation> enemyLocations, boolean removePreviousGoals) {
+        if (goal instanceof FlankingEnemyGoal) {
+            return false;
+        }
+        pushGoal(removePreviousGoals);
+        goal = new FlankingEnemyGoal(enemyLocations);
+        return true;
     }
 
     class DirectionGoal extends NavigationGoal {
@@ -524,7 +538,7 @@ public class NaughtyNavigation extends Base {
         }
     }
 
-    class MoveableDirectionGoal extends NavigationGoal {
+    class MoveableDirectionGoal extends FollowArchonGoal {
         public Direction previousDirection;
         public MapLocation closest;
         public int enemiesLastSeen;
@@ -539,6 +553,7 @@ public class NaughtyNavigation extends Base {
                 archonPlayer = (ArchonPlayer) player;
             }
         }
+
         public Direction getDirection() {
             if(player.isArchon) {
                 ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
@@ -562,8 +577,12 @@ public class NaughtyNavigation extends Base {
                 } else if(enemiesLastSeen+tolerance > Clock.getRoundNum()) {
                     return previousDirection;
                 } else {
-                    return previousDirection = getMoveableArchonDirection(previousDirection);
-                }
+                    // TODO: Change this to get if archon is leader
+                    if (((ArchonPlayer)(player)).archonNumber == 1) {
+                        return previousDirection = getMoveableArchonDirection(controller.getDirection());
+                    } else {
+                         return archonDirection;
+                    }                }
             }
             else {
                 return getMoveableArchonDirection(controller.getDirection());
@@ -669,11 +688,11 @@ public class NaughtyNavigation extends Base {
     class FollowArchonGoal extends NavigationGoal {
 
         public MapLocation archonLocation;
-        public int archonID;
+        public int archonID = -1;
         public Direction archonDirection;
 
-        public FollowArchonGoal(int archonID) {
-            this.archonID = archonID;
+        public FollowArchonGoal() {
+            followArchonGoal = this;
         }
 
         public Direction getDirection() {
@@ -687,6 +706,9 @@ public class NaughtyNavigation extends Base {
         }
 
         public void updateArchonGoal(MapLocation location, int archonID) {
+            if (this.archonID == -1) {
+                this.archonID = archonID;
+            }
             if (archonID == this.archonID) {
                 if (archonLocation == null) {
                     archonLocation = location;
@@ -734,6 +756,86 @@ public class NaughtyNavigation extends Base {
                     this.archonID = archonID;
                 }
             }
+        }
+    }
+
+    class FlankingEnemyGoal extends NavigationGoal {
+        Direction enemyAvgDirection = null;
+        MapLocation currentEnemyAvgLocation = null;
+        MapLocation newEnemyAvgLocation = null;
+        ArrayList<MapLocation> enemyLocations = null;
+
+        public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
+            flankingEnemyGoal = this;
+            this.enemyLocations = enemyLocations;
+            setAvgLocation(enemyLocations);
+        }
+
+        public Direction getDirection() {
+            return enemyAvgDirection;
+        }
+
+        public void setAvgLocation(ArrayList<MapLocation> enemyLocations) {
+            this.enemyLocations = enemyLocations;
+            int xVal = 0, yVal = 0;
+            double xAvg = 0, yAvg = 0;
+            for (int i = 0; i < enemyLocations.size(); ++i) {
+                xVal += enemyLocations.get(i).getX();
+                yVal += enemyLocations.get(i).getY();
+            }
+
+            xAvg = (double)(xVal / enemyLocations.size()) * 100;
+            yAvg = (double)(yVal / enemyLocations.size()) * 100;
+            if (currentEnemyAvgLocation == null) {
+                currentEnemyAvgLocation = new MapLocation((int)xAvg, (int)yAvg);
+            } else {
+                newEnemyAvgLocation = new MapLocation((int)xAvg, (int)yAvg);
+                setAvgDirection(newEnemyAvgLocation);
+                currentEnemyAvgLocation = newEnemyAvgLocation;
+            }
+        }
+
+        private void setAvgDirection(MapLocation newLocation) {
+            enemyAvgDirection = currentEnemyAvgLocation.directionTo(newLocation);
+        }
+
+        private Direction flank() {
+
+            return null;
+        }
+
+        private MapLocation getNearestEnemy() {
+            MapLocation currentLocation = controller.getLocation(), nearestLocation = null;
+            int x1 = currentLocation.getX();
+            int y1 = currentLocation.getY();
+            int x2 = 0, y2 = 0, deltaX = 0, deltaY = 0, distance = 0, newDistance = 0;
+
+            for (int i = 0; i < enemyLocations.size(); ++i) {
+                if (distance == 0) {
+                    x2 = enemyLocations.get(i).getX();
+                    y2 = enemyLocations.get(i).getY();
+                    deltaX = (int)Math.pow((x2 - x1), 2);
+                    deltaY = (int)Math.pow((y2 - y1), 2);
+                    distance = (int)(Math.sqrt(deltaX + deltaY));
+                    nearestLocation = enemyLocations.get(i);
+                } else {
+                    x2 = enemyLocations.get(i).getX();
+                    y2 = enemyLocations.get(i).getY();
+                    deltaX = (int)Math.pow((x2 - x1), 2);
+                    deltaY = (int)Math.pow((y2 - y1), 2);
+                    newDistance = (int)(Math.sqrt(deltaX + deltaY));
+                    if (newDistance < distance) {
+                        distance = newDistance;
+                        nearestLocation = new MapLocation(x2, y2);
+                    }
+                }
+            }
+
+            return nearestLocation;
+        }
+
+        public boolean done() {
+            return false;
         }
     }
 
