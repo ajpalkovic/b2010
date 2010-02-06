@@ -70,7 +70,12 @@ public class WoutPlayer extends AttackPlayer {
 
                 } else {
                     //p("move once");
-                    navigation.moveOnce(false);
+                	MapLocation goalLocation = ((LocationGoalWithBugPlanning) navigation.goal).location;
+                	if (navigation.goal instanceof BendoverBugging && !((BendoverBugging)navigation.goal).isGoalAttainable()){
+                		navigation.changeToLocationGoal(goalLocation.subtract(controller.getLocation().directionTo(goalLocation)),true);
+                		System.out.println("changing goal");
+                	}
+                	navigation.moveOnce(false);
                 }
                 break;
             case Goal.placingTeleporter:
@@ -110,7 +115,7 @@ public class WoutPlayer extends AttackPlayer {
                     if(sensing.senseAlliedTowers().size() > 0) {
                         placeTower();
                     } else {
-                        navigation.moveOnce(false);
+                    	navigation.moveOnce(false);                    
                     }
                 }
                 break;
@@ -215,7 +220,7 @@ public class WoutPlayer extends AttackPlayer {
                     if(robot != null) {
                         towerID = robot.getID();
                     } else {
-                        pa("cannot sense robot at " + location);
+                    	sensing.knownAlliedTowerLocations.remove(sensing.knownAlliedTowerIDs.remove(location.getX() + "," + location.getY()));
                     }
                 }
                 messaging.sendTowerBuildLocationRequest(towerID);
