@@ -569,6 +569,10 @@ public class NaughtyNavigation extends Base {
             }
         }
 
+        public void optimizeDirection() {
+            
+        }
+
         public Direction getDirection() {
             ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
             closest = null;
@@ -581,6 +585,7 @@ public class NaughtyNavigation extends Base {
 
             if(closest != null) {
                 int distance = closest.distanceSquaredTo(controller.getLocation());
+                p(closest.toString()+" "+distance);
                 if(distance >= 14 && distance <= 16) {
                     return null;
                 } else if(distance > 16) {
@@ -592,7 +597,7 @@ public class NaughtyNavigation extends Base {
                 return previousDirection;
             } else {
                 // TODO: Change this to get if archon is leader
-                if(((ArchonPlayer) (player)).archonNumber == 1) {
+                if(archonPlayer.archonNumber == 1) {
                     return previousDirection = getMoveableArchonDirection(controller.getDirection());
                 } else {
                     return archonDirection;
@@ -712,13 +717,21 @@ public class NaughtyNavigation extends Base {
         }
 
         public Direction getDirection() {
-            //archonLocation = findArchonLeader(archonID
-            //getMoveableDirection(dir);
-            return archonDirection;
+            optimizeDirection();
+            return getMoveableDirection(archonDirection);
         }
 
         public boolean done() {
             return false;
+        }
+
+        public void optimizeDirection() {
+            if(archonDirection == null || archonLocation == null) return;
+
+            int distance = controller.getLocation().distanceSquaredTo(archonLocation);
+            if(distance > 25) {
+                archonDirection = controller.getLocation().directionTo(archonLocation);
+            }
         }
 
         public void updateArchonGoal(MapLocation location, int archonID) {

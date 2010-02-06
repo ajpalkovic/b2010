@@ -18,7 +18,7 @@ public class ArchonPlayer extends NovaPlayer {
     public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
     public ArrayList<MapLocation> enemyLocations;
-    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0, turnsSinceMessageForEnemyRobotsSent = 20;
     boolean attacking;
     boolean attackingInitialized;
     public MapLocation closestEnemy;
@@ -46,7 +46,9 @@ public class ArchonPlayer extends NovaPlayer {
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
                 //add a small delay to archon movement so the other dudes can keep up
-                if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
+                if(attacking) {
+                    navigation.moveOnce(false);
+                } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
                     navigation.moveOnce(true);
                     moveTurns = 0;
                 }
@@ -89,7 +91,11 @@ public class ArchonPlayer extends NovaPlayer {
                 	}
                 }
 
-                messaging.sendMessageForEnemyRobots();
+                if(turnsSinceMessageForEnemyRobotsSent < 0) {
+                    messaging.sendMessageForEnemyRobots();
+                    turnsSinceMessageForEnemyRobotsSent = 1;
+                }
+                turnsSinceMessageForEnemyRobotsSent--;
 
                 moveTurns++;
                 break;
