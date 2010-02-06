@@ -12,3 +12,5 @@ Date,What Changed,Basic,Tele,Ref,Basic,Tele,Ref,Basic,Tele,Ref
 ,Made archons only give wouts flux when they are attacking.,1921,-4589,2237,4178,4314,-4800,1563,-2319,3022
 ,Fixed archon loop,3974,-5769,2034,4602,4707,3791,1231,2643,1992
 ,Merged Taylors FollowArchon code.  Made efficiency improvements.,1795,5636,1729,4800,-3933,*-4744,2394,*-6557,2071
+,Fixed idiot archons.,3074,7371,3439,*-4799,*-4580,4728,1816,-2093,-4711
+,Made us spawn more wouts.  Made archons ignore non-shooting enemies.,4851,-2124,1726,4736,-4275,4800,2109,-1434,5377

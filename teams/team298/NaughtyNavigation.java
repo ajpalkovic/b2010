@@ -590,12 +590,25 @@ public class NaughtyNavigation extends Base {
         }
 
         public Direction getDirection() {
-            ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
+            ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
             closest = null;
             if(enemies.size() > 0) {
                 enemiesLastSeen = Clock.getRoundNum();
-                closest = findClosest(enemies);
-            } else if(archonPlayer.closestEnemySeen + archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
+                closest = null;
+                RobotType type;
+                MapLocation location = controller.getLocation();
+                int minDistance = Integer.MAX_VALUE, distance;
+                for(RobotInfo robot : enemies) {
+                    type = robot.type;
+                    if(type.isBuilding() || type == RobotType.ARCHON || type == RobotType.WOUT) continue;
+                    if(closest == null || location.distanceSquaredTo(robot.location) < minDistance) {
+                        closest = robot.location;
+                        minDistance = location.distanceSquaredTo(robot.location);
+                    }
+                }
+            } 
+            
+            if(closest == null && archonPlayer.closestEnemySeen + archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
                 closest = archonPlayer.closestEnemy;
             }
 
