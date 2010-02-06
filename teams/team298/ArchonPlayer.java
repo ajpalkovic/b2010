@@ -49,8 +49,9 @@ public class ArchonPlayer extends NovaPlayer {
                 if(attacking) {
                     navigation.moveOnce(false);
                 } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
-                    navigation.moveOnce(true);
-                    moveTurns = 0;
+                    int status = navigation.moveOnce(true);
+                    //p("Status: "+status);
+                    if(status == Status.success) moveTurns = 0;
                 }
 
                 //try to spawn a new dude every turn
@@ -291,6 +292,14 @@ public class ArchonPlayer extends NovaPlayer {
         sensing.senseAllTiles();
         team = controller.getTeam();
         senseArchonNumber();
+
+        //spread out so we dont group up
+        MapLocation center = navigation.findAverage(sensing.senseArchonLocations());
+        Direction dir = center.directionTo(controller.getLocation());
+        navigation.changeToDirectionGoal(dir, false);
+        navigation.moveOnce(true);
+        navigation.popGoal();
+        
         setGoal(Goal.attackingEnemyArchons);
         if(archonNumber == 1) {
         } else {
@@ -323,7 +332,7 @@ public class ArchonPlayer extends NovaPlayer {
             System.out.println("----Caught Exception in senseArchonNumber.  Exception: " + e.toString());
         }
         hasReceivedUniqueMsg = true;
-        System.out.println("Number: " + min);
+        System.out.println("Number: "+min+" "+archonLeader);
     }
 
     public void senseNewTiles() {

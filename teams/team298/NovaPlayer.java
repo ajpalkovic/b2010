@@ -156,7 +156,7 @@ public class NovaPlayer extends Base {
      **************************************************************************/
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
         if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
-            if(archonLeader > 0 || idOfSendingArchon == archonLeader) {
+            if(archonLeader > 0 && idOfSendingArchon == archonLeader) {
                 hasReceivedUniqueMsg = true;
                 archonLeader = idOfSendingArchon;
                 if(!ignoreFollowRequest && !isArchon) {
