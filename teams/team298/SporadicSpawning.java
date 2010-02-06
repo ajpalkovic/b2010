@@ -255,19 +255,15 @@ public class SporadicSpawning extends Base {
     }
 
     class AttackingSpawnMode extends SpawnMode {
-        public int[] numWouts;
-        public int index;
 
         public int mostWouts, mostWoutsTurn;
 
         public Hashtable<Integer, Integer> robotTable;
         public LinkedList<Integer> robotList;
-        public final int tolerance = 40;
+        public final int tolerance = 100;
 
         public AttackingSpawnMode() {
             super();
-            numWouts = new int[30];
-            index = 0;
             robotTable = new Hashtable<Integer, Integer>();
             robotList = new LinkedList<Integer>();
         }
@@ -275,6 +271,7 @@ public class SporadicSpawning extends Base {
         public RobotType getNextRobotSpawnType() {
             ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
             int round = Clock.getRoundNum(), id, result;
+            chainerCount = 0;
             for(RobotInfo robot : robots) {
                 if(robot.team == player.team) {
                     if(robot.type == RobotType.WOUT) {
@@ -289,6 +286,8 @@ public class SporadicSpawning extends Base {
                             robotList.add(id);
                             robotTable.put(id, round);
                         }
+                    } else if(robot.type == RobotType.CHAINER) {
+                        chainerCount++;
                     }
                 }
             }
@@ -300,32 +299,28 @@ public class SporadicSpawning extends Base {
                     i.remove();
                 }
             }
-            
-            //senseRobotCount();
-            /*numWouts[index] = woutCount;
-            index = (index+1) % numWouts.length;
-            
-            int sum = 0;
-            for(int c = 0; c < numWouts.length; c++) {
-                sum += numWouts[c];
-            }
-            int average = sum / numWouts.length;*/
 
 
-            if(mostWoutsTurn+40 > Clock.getRoundNum() || woutCount > mostWouts) {
+            if(mostWoutsTurn+100 > Clock.getRoundNum() || woutCount > mostWouts) {
                 mostWouts = woutCount;
                 mostWoutsTurn = Clock.getRoundNum();
             }
 
-            
-            //p(woutCount+" "+sum+" "+average+" "+index);
-            if(robotList.size() > 1) {
-                //p("Returning Chainer");
-                return RobotType.CHAINER;
+            boolean attacking = ((ArchonPlayer)player).attacking;
+            if(attacking) {
+                //p(woutCount+" "+sum+" "+average+" "+index);
+                if(robotList.size() > 2) {
+                    //p("Returning Chainer");
+                    return RobotType.CHAINER;
+                }
+                //p("Returning Wout");
+                return RobotType.WOUT;
+            } else {
+                if(robotList.size() > 3) {
+                    return RobotType.CHAINER;
+                }
+                return RobotType.WOUT;
             }
-            //p("Returning Wout");
-            return RobotType.WOUT;
-            //return previousSpawnType == null || previousSpawnType == RobotType.CHAINER ? RobotType.WOUT : RobotType.CHAINER;
         }
     }
 

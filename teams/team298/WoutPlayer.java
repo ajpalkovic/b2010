@@ -131,7 +131,7 @@ public class WoutPlayer extends AttackPlayer {
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
 
-                if(energon.isEnergonLow() || energon.isFluxFull() || distance > 50) {
+                if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
                 } else {

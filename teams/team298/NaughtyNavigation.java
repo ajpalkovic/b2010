@@ -24,6 +24,19 @@ public class NaughtyNavigation extends Base {
         goalStack = new LinkedList<NavigationGoal>();
     }
 
+    public MapLocation findAverage(MapLocation[] locations) {
+        int xVal = 0, yVal = 0;
+        for(MapLocation location : locations) {
+            xVal += location.getX();
+            yVal += location.getY();
+        }
+
+        xVal = xVal / locations.length;
+        yVal = yVal / locations.length;
+
+        return new MapLocation(xVal, yVal);
+    }
+
     public MapLocation findClosest(ArrayList<MapLocation> locations) {
         MapLocation closest = null, current = controller.getLocation();
         int min = Integer.MAX_VALUE, distance;
@@ -176,20 +189,19 @@ public class NaughtyNavigation extends Base {
         if(dir == null) {
             return null;
         }
-        Direction leftDir = dir, rightDir = dir;
         if(controller.canMove(dir) && map.onMap(controller.getLocation().add(dir))) {
             return dir;
-        } else {
-            for(int d = 0; d < 3; d++) {
-                leftDir = leftDir.rotateLeft();
-                rightDir = rightDir.rotateRight();
+        }
+        Direction leftDir = dir, rightDir = dir;
+        for(int d = 0; d < 3; d++) {
+            leftDir = leftDir.rotateLeft();
+            rightDir = rightDir.rotateRight();
 
-                if(controller.canMove(leftDir) && map.onMap(controller.getLocation().add(leftDir))) {
-                    return leftDir;
-                }
-                if(controller.canMove(rightDir) && map.onMap(controller.getLocation().add(rightDir))) {
-                    return rightDir;
-                }
+            if(controller.canMove(leftDir) && map.onMap(controller.getLocation().add(leftDir))) {
+                return leftDir;
+            }
+            if(controller.canMove(rightDir) && map.onMap(controller.getLocation().add(rightDir))) {
+                return rightDir;
             }
         }
         return null;
@@ -278,6 +290,8 @@ public class NaughtyNavigation extends Base {
         
         //int t = Clock.getRoundNum(), b = Clock.getBytecodeNum();
         Direction dir = goal.getDirection();
+        //if(dir != null) p(dir.toString());
+        //else p("NULL");
         //printBytecode(t, b, "getDirection: ");
 
         if(faceDirection(dir) != Status.success) {
@@ -576,12 +590,25 @@ public class NaughtyNavigation extends Base {
         }
 
         public Direction getDirection() {
-            ArrayList<MapLocation> enemies = sensing.senseEnemyRobotLocations();
+            ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
             closest = null;
             if(enemies.size() > 0) {
                 enemiesLastSeen = Clock.getRoundNum();
-                closest = findClosest(enemies);
-            } else if(archonPlayer.closestEnemySeen + archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
+                closest = null;
+                RobotType type;
+                MapLocation location = controller.getLocation();
+                int minDistance = Integer.MAX_VALUE, distance;
+                for(RobotInfo robot : enemies) {
+                    type = robot.type;
+                    if(type.isBuilding() || type == RobotType.ARCHON || type == RobotType.WOUT) continue;
+                    if(closest == null || location.distanceSquaredTo(robot.location) < minDistance) {
+                        closest = robot.location;
+                        minDistance = location.distanceSquaredTo(robot.location);
+                    }
+                }
+            } 
+            
+            if(closest == null && archonPlayer.closestEnemySeen + archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
                 closest = archonPlayer.closestEnemy;
             }
 
@@ -600,9 +627,11 @@ public class NaughtyNavigation extends Base {
             } else {
                 // TODO: Change this to get if archon is leader
                 if(archonPlayer.archonNumber == 1) {
-                    return previousDirection = getMoveableArchonDirection(controller.getDirection());
+                    previousDirection = getMoveableArchonDirection(controller.getDirection());
+                    return previousDirection;
                 } else {
-                    return archonDirection;
+                    //p((archonDirection == null ? "NULL": archonDirection)+" "+(getMoveableDirection(archonDirection) == null ? "NULL": getMoveableDirection(archonDirection)));
+                    return getMoveableDirection(archonDirection);
                 }
             }
         }
@@ -730,8 +759,10 @@ public class NaughtyNavigation extends Base {
         public void optimizeDirection() {
             if(archonDirection == null || archonLocation == null) return;
 
+            //p("In optimize direction");
             int distance = controller.getLocation().distanceSquaredTo(archonLocation);
             if(distance > 25) {
+                //p(archonDirection.toString());
                 archonDirection = controller.getLocation().directionTo(archonLocation);
             }
         }
@@ -746,6 +777,7 @@ public class NaughtyNavigation extends Base {
                     archonDirection = controller.getLocation().directionTo(location);
                 } else {
                     archonDirection = archonLocation.directionTo(location);
+                    //p(archonDirection.toString());
                     if(archonDirection == Direction.EAST) {
                         if(controller.getLocation().getX() >= location.getX()) {
                             archonDirection = null;
@@ -783,6 +815,7 @@ public class NaughtyNavigation extends Base {
                     } else {
                         // It was none?
                     }
+                    //if(archonDirection == null)p("NULL");
                     archonLocation = location;
                     this.archonID = archonID;
                 }
