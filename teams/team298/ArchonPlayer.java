@@ -18,7 +18,7 @@ public class ArchonPlayer extends NovaPlayer {
     public MapLocation destinationLocation;
     public MapLocation[] idealTowerSpawnLocations;
     public ArrayList<MapLocation> enemyLocations;
-    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0, turnsSinceMessageForEnemyRobotsSent = 30, turnsSinceTowerStuffDone = 30, turnsLookingForTower = 0;
     boolean attacking;
     boolean attackingInitialized;
     public MapLocation closestEnemy;
@@ -39,19 +39,16 @@ public class ArchonPlayer extends NovaPlayer {
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
-                if(false) {
-                    spawning.changeModeToCollectingFlux();
-                    navigation.changeToMoveableDirectionGoal(true);
-                } else {
-                    navigation.changeToMoveableDirectionGoal(true);
-                    spawning.changeModeToAttacking();
-                }
+                navigation.changeToMoveableDirectionGoal(true);
+                spawning.changeModeToAttacking();
                 energon.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
                 //add a small delay to archon movement so the other dudes can keep up
-                if(attacking || (moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
+                if(attacking) {
+                    navigation.moveOnce(false);
+                } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
                     navigation.moveOnce(true);
                     moveTurns = 0;
                 }
@@ -59,7 +56,8 @@ public class ArchonPlayer extends NovaPlayer {
                 //try to spawn a new dude every turn
                 if(turnsSinceLastSpawn > 2) {
                     int status = spawning.spawnRobot();
-                    if(status == Status.success) {
+                    if(status == Status.cannotSupportUnit) turnsSinceLastSpawn = -1;
+                    else if(status == Status.success) {
                         turnsSinceLastSpawn = -1;
                         try {
                             messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
@@ -70,33 +68,42 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 turnsSinceLastSpawn++;
 
-                //try to spawn a tower every turn
-                sensing.senseAlliedTeleporters();
-                if(spawning.canSupportTower(RobotType.TELEPORTER)) {
-                    //System.out.println("Can support it");
-                	if (attacking) {
-                		ArrayList<RobotInfo> robots =  sensing.senseGroundRobotInfo();
-                    	for (RobotInfo robot : robots){
-                    		if (robot.type == RobotType.WOUT){
-                    			if (robot.location.isAdjacentTo(controller.getLocation())){
-                    				energon.fluxUpWout(robot.location);
-                    				sensing.senseAlliedTeleporters();
-                    				if (sensing.knownAlliedTowerLocations == null)
-                    					sensing.senseAlliedTowers();
-                    				if (!sensing.knownAlliedTowerLocations.isEmpty()){
-                    					MapLocation loc = navigation.findClosest(new ArrayList<MapLocation>(sensing.knownAlliedTowerLocations.values()));
-                    					messaging.sendTowerPing(sensing.knownAlliedTowerIDs.get(loc.getX() +","+loc.getY()), loc);
-                    				}
-                    			}
-                    		}
-                    	}
-                	} else
-                	{
-                		placeTower();
-                	}
+                if(turnsSinceTowerStuffDone < 0) {
+                    //try to spawn a tower every turn
+                    sensing.senseAlliedTeleporters();
+                    if(spawning.canSupportTower(RobotType.TELEPORTER)) {
+                        turnsSinceTowerStuffDone = 1;
+                        //System.out.println("Can support it");
+                        if (attacking) {
+                            ArrayList<RobotInfo> robots =  sensing.senseGroundRobotInfo();
+                            for (RobotInfo robot : robots){
+                                if (robot.type == RobotType.WOUT){
+                                    if (robot.location.isAdjacentTo(controller.getLocation())){
+                                        energon.fluxUpWout(robot.location);
+                                        sensing.senseAlliedTeleporters();
+                                        if (sensing.knownAlliedTowerLocations == null)
+                                            sensing.senseAlliedTowers();
+                                        if (!sensing.knownAlliedTowerLocations.isEmpty()){
+                                            MapLocation loc = navigation.findClosest(new ArrayList<MapLocation>(sensing.knownAlliedTowerLocations.values()));
+                                            messaging.sendTowerPing(sensing.knownAlliedTowerIDs.get(loc.getX() +","+loc.getY()), loc);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            placeTower();
+                        }
+                    } else {
+                        turnsSinceTowerStuffDone = 5;
+                    }
                 }
+                turnsSinceTowerStuffDone--;
 
-                messaging.sendMessageForEnemyRobots();
+                if(turnsSinceMessageForEnemyRobotsSent < 0) {
+                    messaging.sendMessageForEnemyRobots();
+                    turnsSinceMessageForEnemyRobotsSent = 1;
+                }
+                turnsSinceMessageForEnemyRobotsSent--;
 
                 moveTurns++;
                 break;
