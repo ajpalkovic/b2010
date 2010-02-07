@@ -70,7 +70,29 @@ public class EnergeticEnergon extends Base {
             e.printStackTrace();
         }
     }
-    
+    public void fluxUpWout(MapLocation woutLocation) {
+    	
+    	Robot robot;
+        RobotInfo info;
+    		try{
+    			robot = player.controller.senseGroundRobotAtLocation(woutLocation);
+    			info = player.controller.senseRobotInfo(robot);
+    		} catch (Exception e) {return;}
+    	if (robot == null) {
+    		return;
+    	} else { 
+    		if (player.controller.getLocation().distanceSquaredTo(woutLocation) < 3){
+    			try{
+    			player.controller.transferFlux(3000, woutLocation, RobotLevel.ON_GROUND);
+    			double transferamt = (RobotType.WOUT.maxEnergon() - info.energonLevel);
+    			if (transferamt > player.controller.getEnergonLevel())
+    				transferamt = player.controller.getEnergonLevel();
+    			transferEnergon(transferamt, woutLocation, false);
+    			} catch (Exception e) {return;}
+    		}
+    	}
+    		
+    }
 	public void transferFluxToTower(MapLocation towerLocation) {
         try {
             Robot robot = player.controller.senseGroundRobotAtLocation(towerLocation);
@@ -80,7 +102,7 @@ public class EnergeticEnergon extends Base {
             } else {
            		if (player.controller.getLocation().isAdjacentTo(towerLocation)) {
            			// Check to make sure we don't transfer more flux than the Wout has, and the tower can receive.
-           			double maxTransfer = info.maxEnergon - info.energonLevel;
+           			double maxTransfer = info.flux;
            			double available = player.controller.getFlux();
            			if (maxTransfer > available) {
            				maxTransfer = available;
@@ -238,7 +260,7 @@ public class EnergeticEnergon extends Base {
     public boolean isFluxFull() {
         int limit = Math.min(200+(int)(player.turnsSinceEnemiesSeen*player.turnsSinceEnemiesSeen*0.1), 2000);
         //p(limit+"");
-        return controller.getFlux() > limit;
+        return controller.getFlux() > limit && controller.getFlux() < 3000;
     }
 
     /**

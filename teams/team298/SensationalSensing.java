@@ -24,6 +24,8 @@ public class SensationalSensing extends Base {
     public Robot[] air, ground;
     public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots, alliedTowerInfo;
     public ArrayList<MapLocation> enemyLocations, alliedTowerLocations;
+    public HashMap<Integer, MapLocation> knownAlliedTowerLocations;
+    public HashMap<String, Integer> knownAlliedTowerIDs;
     public MapLocation[] archonLocations;
     public MapLocation nearestArchon;
     public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();
@@ -167,8 +169,8 @@ public class SensationalSensing extends Base {
      * This way, if an archon is not in sensor range of a tower, it can still know the general direction in which to go to find one.
      */
     public ArrayList<MapLocation> senseKnownAlliedTowerLocations() {
-        senseAlliedTowerLocations();
-        return alliedTowerLocations;
+        senseAlliedTowerLocations();        
+        return new ArrayList<MapLocation>(knownAlliedTowerLocations.values());
     }
 
     /**
@@ -182,7 +184,7 @@ public class SensationalSensing extends Base {
             try {
                 List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
                 if(!loc.isEmpty()) {
-                    teleporterLocations.addAll(loc);
+                	teleporterLocations.addAll(loc);
                 }
                 alliedTeleportersSensed = Clock.getRoundNum();
             } catch(Exception e) {
@@ -224,6 +226,7 @@ public class SensationalSensing extends Base {
      * Returns an arraylist of all of the allied towers that are in range.
      */
     public ArrayList<RobotInfo> senseAlliedTowers() {
+
         if(alliedTowersSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return alliedTowerInfo;
         }
@@ -248,15 +251,20 @@ public class SensationalSensing extends Base {
         if(alliedTowerLocationsSensed >= Clock.getRoundNum() - oldDataTolerance) {
             return alliedTowerLocations;
         }
-
+        if (knownAlliedTowerLocations == null) { 
+        	knownAlliedTowerLocations = new HashMap<Integer, MapLocation>();
+        	knownAlliedTowerIDs = new HashMap<String, Integer>();
+        }
         alliedTowerLocations = new ArrayList<MapLocation>();
         senseAlliedRobotInfoInSensorRange();
-        for(RobotInfo robot : alliedRobots) {
+        for(RobotInfo robot : alliedRobots) 
             if(robot.type.isBuilding()) {
                 alliedTowerLocations.add(robot.location);
-            }
-        }
-
+                if (!knownAlliedTowerLocations.containsKey(robot.id)){
+                	knownAlliedTowerLocations.put(robot.id, robot.location);
+                	knownAlliedTowerIDs.put(robot.location.getX() + "," + robot.location.getY(), robot.id);
+                }
+            }        
         alliedTowerLocationsSensed = Clock.getRoundNum();
         return alliedTowerLocations;
     }

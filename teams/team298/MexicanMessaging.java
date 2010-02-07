@@ -23,7 +23,9 @@ public class MexicanMessaging extends Base {
             KEY2 = tmp;
         }
     }
-
+    public boolean sendTowerPing(int robotID, MapLocation location) {
+    	return addMessage(BroadcastMessage.towerPing, BroadcastMessage.everyone, new int[]{robotID}, null, new MapLocation[]{location});
+    }
     /**
      * Each of these methods represent the public interface for sending messages.
      * All they have to do is call addMessage and pass it some data.
@@ -34,14 +36,13 @@ public class MexicanMessaging extends Base {
         return addMessage(BroadcastMessage.towerBuildLocationRequest, recipientRobotID, null, null, null);
     }
 
-    public boolean sendTowerBuildLocationResponse(MapLocation[] locations) {
-        return addMessage(BroadcastMessage.towerBuildLocationResponse, BroadcastMessage.everyone, new int[] {locations.length}, null, locations);
+    public boolean sendTowerBuildLocationResponse(MapLocation[] locations,int recepientID) {
+        return addMessage(BroadcastMessage.towerBuildLocationResponse, recepientID, new int[] {locations.length}, null, locations);
     }
 
     public boolean sendMove(MapLocation location) {
         return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
     }
-
     public boolean sendLowEnergon(int amount) {
         int[] ints = new int[] {amount, player.isAirRobot ? 1 : 0};
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
@@ -143,7 +144,7 @@ public class MexicanMessaging extends Base {
         if(message != null) {
             //is it ours?
             if(message.ints == null || message.ints.length < 3 || message.ints[0] != KEY1 || message.ints[1] != KEY2) {
-                return;
+            	return;
             }
 
             int senderID = message.ints[2];
@@ -218,7 +219,7 @@ public class MexicanMessaging extends Base {
                         case BroadcastMessage.support:
                             break;
                         case BroadcastMessage.towerBuildLocationRequest:
-                            player.towerBuildLocationRequestCallback();
+                            player.towerBuildLocationRequestCallback(senderID);
                             break;
                         case BroadcastMessage.towerBuildLocationResponse:
                             count = message.ints[intIndex];
@@ -229,6 +230,11 @@ public class MexicanMessaging extends Base {
                             locationIndex += count;
                             intIndex++;
                             break;
+                        case BroadcastMessage.towerPing:
+                        	player.towerPingLocationCallback(message.locations[locationIndex], message.ints[intIndex]);
+                        	intIndex++;
+                        	locationIndex++;
+                        	break;
                     }
                 }
             }
@@ -309,7 +315,13 @@ public class MexicanMessaging extends Base {
         }
         return good;
     }
-
+    private void doS(Message message) {
+    	if (message.locations!=null && message.locations.length > 0) {
+    		for (MapLocation l : message.locations)
+    			l.add(Direction.NORTH);
+    	}
+    	
+    }
     /*
      * send message methods
      */

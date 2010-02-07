@@ -451,6 +451,7 @@ public class NaughtyNavigation extends Base {
      * If removePreviousGoals is true, then the stack is cleared.  This is useful if the goal needs to be changed from the main method.
      */
     public void changeToWoutCollectingFluxGoal(boolean removePreviousGoals) {
+        if(goal instanceof WoutCollectingFluxGoal) return;
         pushGoal(removePreviousGoals);
         goal = new WoutCollectingFluxGoal();
     }
@@ -594,7 +595,17 @@ public class NaughtyNavigation extends Base {
     }
 
     class WoutCollectingFluxGoal extends NavigationGoal {
+        public Direction previousDirection = null;
 
+        public Direction getTheDirection(Direction dir) {
+            if(dir == null) return null;
+            if(controller.canMove(dir)) {
+                previousDirection = null;
+                return dir;
+            }
+            return previousDirection = getMoveableDirection(previousDirection == null ? dir : previousDirection);
+        }
+        
         public Direction getDirection() {
             if(controller.getRoundsUntilMovementIdle() > 1) return null;
 
@@ -617,7 +628,7 @@ public class NaughtyNavigation extends Base {
                 try {
                     if(controller.senseFluxAtLocation(newLocation) > 5) {
                         //p("Going straight: "+newLocation);
-                        return getMoveableDirection(currentDirection);
+                        return getTheDirection(currentDirection);
                     }
                 } catch (Exception e) {
                     pa("----Caught exception in WoutCollectingFluxGoal "+e.toString());
@@ -642,10 +653,10 @@ public class NaughtyNavigation extends Base {
                 if(minAmount > 5) {
                     location = new MapLocation(location.getX()+min[0], location.getY()+min[1]);
                     //p("Returning: "+getMoveableDirection(controller.getLocation().directionTo(location)));
-                    return getMoveableDirection(controller.getLocation().directionTo(location));
+                    return getTheDirection(controller.getLocation().directionTo(location));
                 } else {
                     //p("Returning2: "+getMoveableDirection(controller.getDirection()));
-                    return getMoveableDirection(controller.getDirection());
+                    return getTheDirection(controller.getDirection());
                 }
             }
         }
@@ -750,8 +761,10 @@ public class NaughtyNavigation extends Base {
 
     class FlankingEnemyGoal extends NavigationGoal {
         Direction enemyAvgDirection = null;
+        Direction currentDirection = controller.getDirection();
         MapLocation currentEnemyAvgLocation = null;
         MapLocation newEnemyAvgLocation = null;
+        MapLocation closestEnemyLocation = null;
         ArrayList<MapLocation> enemyLocations = null;
 
         public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
@@ -761,11 +774,12 @@ public class NaughtyNavigation extends Base {
         }
 
         public Direction getDirection() {
-            return enemyAvgDirection;
+            return flank();
         }
 
         public void setAvgLocation(ArrayList<MapLocation> enemyLocations) {
             this.enemyLocations = enemyLocations;
+            closestEnemyLocation = getNearestEnemy();
             int xVal = 0, yVal = 0;
             double xAvg = 0, yAvg = 0;
             for (int i = 0; i < enemyLocations.size(); ++i) {
@@ -789,8 +803,29 @@ public class NaughtyNavigation extends Base {
         }
 
         private Direction flank() {
-
-            return null;
+            currentDirection = controller.getDirection();
+            //if (controller.getLocation() )
+            if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
+                if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
+                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
+                        return Direction.NONE;
+                    } else {
+                        return Direction.NORTH;
+                    }
+                } else {
+                    return Direction.WEST;
+                }
+            } else {
+                if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
+                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
+                        return Direction.NONE;
+                    } else {
+                        return Direction.NORTH;
+                    }
+                } else {
+                    return Direction.EAST;
+                }
+            }
         }
 
         private MapLocation getNearestEnemy() {
