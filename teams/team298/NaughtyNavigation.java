@@ -587,10 +587,11 @@ public class NaughtyNavigation extends Base {
         }
 
         public void optimizeDirection() {
-            if(archonPlayer.archonNumber == 1) return;
-            if(archonLastSeen+directionTolerance > Clock.getRoundNum()) {
-                if(archonLastSeen+leaderTolerance > Clock.getRoundNum()) {
-                    //send a ping to select a new leader
+            if(player.isLeader) return;
+            if(archonLastSeen+directionTolerance < Clock.getRoundNum()) {
+                if(archonLastSeen+leaderTolerance < Clock.getRoundNum()) {
+                    player.archonLeader = controller.getRobot().getID();
+                    player.isLeader = true;
                 } else {
                     if(archonLocation != null && !archonLocation.equals(controller.getLocation())) {
                         archonDirection = controller.getLocation().directionTo(archonLocation);
@@ -640,10 +641,11 @@ public class NaughtyNavigation extends Base {
             } else if(enemiesLastSeen + enemyTolerance > Clock.getRoundNum()) {
                 return previousDirection;
             } else {
+                optimizeDirection();
                 // TODO: Change this to get if archon is leader
-                if(archonPlayer.archonNumber == 1) {
+                if(player.isLeader) {
                     previousDirection = getMoveableArchonDirection(controller.getDirection());
-                    p(previousDirection == null ? "NULL": previousDirection.toString());
+                    //p(previousDirection == null ? "NULL": previousDirection.toString());
                     return previousDirection;
                 } else {
                     //p((archonDirection == null ? "NULL": archonDirection)+" "+(getMoveableDirection(archonDirection) == null ? "NULL": getMoveableDirection(archonDirection)));

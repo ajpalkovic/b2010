@@ -289,6 +289,9 @@ public class ArchonPlayer extends NovaPlayer {
     	}
     }
     public void boot() {
+        archonLeader = controller.getRobot().getID();
+        isLeader = true;
+        
         sensing.senseAllTiles();
         team = controller.getTeam();
         senseArchonNumber();
@@ -314,9 +317,6 @@ public class ArchonPlayer extends NovaPlayer {
         Message[] messages = controller.getAllMessages();
         int min = 1;
         for(Message m : messages) {
-            if (m.ints[0] == 1) {
-                archonLeader = m.ints[1];
-            }
             if(m.ints[0] >= min) {
                 min = m.ints[0] + 1;
             }
