@@ -571,7 +571,7 @@ public class NaughtyNavigation extends Base {
     class MoveableDirectionGoal extends FollowArchonGoal {
 
         public Direction previousDirection;
-        public MapLocation closest;
+        public MapLocation closest, average;
         public int enemiesLastSeen;
         public final int enemyTolerance = 20;
         public int directionTolerance = 10, leaderTolerance = 40, archonLastSeen = 0;
@@ -608,20 +608,26 @@ public class NaughtyNavigation extends Base {
         public Direction getDirection() {
             ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
             closest = null;
+            average = null;
             if(enemies.size() > 0) {
                 enemiesLastSeen = Clock.getRoundNum();
                 closest = null;
                 RobotType type;
+                int x = 0, y = 0, count = 0;
                 MapLocation location = controller.getLocation();
                 int minDistance = Integer.MAX_VALUE, distance;
                 for(RobotInfo robot : enemies) {
                     type = robot.type;
                     if(type.isBuilding() || type == RobotType.ARCHON || type == RobotType.WOUT) continue;
+                    count++;
+                    x += robot.location.getX();
+                    y += robot.location.getY();
                     if(closest == null || location.distanceSquaredTo(robot.location) < minDistance) {
                         closest = robot.location;
                         minDistance = location.distanceSquaredTo(robot.location);
                     }
                 }
+                average = new MapLocation(x, y);
             } 
             
             if(closest == null && archonPlayer.closestEnemySeen + archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
@@ -634,6 +640,9 @@ public class NaughtyNavigation extends Base {
                 if(distance >= 14 && distance <= 16) {
                     return null;
                 } else if(distance > 16) {
+                    if(average != null) {
+                        return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(average));
+                    }
                     return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closest));
                 } else {
                     return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));

@@ -308,6 +308,9 @@ public class SporadicSpawning extends Base {
 
             boolean attacking = ((ArchonPlayer)player).attacking;
             if(attacking) {
+                if(chainerCount < 3) {
+                    return RobotType.CHAINER;
+                }
                 //p(woutCount+" "+sum+" "+average+" "+index);
                 if(robotList.size() > 2) {
                     //p("Returning Chainer");
@@ -316,7 +319,7 @@ public class SporadicSpawning extends Base {
                 //p("Returning Wout");
                 return RobotType.WOUT;
             } else {
-                if(robotList.size() > 3) {
+                if(robotList.size() > 4) {
                     return RobotType.CHAINER;
                 }
                 return RobotType.WOUT;
