@@ -1,4 +1,4 @@
-package team298;
+package team299;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -21,7 +21,6 @@ public class NovaPlayer extends Base {
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
-    public int turnsSinceEnergonSent = -1, turnsSinceEnergonProcessed = -1;
 
     public Team team;
 
@@ -90,30 +89,17 @@ public class NovaPlayer extends Base {
         while(true) {
             int startTurn = Clock.getRoundNum();
             controller.setIndicatorString(0, controller.getLocation().toString());
-
-            //int b = Clock.getBytecodeNum(), t = Clock.getRoundNum();
+            int b = Clock.getBytecodeNum(), t = Clock.getRoundNum();
             messaging.parseMessages();
             //printBytecode(t, b, "Parse Messages: ");
 
-            if(!isArchon && !isTower && turnsSinceEnergonSent < 0 && energon.isEnergonSortaLow()) {
-                messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
-                turnsSinceEnergonSent = 2;
-            }
-            turnsSinceEnergonSent--;
+            if(!isArchon && !isTower && energon.isEnergonSortaLow()) messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
 
-            if(turnsSinceEnergonProcessed < 0) {
-                if(isArchon) {
-                    //b = Clock.getBytecodeNum();
-                    //t = Clock.getRoundNum();
-                    energon.processEnergonTransferRequests();
-                    //printBytecode(t, b, "Process energon: ");
-                } else if(!isTower) {
-                    energon.autoTransferEnergonBetweenUnits();
-                }
-                turnsSinceEnergonProcessed = 1;
+            if(isArchon) {
+                energon.processEnergonTransferRequests();
+            } else if(!isTower) {
+                energon.autoTransferEnergonBetweenUnits();
             }
-            turnsSinceEnergonProcessed--;
-            
             step();
 
             if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
@@ -156,15 +142,11 @@ public class NovaPlayer extends Base {
      **************************************************************************/
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
         if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
-            if(archonLeader > 0 && idOfSendingArchon == archonLeader) {
+            if(archonLeader < 0 || idOfSendingArchon == archonLeader) {
                 hasReceivedUniqueMsg = true;
                 archonLeader = idOfSendingArchon;
-                if(!ignoreFollowRequest && !isArchon) {
-                    navigation.changeToFollowingArchonGoal(archonLeader, true);
-                }
-                if(navigation.followArchonGoal != null) {
-                    navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
-                }
+                if(!ignoreFollowRequest) navigation.changeToFollowingArchonGoal(archonLeader, true);
+                if(navigation.followArchonGoal != null) navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
             }
         }
     }

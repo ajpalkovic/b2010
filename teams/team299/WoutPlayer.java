@@ -1,13 +1,13 @@
-package team298;
+package team299;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
 import java.util.*;
 
-import team298.Base.BroadcastMessage;
-import team298.Base.Goal;
-import team298.Base.Status;
-import team298.NaughtyNavigation.LocationGoalWithBugPlanning;
+import team299.Base.BroadcastMessage;
+import team299.Base.Goal;
+import team299.Base.Status;
+import team299.NaughtyNavigation.LocationGoalWithBugPlanning;
 
 public class WoutPlayer extends AttackPlayer {
 
@@ -126,7 +126,7 @@ public class WoutPlayer extends AttackPlayer {
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
 
-                if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70) {
+                if(energon.isEnergonLow() || energon.isFluxFull() || distance > 50) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
                 } else {

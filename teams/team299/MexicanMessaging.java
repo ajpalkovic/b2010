@@ -1,4 +1,4 @@
-package team298;
+package team299;
 
 import battlecode.common.*;
 import static battlecode.common.GameConstants.*;
@@ -24,7 +24,6 @@ public class MexicanMessaging extends Base {
         }
     }
     public boolean sendTowerPing(int robotID, MapLocation location) {
-        //p("Send Tower Ping");
     	return addMessage(BroadcastMessage.towerPing, BroadcastMessage.everyone, new int[]{robotID}, null, new MapLocation[]{location});
     }
     /**
@@ -34,35 +33,29 @@ public class MexicanMessaging extends Base {
      * Add message accepts an array of ints, strings, and MapLocations which will be sent along with the message.
      */
     public boolean sendTowerBuildLocationRequest(int recipientRobotID) {
-        //p("Send Tower Build Location Request");
         return addMessage(BroadcastMessage.towerBuildLocationRequest, recipientRobotID, null, null, null);
     }
 
     public boolean sendTowerBuildLocationResponse(MapLocation[] locations,int recepientID) {
-        //p("Send Tower Build Location Response");
         return addMessage(BroadcastMessage.towerBuildLocationResponse, recepientID, new int[] {locations.length}, null, locations);
     }
 
     public boolean sendMove(MapLocation location) {
-        //p("Send Move");
         return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
     }
     public boolean sendLowEnergon(int amount) {
-        //p("Send Low Energon");
         int[] ints = new int[] {amount, player.isAirRobot ? 1 : 0};
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
         return addMessage(BroadcastMessage.lowEnergon, BroadcastMessage.everyone, ints, null, locations);
     }
 
     public boolean sendNewUnit() {
-        //p("Send New Unit");
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
         String[] strings = {controller.getRobotType().toString()};
         return addMessage(BroadcastMessage.newUnit, BroadcastMessage.everyone, null, strings, locations);
     }
 
     public boolean sendFollowRequest(MapLocation archonLocation, int recipientRobotId) {
-        //p("Send Follow Request");
         MapLocation[] locations = new MapLocation[] {archonLocation};
         return addMessage(BroadcastMessage.followRequest, recipientRobotId, null, null, locations);
     }
@@ -72,7 +65,6 @@ public class MexicanMessaging extends Base {
      * This method sends enemyInSight message broadcast for all enemies in sight
      */
     public void sendMessageForEnemyRobots() {
-        //p("Send Message For Enemy Robots");
         try {
             if(controller.hasBroadcastMessage()) {
                 controller.yield();

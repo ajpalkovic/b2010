@@ -28,3 +28,4 @@ output.txt
 output-*.txt
 match-*.rms
 bc.conf.backup
+*.tmp
