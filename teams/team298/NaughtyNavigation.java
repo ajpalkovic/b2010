@@ -839,7 +839,12 @@ public class NaughtyNavigation extends Base {
         }
 
         public Direction getDirection() {
-            return flank();
+            if (!goalIsDone) {
+                return flank();
+            } else {
+                return null;
+            }
+            
         }
 
         public void setAvgLocation(ArrayList<MapLocation> enemyLocations) {
@@ -861,6 +866,10 @@ public class NaughtyNavigation extends Base {
                 setAvgDirection(newEnemyAvgLocation);
                 currentEnemyAvgLocation = newEnemyAvgLocation;
             }
+        }
+
+        public void setIsGoalDone(boolean goalIsDone) {
+            this.goalIsDone = goalIsDone;
         }
 
         private void setAvgDirection(MapLocation newLocation) {

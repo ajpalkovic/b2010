@@ -58,7 +58,8 @@ public class ArchonPlayer extends NovaPlayer {
                             pa("Archon #3 has successfully set a FlankingEnemyGoal");
                         }
                     } else {
-                        navigation.changeToMoveableDirectionGoal(true);
+                        if (navigation.flankingEnemyGoal != null)
+                            navigation.flankingEnemyGoal.setIsGoalDone(true);
                     }
                 }
 
