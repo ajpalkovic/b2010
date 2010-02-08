@@ -57,6 +57,8 @@ public class ArchonPlayer extends NovaPlayer {
                         } else {
                             pa("Archon #3 has successfully set a FlankingEnemyGoal");
                         }
+                    } else {
+                        navigation.changeToMoveableDirectionGoal(true);
                     }
                 }
 
@@ -204,6 +206,9 @@ public class ArchonPlayer extends NovaPlayer {
     }
 
     public void placeTower() {
+        if (archonNumber == 3) {
+            return;
+        }
         idealTowerSpawnLocations = null;
         turnsWaitedForTowerSpawnLocationMessage = 0;
         towerSpawnFromLocation = null;
