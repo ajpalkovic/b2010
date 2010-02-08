@@ -824,7 +824,7 @@ public class NaughtyNavigation extends Base {
     }
 
     class FlankingEnemyGoal extends NavigationGoal {
-
+        boolean goalIsDone = false;
         Direction enemyAvgDirection = null;
         Direction currentDirection = controller.getDirection();
         MapLocation currentEnemyAvgLocation = null;
@@ -869,29 +869,43 @@ public class NaughtyNavigation extends Base {
 
         private Direction flank() {
             currentDirection = controller.getDirection();
-
-            // This will only work if the attack them in a north or south direction right now
-            if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
-                if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
-                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
-                        return Direction.NONE;
+            if (!goalIsDone) {
+                // This will only work if the attack them in a north or south direction right now
+                if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
+                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
+                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
+                            if (controller.getLocation().getY() != currentEnemyAvgLocation.getY()) {
+                                return Direction.EAST;
+                            } else {
+                                pa("Successfully Flanked!");
+                                goalIsDone = true;
+                                return null;
+                            }
+                        } else {
+                            return Direction.NORTH;
+                        }
                     } else {
-                        return Direction.NORTH;
+                        return Direction.WEST;
                     }
                 } else {
-                    return Direction.WEST;
-                }
-            } else {
-                if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
-                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
-                        return Direction.NONE;
+                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
+                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
+                            if (controller.getLocation().getY() != currentEnemyAvgLocation.getY()) {
+                                return Direction.WEST;
+                            } else {
+                                pa("Successfully Flanked!");
+                                goalIsDone = true;
+                                return null;
+                            }
+                        } else {
+                            return Direction.NORTH;
+                        }
                     } else {
-                        return Direction.NORTH;
+                        return Direction.EAST;
                     }
-                } else {
-                    return Direction.EAST;
                 }
             }
+            return null;
         }
 
         private MapLocation getNearestEnemy() {
