@@ -573,7 +573,8 @@ public class NaughtyNavigation extends Base {
         public Direction previousDirection;
         public MapLocation closest;
         public int enemiesLastSeen;
-        public final int tolerance = 20;
+        public final int enemyTolerance = 20;
+        public int directionTolerance = 10, leaderTolerance = 40, archonLastSeen = 0;
         public ArchonPlayer archonPlayer;
 
         public MoveableDirectionGoal() {
@@ -586,7 +587,21 @@ public class NaughtyNavigation extends Base {
         }
 
         public void optimizeDirection() {
-            
+            if(archonPlayer.archonNumber == 1) return;
+            if(archonLastSeen+directionTolerance > Clock.getRoundNum()) {
+                if(archonLastSeen+leaderTolerance > Clock.getRoundNum()) {
+                    //send a ping to select a new leader
+                } else {
+                    if(archonLocation != null && !archonLocation.equals(controller.getLocation())) {
+                        archonDirection = controller.getLocation().directionTo(archonLocation);
+                    }
+                }
+            }
+        }
+
+        public void updateArchonGoal(MapLocation archonLocation, int archonID) {
+            archonLastSeen = Clock.getRoundNum();
+            super.updateArchonGoal(archonLocation, archonID);
         }
 
         public Direction getDirection() {
@@ -622,12 +637,13 @@ public class NaughtyNavigation extends Base {
                 } else {
                     return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
                 }
-            } else if(enemiesLastSeen + tolerance > Clock.getRoundNum()) {
+            } else if(enemiesLastSeen + enemyTolerance > Clock.getRoundNum()) {
                 return previousDirection;
             } else {
                 // TODO: Change this to get if archon is leader
                 if(archonPlayer.archonNumber == 1) {
                     previousDirection = getMoveableArchonDirection(controller.getDirection());
+                    p(previousDirection == null ? "NULL": previousDirection.toString());
                     return previousDirection;
                 } else {
                     //p((archonDirection == null ? "NULL": archonDirection)+" "+(getMoveableDirection(archonDirection) == null ? "NULL": getMoveableDirection(archonDirection)));

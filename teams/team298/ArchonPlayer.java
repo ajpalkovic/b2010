@@ -84,7 +84,7 @@ public class ArchonPlayer extends NovaPlayer {
                                         sensing.senseAlliedTeleporters();
                                         if (sensing.knownAlliedTowerLocations == null)
                                             sensing.senseAlliedTowers();
-                                        if (!sensing.knownAlliedTowerLocations.isEmpty()){
+                                        if (sensing.knownAlliedTowerLocations != null && !sensing.knownAlliedTowerLocations.isEmpty()){
                                             MapLocation loc = navigation.findClosest(new ArrayList<MapLocation>(sensing.knownAlliedTowerLocations.values()));
                                             messaging.sendTowerPing(sensing.knownAlliedTowerIDs.get(loc.getX() +","+loc.getY()), loc);
                                         }
