@@ -246,7 +246,7 @@ public class WoutPlayer extends AttackPlayer {
             MapLocation closest = navigation.findClosest(towers);
             if(closest != null) {
                 double distance = Math.abs(controller.getLocation().getX()-closest.getX()) + Math.abs(controller.getLocation().getY()-closest.getY());
-                double energonCost = distance * 0.4;
+                double energonCost = distance * 0.2;
                 if(energonCost+2 > controller.getEnergonLevel()) {
                     if(controller.canSenseSquare(closest)) {
                         try {
