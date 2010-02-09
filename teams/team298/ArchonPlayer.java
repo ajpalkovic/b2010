@@ -302,9 +302,38 @@ public class ArchonPlayer extends NovaPlayer {
         navigation.changeToDirectionGoal(dir, false);
         navigation.moveOnce(true);
         navigation.popGoal();
+
+        int x = controller.getLocation().getX();
+        int y = controller.getLocation().getY();
         
         setGoal(Goal.attackingEnemyArchons);
         if(archonNumber == 1) {
+            TerrainTile top = controller.senseTerrainTile(new MapLocation(x, y-6));
+            TerrainTile bottom = controller.senseTerrainTile(new MapLocation(x, y+6));
+            TerrainTile right = controller.senseTerrainTile(new MapLocation(x+6, y));
+            TerrainTile left = controller.senseTerrainTile(new MapLocation(x-6, y));
+
+            boolean t = top.getType() != TerrainType.OFF_MAP;
+            boolean b = bottom.getType() != TerrainType.OFF_MAP;
+            boolean l = left.getType() != TerrainType.OFF_MAP;
+            boolean r = right.getType() != TerrainType.OFF_MAP;
+
+            if(t) {
+                if(l) dir = Direction.NORTH_WEST;
+                else if(r) dir = Direction.NORTH_EAST;
+                else dir = Direction.NORTH;
+            } else if(b) {
+                if(l) dir = Direction.SOUTH_WEST;
+                else if(r) dir = Direction.SOUTH_WEST;
+                else dir = Direction.SOUTH;
+            } else {
+                dir = l ? Direction.WEST : Direction.EAST;
+            }
+
+            navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir).add(dir), true);
+            for(int c = 0; c < 3; c++) {
+                navigation.moveOnce(true);
+            }
         } else {
         }
 
