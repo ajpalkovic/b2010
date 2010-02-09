@@ -14,6 +14,7 @@ public class NovaPlayer extends Base {
     public int currentGoal = 0;
     public int followingArchonNumber = -1;
     public int archonLeader = -1;
+    public boolean isLeader = false;
     public boolean hasReceivedUniqueMsg, ignoreFollowRequest = false;
     public int turnsSinceEnemiesSeen = 0;
 
@@ -155,15 +156,28 @@ public class NovaPlayer extends Base {
      * CALLBACKS
      **************************************************************************/
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
-        if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
-            if(archonLeader > 0 && idOfSendingArchon == archonLeader) {
-                hasReceivedUniqueMsg = true;
+        if(isArchon) {
+            if(idOfSendingArchon < archonLeader) {
                 archonLeader = idOfSendingArchon;
-                if(!ignoreFollowRequest && !isArchon) {
-                    navigation.changeToFollowingArchonGoal(archonLeader, true);
-                }
+                isLeader = false;
+            }
+
+            if(archonLeader == idOfSendingArchon) {
                 if(navigation.followArchonGoal != null) {
                     navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
+                }
+            }
+        } else {
+            if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
+                if(archonLeader > 0 && idOfSendingArchon == archonLeader) {
+                    hasReceivedUniqueMsg = true;
+                    archonLeader = idOfSendingArchon;
+                    if(!ignoreFollowRequest) {
+                        navigation.changeToFollowingArchonGoal(archonLeader, true);
+                    }
+                    if(navigation.followArchonGoal != null) {
+                        navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
+                    }
                 }
             }
         }
