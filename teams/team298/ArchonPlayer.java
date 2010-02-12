@@ -45,18 +45,11 @@ public class ArchonPlayer extends NovaPlayer {
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
-                // Arbitrary archonNumber hardcoded for now.
                 if (attacking && this.archonNumber == 3) {
-                    pa("robot id: " + robot.getID());
                     if (sensing.senseEnemyRobotInfoInSensorRange().size() > 0) {
-                        pa("Archon #3 attacking, there are " + sensing.senseEnemyRobotInfoInSensorRange().size() + " enemies in his scope");
                         enemyLocations = sensing.senseEnemyRobotLocations();
-                        if (!navigation.changeToFlankingEnemyGoal(enemyLocations, true)) {
-                            navigation.flankingEnemyGoal.setAvgLocation(enemyLocations);
-                            pa("Archon #3 has updated FlankingEnemyGoal");
-                        } else {
-                            pa("Archon #3 has successfully set a FlankingEnemyGoal");
-                        }
+                        navigation.changeToFlankingEnemyGoal(enemyLocations, true);
+                        navigation.flankingEnemyGoal.setAvgLocation(enemyLocations);
                     } else {
                         if (navigation.flankingEnemyGoal != null)
                             navigation.flankingEnemyGoal.setIsGoalDone(true);

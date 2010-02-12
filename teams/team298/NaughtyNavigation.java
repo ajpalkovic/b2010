@@ -825,6 +825,7 @@ public class NaughtyNavigation extends Base {
 
     class FlankingEnemyGoal extends NavigationGoal {
         boolean goalIsDone = false;
+        int currentStage;
         Direction enemyAvgDirection = null;
         Direction currentDirection = controller.getDirection();
         MapLocation currentEnemyAvgLocation = null;
@@ -834,17 +835,18 @@ public class NaughtyNavigation extends Base {
 
         public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
             flankingEnemyGoal = this;
+            currentStage = 1;
             this.enemyLocations = enemyLocations;
             setAvgLocation(enemyLocations);
         }
 
         public Direction getDirection() {
+            pa("flank");
             if (!goalIsDone) {
                 return flank();
             } else {
                 return null;
             }
-            
         }
 
         public void setAvgLocation(ArrayList<MapLocation> enemyLocations) {
@@ -878,41 +880,69 @@ public class NaughtyNavigation extends Base {
 
         private Direction flank() {
             currentDirection = controller.getDirection();
-            if (!goalIsDone) {
-                // This will only work if the attack them in a north or south direction right now
-                if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
-                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
-                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
-                            if (controller.getLocation().getY() != currentEnemyAvgLocation.getY()) {
-                                return Direction.EAST;
-                            } else {
-                                pa("Successfully Flanked!");
-                                goalIsDone = true;
-                                return null;
-                            }
+            pa("Current Stage: " + currentStage);
+            switch (currentStage) {
+                case 1:
+                    pa("Stage 1:\n");
+                    if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
+                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
+                            pa("\tCompleted Stage 1!");
+                            ++currentStage;
+                            pa("New Stage: " + currentStage);
                         } else {
-                            return Direction.NORTH;
+                            pa("\tStage 1 not finished!");
+                            return Direction.WEST;
                         }
                     } else {
-                        return Direction.WEST;
-                    }
-                } else {
-                    if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
-                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
-                            if (controller.getLocation().getY() != currentEnemyAvgLocation.getY()) {
-                                return Direction.WEST;
-                            } else {
-                                pa("Successfully Flanked!");
-                                goalIsDone = true;
-                                return null;
-                            }
+                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
+                            pa("\tCompleted Stage 1!");
+                            ++currentStage;
+                            pa("New Stage: " + currentStage);
                         } else {
-                            return Direction.NORTH;
+                            pa("\tStage 2 not finished!");
+                            return Direction.EAST;
+                        }
+                    }
+                    break;
+                case 2:
+                    pa("Stage 2:\n");
+                    if (controller.getLocation().getY() <= closestEnemyLocation.getY()) {
+                        // Our flanking unit is above the enemy
+                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
+                            ++currentStage;
+                        } else {
+                            pa("\tStage 2 not finished!");
+                            return Direction.SOUTH;
                         }
                     } else {
-                        return Direction.EAST;
+                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
+                            ++currentStage;
+                        } else {
+                            pa("\tStage 2 not finished!");
+                            return Direction.NORTH;
+                        }
                     }
-                }
+                    pa("\tCompleted Stage 2!");
+                    break;
+                case 3:
+                    if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
+                        if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) < 2) {
+                            ++currentStage;
+                        } else {
+                            return Direction.EAST;
+                        }
+                    } else {
+                        if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) < 2) {
+                            ++currentStage;
+                        } else {
+                            return Direction.WEST;
+                        }
+                    }
+                    break;
+                case 4:
+                    return null;
+                default:
+                    break;
             }
             return null;
         }
