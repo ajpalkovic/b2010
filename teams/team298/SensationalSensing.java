@@ -24,8 +24,8 @@ public class SensationalSensing extends Base {
     public Robot[] air, ground;
     public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots, alliedTowerInfo;
     public ArrayList<MapLocation> enemyLocations, alliedTowerLocations;
-    public HashMap<Integer, MapLocation> knownAlliedTowerLocations;
-    public HashMap<String, Integer> knownAlliedTowerIDs;
+    public HashMap<Integer, MapLocation> knownAlliedTowerLocations = new HashMap<Integer, MapLocation>();
+    public HashMap<String, Integer> knownAlliedTowerIDs = new HashMap<String, Integer>();
     public MapLocation[] archonLocations;
     public MapLocation nearestArchon;
     public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();

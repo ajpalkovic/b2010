@@ -125,11 +125,26 @@ public class WoutPlayer extends AttackPlayer {
                     return;
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
-
+                if (energon.isEnergonLow() && distance > 80) {
+                	ArrayList<RobotInfo> allied = sensing.senseAlliedRobotInfoInSensorRange();
+                	for(RobotInfo robotInfo : allied) {
+                		if (robotInfo.type.isBuilding() || robotInfo.type ==RobotType.WOUT){
+                			if (controller.getLocation().isAdjacentTo(robotInfo.location)){
+                				energon.transferFlux(robotInfo.location);
+                			}
+                			else{
+                				navigation.changeToLocationGoal(robotInfo.location, true);
+                			}
+                				
+                		}
+                	}
+                }
+                	
                 if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70 || (energon.isEnergonSortaLow() && distance > 36)) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
-                } else {
+                } 
+                else {
                     //p("collect flux goal");
                     navigation.changeToWoutCollectingFluxGoal(true);
                 }
