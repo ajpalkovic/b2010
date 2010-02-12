@@ -151,7 +151,6 @@ public class EnergeticEnergon extends Base {
 
         if(player.isWout) {
             requests.clear();
-            autoTransferEnergon();
         }
         processEnergonTransferRequests();
     }
