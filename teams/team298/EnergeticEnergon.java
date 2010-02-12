@@ -11,8 +11,6 @@ public class EnergeticEnergon extends Base {
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public ArrayList<EnergonTransferRequest> requests;
-    public ArrayList<LowAllyRequest> lowAllyRequests;
-    public int lowAllyRequestsTurn = 0;
     public double lowEnergonLevel, sortaLowEnergonLevel;
 
     public EnergeticEnergon(NovaPlayer player) {
@@ -23,7 +21,6 @@ public class EnergeticEnergon extends Base {
         sensing = player.sensing;
 
         requests = new ArrayList<EnergonTransferRequest>();
-        lowAllyRequests = new ArrayList<LowAllyRequest>();
         lowEnergonLevel = controller.getRobotType().maxEnergon() * .3;
         sortaLowEnergonLevel = controller.getRobotType().maxEnergon() * .5;
     }
@@ -123,11 +120,8 @@ public class EnergeticEnergon extends Base {
     }
     
     public void addRequest(MapLocation location, boolean isAirUnit, int amount) {
+        if(location.distanceSquaredTo(controller.getLocation()) > 2) return;
         requests.add(new EnergonTransferRequest(location, isAirUnit, amount));
-    }
-
-    public void addLowAllyRequest(MapLocation location, int level, int reserve, int max) {
-        lowAllyRequests.add(new LowAllyRequest(location, level, reserve, max));
     }
 
     /**
@@ -150,70 +144,15 @@ public class EnergeticEnergon extends Base {
      * Auto energon transfers between units
      */
     public void autoTransferEnergonBetweenUnits() {
-        if(player.isTower) return;
-        
-        if(controller.getEnergonLevel() < controller.getRobotType().maxEnergon() / 2) {
+        if(player.isTower ||controller.getEnergonLevel() < controller.getRobotType().maxEnergon() / 2) {
+            requests.clear();
             return;
         }
 
-        if(player.isArchon || player.isWout) {
-            RobotInfo min = null;
-            ArrayList<RobotInfo> robots = sensing.senseAlliedRobotInfoInSensorRange();
-            for(RobotInfo robot : robots) {
-                if(robot.type.isBuilding()) continue;
-                if(!robot.location.isAdjacentTo(controller.getLocation())) continue;
-                if(min == null) {
-                    min = robot;
-                } else {
-                    double percent = (robot.energonLevel + robot.energonReserve) / robot.type.maxEnergon();
-                    double minpercent = (min.energonLevel + min.energonReserve) / min.type.maxEnergon();
-                    if(percent < minpercent) {
-                        min = robot;
-                    }
-                }
-            }
-            if(min == null) {
-                return;
-            }
-            double amount = calculateEnergonRequestAmount(min);
-            if(amount < 2) {
-                return;
-            }
-            transferEnergon(amount, min.location, min.type.isAirborne());
-        } else {
-            if(lowAllyRequestsTurn + 1 <= Clock.getRoundNum()) {
-                return;
-            }
-            LowAllyRequest min = null;
-            double percent, minpercent = 500;
-            for(LowAllyRequest cur : lowAllyRequests) {
-                if(!cur.location.isAdjacentTo(controller.getLocation())) {
-                    continue;
-                }
-                if(min == null) {
-                    min = cur;
-                    minpercent = (min.level + min.reserve) / min.max;
-                } else {
-                    percent = (cur.level + cur.reserve) / cur.max;
-                    if(percent < minpercent) {
-                        min = cur;
-                        minpercent = percent;
-                    }
-                }
-            }
-
-            if(min == null) {
-                return;
-            }
-
-            double amount = calculateEnergonRequestAmount(min.level, min.reserve, min.max);
-            /*if(amount < 2) {
-                return;
-            }*/
-            amount = amount / 2;
-
-            transferEnergon(amount, min.location, false);
+        if(player.isWout) {
+            requests.clear();
         }
+        processEnergonTransferRequests();
     }
 
     /**
@@ -287,11 +226,12 @@ public class EnergeticEnergon extends Base {
     public void processEnergonTransferRequests() {
         double amount = controller.getEnergonLevel();
         double maxToGive = amount - 10;
-        if(maxToGive < 0) return;
-
-        if(player.isArchon) {
-            autoTransferEnergon();
+        if(maxToGive < 0) {
+            requests.clear();
+            return;
         }
+
+        autoTransferEnergon();
 
         //p("processing requests");
         if(requests.size() > 0) {
@@ -351,11 +291,12 @@ public class EnergeticEnergon extends Base {
      * just 1 energon.
      */
     public int transferEnergon(double amount, MapLocation location, boolean isAirUnit) {
+        if(location.distanceSquaredTo(controller.getLocation()) > 3) return Status.fail;
         if(controller.getEnergonLevel() - 1 < amount) {
             return Status.notEnoughEnergon;
         }
 
-        if(amount < 0) {
+        if(amount < 0.1) {
             return Status.success;
         }
 
@@ -401,19 +342,6 @@ public class EnergeticEnergon extends Base {
 
         public String toString() {
             return "Location: " + location.toString() + " isAirUnit: " + isAirUnit + " Amount: " + amount;
-        }
-    }
-
-    class LowAllyRequest {
-
-        public MapLocation location;
-        public int level, reserve, max;
-
-        public LowAllyRequest(MapLocation location, int level, int reserve, int max) {
-            this.location = location;
-            this.level = level;
-            this.reserve = reserve;
-            this.max = max;
         }
     }
 }

@@ -337,6 +337,8 @@ public class ArchonPlayer extends NovaPlayer {
         } else {
         }
 
+        //if(archonNumber != 1) minMoveTurns -= 2;
+
     }
 
     /**
