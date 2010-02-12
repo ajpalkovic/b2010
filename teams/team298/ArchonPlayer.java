@@ -39,7 +39,6 @@ public class ArchonPlayer extends NovaPlayer {
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
-                navigation.changeToMoveableDirectionGoal(true);
                 spawning.changeModeToAttacking();
                 energon.transferFluxBetweenArchons();
 
@@ -54,6 +53,8 @@ public class ArchonPlayer extends NovaPlayer {
                         if (navigation.flankingEnemyGoal != null)
                             navigation.flankingEnemyGoal.setIsGoalDone(true);
                     }
+                } else {
+                    navigation.changeToMoveableDirectionGoal(true);
                 }
 
                 //add a small delay to archon movement so the other dudes can keep up

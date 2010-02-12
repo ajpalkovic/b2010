@@ -834,6 +834,7 @@ public class NaughtyNavigation extends Base {
         ArrayList<MapLocation> enemyLocations = null;
 
         public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
+                p("in constructor");
             flankingEnemyGoal = this;
             currentStage = 1;
             this.enemyLocations = enemyLocations;
