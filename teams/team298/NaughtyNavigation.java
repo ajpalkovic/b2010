@@ -714,6 +714,7 @@ public class NaughtyNavigation extends Base {
                 }
 
                 //alright, we cant go straight, lets see whats best
+                //sense all tiles 3 units away.  returns [x, y, flux], i think
                 int[][] fluxDeltas = ((WoutPlayer) player).fluxDeltas;
                 int[] cur, min = null;
                 int minAmount = -1, curAmount;

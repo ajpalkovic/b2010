@@ -48,7 +48,7 @@ public class MexicanMessaging extends Base {
         return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
     }
     public boolean sendLowEnergon(int amount) {
-        //p("Send Low Energon");
+        //p("Send Low Energon"+amount);
         int[] ints = new int[] {amount, player.isAirRobot ? 1 : 0};
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
         return addMessage(BroadcastMessage.lowEnergon, BroadcastMessage.everyone, ints, null, locations);
