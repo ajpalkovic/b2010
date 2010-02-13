@@ -272,9 +272,11 @@ public class SporadicSpawning extends Base {
             ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
             int round = Clock.getRoundNum(), id, result;
             chainerCount = 0;
+            soldierCount = 0;
             for(RobotInfo robot : robots) {
-                if(robot.team == player.team) {
-                    if(robot.type == RobotType.WOUT) {
+                if(robot.team != player.team) continue;
+                switch(robot.type) {
+                    case WOUT:
                         id = robot.id;
                         if(robotTable.containsKey(id)) {
                             result = robotTable.get(id);
@@ -286,11 +288,16 @@ public class SporadicSpawning extends Base {
                             robotList.add(id);
                             robotTable.put(id, round);
                         }
-                    } else if(robot.type == RobotType.CHAINER) {
+                        break;
+                    case CHAINER:
                         chainerCount++;
-                    }
+                        break;
+                    case SOLDIER:
+                        soldierCount++;
+                        break;
                 }
             }
+            
             Iterator<Integer> i = robotList.iterator();
             int robot;
             while(i.hasNext()) {
@@ -306,17 +313,39 @@ public class SporadicSpawning extends Base {
                 mostWoutsTurn = Clock.getRoundNum();
             }
 
+            double nearbyArchons = 0;
+            MapLocation[] archons = sensing.senseArchonLocations();
+            for(MapLocation archon : archons) {
+                if(archon.distanceSquaredTo(controller.getLocation()) < 26) nearbyArchons++;
+            }
+
             boolean attacking = ((ArchonPlayer)player).attacking;
             if(attacking) {
+                if(nearbyArchons < 2) {
+                    return RobotType.CHAINER;
+                }
+
+                if(chainerCount < nearbyArchons) {
+                    return RobotType.CHAINER;
+                }
+
+                if(soldierCount < 0.5*nearbyArchons) {
+                    return RobotType.SOLDIER;
+                }
+
+                if(chainerCount < 1.5*nearbyArchons) {
+                    return RobotType.CHAINER;
+                }
+
                 //p(woutCount+" "+sum+" "+average+" "+index);
-                if(robotList.size() > 2) {
+                if(robotList.size() > 1.5*nearbyArchons) {
                     //p("Returning Chainer");
                     return RobotType.CHAINER;
                 }
                 //p("Returning Wout");
                 return RobotType.WOUT;
             } else {
-                if(robotList.size() > 3) {
+                if(robotList.size() > 1.5*nearbyArchons || (robotList.size() > nearbyArchons*0.75 && chainerCount < nearbyArchons)) {
                     return RobotType.CHAINER;
                 }
                 return RobotType.WOUT;
