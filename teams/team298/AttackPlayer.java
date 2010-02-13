@@ -254,15 +254,10 @@ public abstract class AttackPlayer extends NovaPlayer {
                 return null;
             }
 
-            if(inRangeWithoutTurningEnemies.size() > 0)
-                return getCheapestEnemy(inRangeWithoutTurningEnemies);
-            if(archonEnemies.size() > 0)
-                return getCheapestEnemy(archonEnemies);
-            if(inRangeEnemies.size() > 0)
-                return getCheapestEnemy(inRangeEnemies);
-            // if an enemy is just 1 or 2 hops a way, kill him but still come back
-            if(outOfRangeEnemies.size() > 0)
-                return getCheapestEnemy(outOfRangeEnemies);
+            if(inRangeWithoutTurningEnemies.size() > 0) return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(archonEnemies.size() > 0) return getCheapestEnemy(archonEnemies);
+            if(inRangeEnemies.size() > 0) return getCheapestEnemy(inRangeEnemies);
+            if(outOfRangeEnemies.size() > 0) return getCheapestEnemy(outOfRangeEnemies);
             return getCheapestEnemy(outOfRangeArchonEnemies);
         }
     }
@@ -277,16 +272,11 @@ public abstract class AttackPlayer extends NovaPlayer {
                 return null;
             }
 
-            if(archonEnemies.size() > 0)
-                return getCheapestEnemy(archonEnemies);
-            if(inRangeWithoutTurningEnemies.size() > 0)
-                return getCheapestEnemy(inRangeWithoutTurningEnemies);
-            if(inRangeEnemies.size() > 0)
-                return getCheapestEnemy(inRangeEnemies);
-            // if an enemy is just 1 or 2 hops a way, kill him but still come back
-            if(outOfRangeEnemies.size() > 0)
-                return getCheapestEnemy(outOfRangeEnemies);
-            return getCheapestEnemy(outOfRangeArchonEnemies);
+            if(archonEnemies.size() > 0) return getCheapestEnemy(archonEnemies);
+            if(inRangeWithoutTurningEnemies.size() > 0) return getCheapestEnemy(inRangeWithoutTurningEnemies);
+            if(outOfRangeArchonEnemies.size() > 0) return getCheapestEnemy(outOfRangeArchonEnemies);
+            if(inRangeEnemies.size() > 0) return getCheapestEnemy(inRangeEnemies);
+            return getCheapestEnemy(outOfRangeEnemies);
         }
     }
 }

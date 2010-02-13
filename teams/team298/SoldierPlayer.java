@@ -52,14 +52,20 @@ public class SoldierPlayer extends AttackPlayer {
 
         if(enemy != null) {
             MapLocation enemyLocation = enemy.location;
-            navigation.faceLocation(enemyLocation);
 
-            if(!controller.canAttackSquare(enemyLocation) && canMove) {
-                navigation.changeToLocationGoal(enemyLocation, false);
-                navigation.moveOnce(false);
-                navigation.popGoal();
+            if(enemyLocation.distanceSquaredTo(controller.getLocation()) > 2) {
+                if(controller.getRoundsUntilMovementIdle() <= 1) {
+                    navigation.changeToLocationGoal(enemyLocation, false);
+                    navigation.moveOnce(true);
+                    navigation.popGoal();
+                }
                 return;
             }
+
+            if(!controller.canAttackSquare(enemyLocation)) {
+                navigation.faceLocation(enemyLocation);
+            }
+            
             int status = executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
             //if(status == Status.success) p("take that bitch");
             processEnemies();

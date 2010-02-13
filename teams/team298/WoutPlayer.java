@@ -126,7 +126,7 @@ public class WoutPlayer extends AttackPlayer {
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
 
-                if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70) {
+                if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70 || (energon.isEnergonSortaLow() && distance > 36)) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
                 } else {
@@ -239,21 +239,26 @@ public class WoutPlayer extends AttackPlayer {
         if(towers.size() > 0) {
             //we remember that there used to be a tower here, so lets try going there.  once we get there, we can ask again
             MapLocation closest = navigation.findClosest(towers);
-            if(controller.canSenseSquare(closest) && closest != null) {
-                try {
-                    robot = controller.senseGroundRobotAtLocation(closest);
-                } catch(Exception e) {
-                    ;
-                }
-                if(robot == null) {
-                    int id = sensing.knownAlliedTowerIDs.remove(closest.getX() + "," + closest.getY());
-                    sensing.knownAlliedTowerLocations.remove(id);
+            if(closest != null) {
+                double distance = Math.abs(controller.getLocation().getX()-closest.getX()) + Math.abs(controller.getLocation().getY()-closest.getY());
+                double energonCost = distance * 0.2;
+                if(energonCost+2 > controller.getEnergonLevel()) {
+                    if(controller.canSenseSquare(closest)) {
+                        try {
+                            robot = controller.senseGroundRobotAtLocation(closest);
+                        } catch(Exception e) {
+                            pa("---Caught exception in checkKnownTowerLocations."+e);
+                        }
+                        if(robot == null) {
+                            int id = sensing.knownAlliedTowerIDs.remove(closest.getX() + "," + closest.getY());
+                            sensing.knownAlliedTowerLocations.remove(id);
+                        }
+                    }
+                    navigation.changeToLocationGoal(closest, true);
+                    setGoal(Goal.movingToPreviousTowerLocation);
+                    return;
                 }
             }
-            navigation.changeToLocationGoal(closest, true);
-            setGoal(Goal.movingToPreviousTowerLocation);
-
-            return;
         }
 
         spawnTeleporter();
