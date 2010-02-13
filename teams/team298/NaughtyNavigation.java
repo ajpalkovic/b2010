@@ -853,9 +853,11 @@ public class NaughtyNavigation extends Base {
 
     class FlankingEnemyGoal extends NavigationGoal {
         boolean goalIsDone = false;
+        boolean initialFlankingStage = true;
         int currentStage;
         Direction enemyAvgDirection = null;
         Direction currentDirection = controller.getDirection();
+        Direction flankingDirection = null;
         MapLocation currentEnemyAvgLocation = null;
         MapLocation newEnemyAvgLocation = null;
         MapLocation closestEnemyLocation = null;
@@ -863,6 +865,7 @@ public class NaughtyNavigation extends Base {
 
         public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
             flankingEnemyGoal = this;
+            flankingDirection = null;
             currentStage = 1;
             this.enemyLocations = enemyLocations;
             setAvgLocation(enemyLocations);
@@ -886,8 +889,8 @@ public class NaughtyNavigation extends Base {
                 yVal += enemyLocations.get(i).getY();
             }
 
-            xAvg = (double) (xVal / enemyLocations.size()) * 100;
-            yAvg = (double) (yVal / enemyLocations.size()) * 100;
+            xAvg = (double) (xVal / enemyLocations.size());
+            yAvg = (double) (yVal / enemyLocations.size());
             if(currentEnemyAvgLocation == null) {
                 currentEnemyAvgLocation = new MapLocation((int) xAvg, (int) yAvg);
             } else {
@@ -906,43 +909,79 @@ public class NaughtyNavigation extends Base {
         }
 
         private Direction flank() {
-            currentDirection = controller.getDirection();
+            MapLocation currentLocation = controller.getLocation();
             switch (currentStage) {
                 case 1:
-                    pa("Stage 1:\n");
-                    if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) >= 3) {
-                        pa("\tCompleted Stage 1!");
-                        ++currentStage;
-                    } else {
-                        if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
+                    // X-movement
+                    pa("STAGE 1:");
+                    if (currentLocation.getX() <= currentEnemyAvgLocation.getX()) {
+                        if (currentLocation.getX() > currentEnemyAvgLocation.getX() - 3) {
+                            pa("STAGE 1 IN PROGRESS... HEADING WEST");
                             return Direction.WEST;
                         } else {
+                            ++currentStage;
+                        }
+                    } else {
+                        if (currentLocation.getX() < currentEnemyAvgLocation.getX() + 3) {
+                            pa("STAGE 1 IN PROGRESS... HEADING EAST");
                             return Direction.EAST;
+                        } else {
+                            ++currentStage;
                         }
                     }
+                    pa("STAGE 1 COMPLETED!");
                     break;
                 case 2:
-                    pa("Stage 2:\n");
-                    if (Math.abs(controller.getLocation().getY() - closestEnemyLocation.getY()) >= 3) {
-                        pa("\tCompleted Stage 2!");
-                        ++currentStage;
-                    } else {
-                        if (controller.getLocation().getY() <= closestEnemyLocation.getY()) {
-                            return Direction.SOUTH;
+                    // Y-movement
+                    pa("STAGE 2:");
+                    if (initialFlankingStage) {
+                        if (currentLocation.getY() <= currentEnemyAvgLocation.getY()) {
+                            flankingDirection = Direction.SOUTH;
                         } else {
-                            return Direction.NORTH;
+                            flankingDirection = Direction.NORTH;
+                        }
+                        initialFlankingStage = false;
+                    }
+                    if (flankingDirection == Direction.SOUTH) {
+                        if (currentLocation.getY() < currentEnemyAvgLocation.getY() + 3) {
+                            pa("STAGE 2 IN PROGRESS... HEADING SOUTH");
+                            return flankingDirection;
+                        } else {
+                            ++currentStage;
+                        }
+                    } else {
+                        if (currentLocation.getY() > currentEnemyAvgLocation.getY() - 3) {
+                            pa("STAGE 2 IN PROGRESS... HEADING NORTH");
+                            return flankingDirection;
+                        } else {
+                            ++currentStage;
                         }
                     }
+                    initialFlankingStage = true;
+                    pa("STAGE 2 COMPLETED!");
                     break;
                 case 3:
-                    if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) < 2) {
-                        pa("\tCompleted Stage 3!");
-                        ++currentStage;
-                    } else {
-                        if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
-                            return Direction.EAST;
+                    if (initialFlankingStage) {
+                        if (currentLocation.getX() <= currentEnemyAvgLocation.getX()) {
+                            flankingDirection = Direction.EAST;
                         } else {
-                            return Direction.WEST;
+                            flankingDirection = Direction.WEST;
+                        }
+                        initialFlankingStage = false;
+                    }
+                    if (flankingDirection == Direction.EAST) {
+                        if (currentLocation.getX() < currentEnemyAvgLocation.getX()) {
+                            pa("STAGE 2 IN PROGRESS... HEADING SOUTH");
+                            return flankingDirection;
+                        } else {
+                            ++currentStage;
+                        }
+                    } else {
+                        if (currentLocation.getX() > currentEnemyAvgLocation.getX()) {
+                            pa("STAGE 2 IN PROGRESS... HEADING NORTH");
+                            return flankingDirection;
+                        } else {
+                            ++currentStage;
                         }
                     }
                     break;
