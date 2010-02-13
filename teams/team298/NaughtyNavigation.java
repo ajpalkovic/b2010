@@ -834,7 +834,6 @@ public class NaughtyNavigation extends Base {
         ArrayList<MapLocation> enemyLocations = null;
 
         public FlankingEnemyGoal(ArrayList<MapLocation> enemyLocations) {
-                p("in constructor");
             flankingEnemyGoal = this;
             currentStage = 1;
             this.enemyLocations = enemyLocations;
@@ -842,7 +841,6 @@ public class NaughtyNavigation extends Base {
         }
 
         public Direction getDirection() {
-            pa("flank");
             if (!goalIsDone) {
                 return flank();
             } else {
@@ -881,60 +879,40 @@ public class NaughtyNavigation extends Base {
 
         private Direction flank() {
             currentDirection = controller.getDirection();
-            pa("Current Stage: " + currentStage);
             switch (currentStage) {
                 case 1:
                     pa("Stage 1:\n");
-                    if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
-                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
-                            pa("\tCompleted Stage 1!");
-                            ++currentStage;
-                            pa("New Stage: " + currentStage);
-                        } else {
-                            pa("\tStage 1 not finished!");
-                            return Direction.WEST;
-                        }
+                    if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) >= 3) {
+                        pa("\tCompleted Stage 1!");
+                        ++currentStage;
                     } else {
-                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 10) {
-                            pa("\tCompleted Stage 1!");
-                            ++currentStage;
-                            pa("New Stage: " + currentStage);
+                        if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
+                            return Direction.WEST;
                         } else {
-                            pa("\tStage 2 not finished!");
                             return Direction.EAST;
                         }
                     }
                     break;
                 case 2:
                     pa("Stage 2:\n");
-                    if (controller.getLocation().getY() <= closestEnemyLocation.getY()) {
-                        // Our flanking unit is above the enemy
-                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
-                            ++currentStage;
-                        } else {
-                            pa("\tStage 2 not finished!");
-                            return Direction.SOUTH;
-                        }
+                    if (Math.abs(controller.getLocation().getY() - closestEnemyLocation.getY()) >= 3) {
+                        pa("\tCompleted Stage 2!");
+                        ++currentStage;
                     } else {
-                        if (controller.getLocation().distanceSquaredTo(closestEnemyLocation) >= 18) {
-                            ++currentStage;
+                        if (controller.getLocation().getY() <= closestEnemyLocation.getY()) {
+                            return Direction.SOUTH;
                         } else {
-                            pa("\tStage 2 not finished!");
                             return Direction.NORTH;
                         }
                     }
-                    pa("\tCompleted Stage 2!");
                     break;
                 case 3:
-                    if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
-                        if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) < 2) {
-                            ++currentStage;
-                        } else {
-                            return Direction.EAST;
-                        }
+                    if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) < 2) {
+                        pa("\tCompleted Stage 3!");
+                        ++currentStage;
                     } else {
-                        if (Math.abs(controller.getLocation().getX() - closestEnemyLocation.getX()) < 2) {
-                            ++currentStage;
+                        if (controller.getLocation().getX() <= closestEnemyLocation.getX()) {
+                            return Direction.EAST;
                         } else {
                             return Direction.WEST;
                         }

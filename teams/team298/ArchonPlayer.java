@@ -29,7 +29,6 @@ public class ArchonPlayer extends NovaPlayer {
         super(controller);
         spawning = new SporadicSpawning(this);
         minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 5;
-        enemyLocations = new ArrayList<MapLocation>();
     }
 
     public void step() {
@@ -49,11 +48,18 @@ public class ArchonPlayer extends NovaPlayer {
                         enemyLocations = sensing.senseEnemyRobotLocations();
                         navigation.changeToFlankingEnemyGoal(enemyLocations, true);
                         navigation.flankingEnemyGoal.setAvgLocation(enemyLocations);
-                    } else {
-                        if (navigation.flankingEnemyGoal != null)
-                            navigation.flankingEnemyGoal.setIsGoalDone(true);
+                    } else { 
+                        if (enemyLocations != null) {
+                            navigation.changeToFlankingEnemyGoal(enemyLocations, true);
+                            navigation.flankingEnemyGoal.setAvgLocation(enemyLocations);
+                        }
+                        //if (navigation.flankingEnemyGoal != null)
+                            //navigation.flankingEnemyGoal.setIsGoalDone(true);
                     }
                 } else {
+                    if (this.archonNumber == 3) {
+                        pa("no longer attacking");
+                    }
                     navigation.changeToMoveableDirectionGoal(true);
                 }
 
