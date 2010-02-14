@@ -125,7 +125,7 @@ public class WoutPlayer extends AttackPlayer {
                     return;
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
-                if (energon.isEnergonLow() && distance > 80) {
+                if ((energon.isEnergonLow() && distance > 80) || controller.getEnergonLevel() < controller.getRobotType().maxEnergon()*.1) {
                 	ArrayList<RobotInfo> allied = sensing.senseAlliedRobotInfoInSensorRange();
                 	for(RobotInfo robotInfo : allied) {
                 		if (robotInfo.type.isBuilding() || robotInfo.type ==RobotType.WOUT){
