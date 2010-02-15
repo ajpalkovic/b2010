@@ -57,7 +57,9 @@ public class TowerPlayer extends NovaPlayer {
         ArrayList<MapLocation> locations = sensing.senseKnownAlliedTowerLocations();
         int[] dirValues = {0, 0, 0, 0}; //north south east west
         int distance, nmax=Integer.MIN_VALUE, smax=Integer.MIN_VALUE, emax=Integer.MIN_VALUE, wmax=Integer.MIN_VALUE;
-    	Direction tmpDir = Direction.NORTH;
+    	int mins[] = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
+        Direction tmpDir = Direction.NORTH;
+        MapLocation[] minlocs = new MapLocation[4];
     	int northsoutheastwest = 2;
         MapLocation us = controller.getLocation(), north= us, south=us, east=us, west=us, location=null;        
     
@@ -75,6 +77,8 @@ public class TowerPlayer extends NovaPlayer {
         				nmax = distance;
         				north = loc;
         			}
+        			if (distance < mins[0])
+        				mins[0] = distance;
         		break;
         		case SOUTH:
         			dirValues[1]++;
@@ -82,6 +86,8 @@ public class TowerPlayer extends NovaPlayer {
         				smax = distance;
         				south = loc;
         			}
+        			if (distance < mins[0])
+        				mins[1] = distance;
         		break;
         		case EAST:
         			dirValues[2]++;
@@ -89,13 +95,19 @@ public class TowerPlayer extends NovaPlayer {
         				emax = distance;
         				east = loc;
         			}
+        			if (distance < mins[0])
+        				mins[2] = distance;
+
         		break;
         		case WEST:
         			dirValues[3]++;
         			if (distance > wmax){        				
         				wmax = distance;
         				west = loc;
+        				minlocs[3] = loc;
         			}
+        			if (distance < mins[0])
+        				mins[3] = distance;
         		break;
         	}        	
         }
@@ -131,25 +143,49 @@ public class TowerPlayer extends NovaPlayer {
     	}
         boolean top = northsoutheastwest == 2 , bottom = northsoutheastwest == 2, left = northsoutheastwest == 4, right = northsoutheastwest ==4;
         //pa(dirValues[0] + ", " + dirValues[1] + ", " + dirValues[2] + ", " + dirValues[3]);
-        
+        ArrayList<MapLocation> minloc = new ArrayList<MapLocation>();
         MapLocation topLoc = (new MapLocation(north.getX(), north.getY()-5));
         MapLocation bottomLoc = (new MapLocation(south.getX(), south.getY()+5));
         MapLocation leftLoc = (new MapLocation(west.getX()-5, west.getY()));
         MapLocation rightLoc = (new MapLocation(east.getX()+5, east.getY()));
-        
         int count = 0;
+        for (int i=0; i < 4; i++)
+        	if (mins[i]>25 && mins[i]<=81){
+        		count++;
+       		switch (i){
+        			case 0:
+        				minloc.add(new MapLocation(us.getX(), us.getY()-5));
+        			break;
+        			case 1:
+        				minloc.add(new MapLocation(us.getX(), us.getY()+5));
+        			break;
+        			case 2:
+        				minloc.add(new MapLocation(us.getX()-5, us.getY()));
+        			break;
+        			case 3:
+        				minloc.add(new MapLocation(us.getX()+5, us.getY()));
+        			break;
+        		}
+        	}
         if(top) count++;
         if(bottom) count++;
         if(left) count++;
         if(right) count++;
 
         idealLocations = new MapLocation[count];
+        
+        
         int index = -1;
+
         if(top) idealLocations[++index] = topLoc;
         if(bottom) idealLocations[++index] = bottomLoc;
         if(left) idealLocations[++index] = leftLoc;
         if(right) idealLocations[++index] = rightLoc;
-        
+
+        	for (MapLocation l : minloc) {
+            	idealLocations[++index] = l;
+          }
+
     }
 
     public void moveMessageCallback(MapLocation location) {

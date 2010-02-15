@@ -14,6 +14,7 @@ public class ChainerPlayer extends AttackPlayer {
     }
 
     public void step() {
+    	
         MapLocation location = sensing.senseClosestArchon();
         if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());

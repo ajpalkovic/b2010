@@ -179,7 +179,7 @@ public abstract class BendoverBugging extends NavigationGoal {
 
         if(!isGoalAttainable()) {
             //System.out.println("GOAL IS NOT ATTAINABLE. "+goal);
-            
+           	//goal isn't attainable
             return;
         }
 
