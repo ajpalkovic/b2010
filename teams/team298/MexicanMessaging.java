@@ -279,19 +279,10 @@ public class MexicanMessaging extends Base {
                 messageLocations.add(locations[i]);
             }
         }
-        checkMessageDelay();
-        if (Clock.getRoundNum()%messageDelay==0 || player instanceof ArchonPlayer || player instanceof TowerPlayer)
-        	sendMessage();
+        sendMessage();
         return true;
     }
-    	public void checkMessageDelay(){
-    		if (player.energon.isEnergonFull())
-    			messageDelay=2;
-    		else if (player.energon.isEnergonSortaLow())
-    			messageDelay=3;
-    		else if (player.energon.isEnergonLow())
-    			messageDelay=4;
-    	}
+    	
 
     /**
      * This method copies all of the data from the arraylist of ints,strings,locations and puts them into a message object.
