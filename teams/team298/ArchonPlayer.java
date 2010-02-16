@@ -185,6 +185,12 @@ public class ArchonPlayer extends NovaPlayer {
         closestEnemySeen = Clock.getRoundNum();
         closestEnemy = navigation.findClosest(locations, locationStart);
     }
+    public void enemyInSight(MapLocation location, int energon, String type) {
+        if(closestEnemy == null || controller.getLocation().distanceSquaredTo(location) < controller.getLocation().distanceSquaredTo(closestEnemy)) {
+            closestEnemySeen = Clock.getRoundNum();
+            closestEnemy = location;
+        }
+    }
 
     public void towerBuildLocationResponseCallback(MapLocation[] locations) {
         idealTowerSpawnLocations = locations;
@@ -333,7 +339,7 @@ public class ArchonPlayer extends NovaPlayer {
             }
 
             navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir).add(dir), true);
-            for(int c = 0; c < 3; c++) {
+            for(int c = 0; c < 1; c++) {
                 navigation.moveOnce(true);
             }
         } else {

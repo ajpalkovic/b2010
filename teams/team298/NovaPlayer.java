@@ -196,15 +196,6 @@ public class NovaPlayer extends Base {
     }
 
     /**
-     * Callback when an enemy is spotted in the sense methods.
-     * The MapData object contains the robots.
-     * Return false to return from the calling method.
-     */
-    public boolean enemyInSightCallback(MapLocation location) {
-        return true;
-    }
-
-    /**
      * Callback in the go method each time the robot takes a step.  One use would be to
      * check if an enemy is in sight, each time you move.
      * If the callback returns false, the go method returns.
@@ -219,6 +210,9 @@ public class NovaPlayer extends Base {
      * 
      **/
     public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
+    }
+    public void enemyInSight(MapLocation location, int energon, String type) {
+        
     }
 
     /**

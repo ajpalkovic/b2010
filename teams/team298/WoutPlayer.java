@@ -159,6 +159,7 @@ public class WoutPlayer extends AttackPlayer {
                 EnemyInfo enemy = mode.getEnemyToAttack();
 
                 if(enemy != null) {
+                    messaging.sendClosestEnemyInSight();
                     turnsSinceEnemiesSeen = 0;
                     if(enemy.location.distanceSquaredTo(controller.getLocation()) <= 2) {
                         executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);

@@ -56,7 +56,7 @@ public class Base {
     class BroadcastMessage {
         static final int everyone = -1;
         static final int lowEnergon = 1;//LOW_ENERGON (has less than 25% energon) //status, sent when pinged
-        static final int enemyInSight = 3;//(can see an enemy) //broadcasted  (how many enemies and enemy types)
+        static final int enemyInSight = 3, closestEnemyInSight = 4;//(can see an enemy) //broadcasted  (how many enemies and enemy types)
         static final int newUnit = 5; //NEW_UNIT (type of unit location on map maybe unique id) //broadcasted
         static final int followRequest = 9;
         static final int move = 11; //MOVE BITCH GET OUT DA WAY

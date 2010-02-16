@@ -108,22 +108,30 @@ public abstract class AttackPlayer extends NovaPlayer {
         }
     }
 
-    /**
-     * Unused callback that creates a list of any enemy in sensor range.
-     * TODO: This 'logic' should be updated with the senseEnemyRobotInfo method instead.
-     */
     public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
+        if(!enemyInSightCalled) {
+            enemiesTemp = enemies;
+            enemies = new ArrayList<EnemyInfo>();
+        }
         enemyInSightCalled = true;
-        enemiesTemp = enemies;
-        enemies = new ArrayList<EnemyInfo>();
         noEnemiesCount = 0;
-        
+
         for(int c = 0; c < count; c++) {
             enemies.add(new EnemyInfo(locations[locationStart], ints[intStart], strings[stringStart]));
             locationStart++;
             intStart++;
             stringStart++;
         }
+    }
+    public void enemyInSight(MapLocation location, int energon, String type) {
+        if(!enemyInSightCalled) {
+            enemiesTemp = enemies;
+            enemies = new ArrayList<EnemyInfo>();
+        }
+        enemyInSightCalled = true;
+        noEnemiesCount = 0;
+
+        enemies.add(new EnemyInfo(location, energon, type));
     }
 
     class EnemyInfo {

@@ -69,6 +69,12 @@ public class MexicanMessaging extends Base {
         return addMessage(BroadcastMessage.followRequest, recipientRobotId, null, null, locations);
     }
 
+    public boolean sendClosestEnemyInSight() {
+        RobotInfo enemy = player.navigation.findClosest(sensing.senseEnemyRobotInfoInSensorRange());
+        if(enemy == null) return true;
+        return addMessage(BroadcastMessage.closestEnemyInSight, BroadcastMessage.everyone, new int[] {(int)enemy.energonLevel}, new String[] {enemy.type.toString()}, new MapLocation[] {enemy.location});
+    }
+
 
     /**
      * This method sends enemyInSight message broadcast for all enemies in sight
@@ -178,6 +184,11 @@ public class MexicanMessaging extends Base {
                             stringIndex += message.ints[intIndex];
                             intIndex += message.ints[intIndex]+1;
                             break;
+                        case BroadcastMessage.closestEnemyInSight:
+                            intIndex++;
+                            stringIndex++;
+                            locationIndex++;
+                            break;
                         case BroadcastMessage.newUnit:
                             break;
                         case BroadcastMessage.lowEnergon:
@@ -209,6 +220,12 @@ public class MexicanMessaging extends Base {
                             intIndex += count+1;
                             locationIndex += count;
                             stringIndex += count;
+                            break;
+                        case BroadcastMessage.closestEnemyInSight:
+                            player.enemyInSight(message.locations[locationIndex], message.ints[intIndex], message.strings[stringIndex]);
+                            intIndex++;
+                            stringIndex++;
+                            locationIndex++;
                             break;
                         case BroadcastMessage.newUnit:
                             player.newUnit(senderID, message.locations[locationIndex], message.strings[stringIndex]);

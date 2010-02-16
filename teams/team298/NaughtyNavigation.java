@@ -54,6 +54,24 @@ public class NaughtyNavigation extends Base {
         return closest;
     }
 
+    public RobotInfo findClosest(ArrayList<RobotInfo> locations) {
+        RobotInfo closest = null;
+        MapLocation current = controller.getLocation();
+        int min = Integer.MAX_VALUE, distance;
+
+        for(RobotInfo location : locations) {
+            if(location == null) {
+                continue;
+            }
+            distance = current.distanceSquaredTo(location.location);
+            if(distance < min) {
+                closest = location;
+                min = distance;
+            }
+        }
+        return closest;
+    }
+
     public MapLocation findFurthest(ArrayList<MapLocation> locations) {
         MapLocation furthest = null, current = controller.getLocation();
         int min = Integer.MIN_VALUE, distance;
