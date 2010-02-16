@@ -12,6 +12,7 @@ public class EnergeticEnergon extends Base {
     public SensationalSensing sensing;
     public ArrayList<EnergonTransferRequest> requests;
     public double lowEnergonLevel, sortaLowEnergonLevel;
+    public double towerFluxTransferMax = 200;
 
     public EnergeticEnergon(NovaPlayer player) {
         super(player);
@@ -90,33 +91,53 @@ public class EnergeticEnergon extends Base {
     	}
     		
     }
-	public void transferFluxToTower(MapLocation towerLocation) {
+
+    public boolean isFluxLow(RobotInfo info) {
+        return info.flux < (towerFluxTransferMax/2);
+    }
+
+	public RobotInfo autoTransferFlux() {
+        RobotInfo robot = null;
+        ArrayList<RobotInfo> allied = sensing.senseAlliedRobotInfoInSensorRange();
+        for(RobotInfo robotInfo : allied) {
+            if (robotInfo.type.isBuilding()) {
+                if(isFluxLow(robotInfo)) {
+                    if(controller.getLocation().isAdjacentTo(robotInfo.location)) {
+                        robot = robotInfo;
+                        break;
+                    }
+                    return robotInfo;
+                }
+            } else if(robotInfo.type == RobotType.WOUT) {
+                if (robotInfo.flux > controller.getFlux() && controller.getLocation().isAdjacentTo(robotInfo.location)) {
+                    robot = robotInfo;
+                }
+            }
+        }
+
+        if(robot == null) return null;
+        
         try {
-            Robot robot = player.controller.senseGroundRobotAtLocation(towerLocation);
-            RobotInfo info = player.controller.senseRobotInfo(robot);
-            if(robot == null) {
-            	return;
-            } else {
-           		if (player.controller.getLocation().isAdjacentTo(towerLocation)) {
-           			// Check to make sure we don't transfer more flux than the Wout has, and the tower can receive.
-           			double maxTransfer = info.flux;
-           			double available = player.controller.getFlux();
-           			if (maxTransfer > available) {
-           				maxTransfer = available;
-           			}
-           			if (maxTransfer > 10) {
-           				player.controller.transferFlux(maxTransfer, towerLocation, RobotLevel.ON_GROUND);
-           				//System.out.println("Transferred " + maxTransfer + " flux to a tower...");
-           			}
-           		} else {
-           			// Wout was not adjacent to the tower, better luck next time.
-           			return;
-           		}
+            if (player.controller.getLocation().isAdjacentTo(robot.location)) {
+                // Check to make sure we don't transfer more flux than the Wout has, and the tower can receive.
+                double maxTransfer = 0;
+                if(robot.type == RobotType.WOUT) {
+                    maxTransfer = Math.min(controller.getFlux(), robot.type.maxFlux() - robot.flux);
+                } else {
+                    maxTransfer = Math.min(towerFluxTransferMax, Math.min(player.controller.getFlux(), robot.type.maxFlux() - robot.flux));
+                }
+                if (maxTransfer > 10) {
+                    if(controller.senseGroundRobotAtLocation(robot.location) == null) return null;
+                    controller.transferFlux(maxTransfer, robot.location, RobotLevel.ON_GROUND);
+                    System.out.println("Transferred " + maxTransfer + " flux to a "+robot.type+"...");
+                }
             }
         } catch (Exception e) {
             pa("---Caught exception in transferFluxToTower");
             e.printStackTrace();
-        }    	
+        }
+
+        return null;
     }
     
     public void addRequest(MapLocation location, boolean isAirUnit, int amount) {

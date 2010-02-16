@@ -130,27 +130,15 @@ public class WoutPlayer extends AttackPlayer {
                     return;
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
-                if ((energon.isEnergonLow() && distance > 80) || controller.getEnergonLevel() < controller.getRobotType().maxEnergon()*.1) {
-                	ArrayList<RobotInfo> allied = sensing.senseAlliedRobotInfoInSensorRange();
-                	for(RobotInfo robotInfo : allied) {
-                		if (robotInfo.type.isBuilding() || robotInfo.type ==RobotType.WOUT){
-                			if (controller.getLocation().isAdjacentTo(robotInfo.location)){
-                				energon.transferFlux(robotInfo.location);
-                			}
-                			else{
-                				navigation.changeToLocationGoal(robotInfo.location, true);
-                			}
-                				
-                		}
-                	}
-                }
-                	
+
+                RobotInfo fluxTower = energon.autoTransferFlux();
                 if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70 || (energon.isEnergonSortaLow() && distance > 36)) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
                 } 
-                else {
-                    //p("collect flux goal");
+                else if(fluxTower != null) {
+                    navigation.changeToLocationGoal(fluxTower.location, true);
+                } else {
                     navigation.changeToWoutCollectingFluxGoal(true);
                 }
 
@@ -164,19 +152,6 @@ public class WoutPlayer extends AttackPlayer {
                     navigation.moveOnce(false);
                 }
 
-                /*// Transfer Flux to towers if they are nearby.
-                ArrayList<MapLocation> towers = sensing.senseAlliedTowerLocations();
-                MapLocation transferTarget = null;
-                for (MapLocation towerLoc : towers) {
-                if (controller.getLocation().isAdjacentTo(towerLoc)) {
-                transferTarget = towerLoc;
-                break;
-                }
-                }
-                if (transferTarget != null) {
-                energon.transferFluxToTower(transferTarget);
-                }*/
-
                 //messaging.sendMessageForEnemyRobots();
 
                 processEnemies();
@@ -186,7 +161,6 @@ public class WoutPlayer extends AttackPlayer {
                 if(enemy != null) {
                     turnsSinceEnemiesSeen = 0;
                     if(enemy.location.distanceSquaredTo(controller.getLocation()) <= 2) {
-                        //p("execute attack");
                         executeAttack(enemy.location, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
                     }
                 } else {
