@@ -96,15 +96,23 @@ public class ChainerPlayer extends AttackPlayer {
         return enemiesHit;
     }
 
-    public int getAllyCount(ArrayList<RobotInfo> allies, MapLocation location, boolean inAir) {
+    public int getAllyCount(ArrayList<RobotInfo> allies, MapLocation[] archons, MapLocation location, boolean inAir) {
         int alliesHit = 0;
         
         if(location.equals(controller.getLocation())) alliesHit++;
 
-        for(RobotInfo ally : allies) {
-            if(inAir == (ally.type == RobotType.ARCHON)) {
-                if(ally.location.distanceSquaredTo(location) <= 2) {
-                    alliesHit++;
+        if(inAir) {
+            for(MapLocation archon : archons) {
+                if(archon.distanceSquaredTo(location) <= 2) {
+                    return Integer.MAX_VALUE;
+                }
+            }
+        } else {
+            for(RobotInfo ally : allies) {
+                if(ally.type != RobotType.ARCHON) {
+                    if(ally.location.distanceSquaredTo(location) <= 2) {
+                        alliesHit++;
+                    }
                 }
             }
         }
@@ -115,6 +123,7 @@ public class ChainerPlayer extends AttackPlayer {
     public MapLocation getChainerAttackLocation(EnemyInfo enemy) {
         ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
         ArrayList<RobotInfo> allies = sensing.senseAlliedRobotInfoInSensorRange();
+        MapLocation[] archons = sensing.senseArchonLocations();
 
         boolean inAir = enemy.type == RobotType.ARCHON;
 
@@ -122,7 +131,7 @@ public class ChainerPlayer extends AttackPlayer {
         int alliesHit = Integer.MAX_VALUE, enemiesHit = Integer.MIN_VALUE;
         int minAlliesHit = Integer.MAX_VALUE, minEnemiesHit = Integer.MIN_VALUE;
 
-        alliesHit = getAllyCount(allies, location, inAir);
+        alliesHit = getAllyCount(allies, archons, location, inAir);
         if(alliesHit <= 1) {
             minEnemiesHit = getEnemyCount(enemies, location, inAir);
             minAlliesHit = alliesHit;
@@ -136,7 +145,7 @@ public class ChainerPlayer extends AttackPlayer {
                 location = new MapLocation(enemy.location.getX()+x, enemy.location.getY()+y);
                 if(location.distanceSquaredTo(controller.getLocation()) > 9) continue;
                 
-                alliesHit = getAllyCount(allies, location, inAir);
+                alliesHit = getAllyCount(allies, archons, location, inAir);
                 if(alliesHit > 1) continue;
                 enemiesHit = getEnemyCount(enemies, location, inAir);
                 

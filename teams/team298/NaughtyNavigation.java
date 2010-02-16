@@ -610,7 +610,7 @@ public class NaughtyNavigation extends Base {
         	int rightval, leftval;
         	
         	for (RobotInfo r : robos) {
-        		if (r.type.canAttackAir() || r.type.canAttackGround()){
+        		if (r.type.canAttackAir()){
         			int index = -1;
         			switch(controller.getLocation().directionTo(r.location)){
         				case NORTH:
@@ -637,9 +637,9 @@ public class NaughtyNavigation extends Base {
         				case NORTH_WEST:
         					index = 7;
         				break;
+                        default:
+                            continue;
         			}
-        			if (index == -1)
-        				continue;
         			rightval = (index+1)%8;
         			leftval = ((index-1)+8)%8;        			
         			dirValues[index]++;
