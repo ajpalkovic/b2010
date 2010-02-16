@@ -12,7 +12,7 @@ public class MexicanMessaging extends Base {
     public ArrayList<String> messageStrings = new ArrayList<String>();
     public ArrayList<MapLocation> messageLocations = new ArrayList<MapLocation>();
     public SensationalSensing sensing;
-
+    private int messageDelay = 1;
     public MexicanMessaging(NovaPlayer player) {
         super(player);
 
@@ -42,7 +42,9 @@ public class MexicanMessaging extends Base {
         //p("Send Tower Build Location Response");
         return addMessage(BroadcastMessage.towerBuildLocationResponse, recepientID, new int[] {locations.length}, null, locations);
     }
-
+    public void setMessageDelay(int messageDelay) {
+    	this.messageDelay = messageDelay;
+    }
     public boolean sendMove(MapLocation location) {
         //p("Send Move");
         return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
@@ -277,10 +279,10 @@ public class MexicanMessaging extends Base {
                 messageLocations.add(locations[i]);
             }
         }
-
         sendMessage();
         return true;
     }
+    	
 
     /**
      * This method copies all of the data from the arraylist of ints,strings,locations and puts them into a message object.

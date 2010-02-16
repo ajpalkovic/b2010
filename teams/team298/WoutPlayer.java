@@ -70,7 +70,12 @@ public class WoutPlayer extends AttackPlayer {
 
                 } else {
                     //p("move once");
-                    navigation.moveOnce(false);
+                	MapLocation goalLocation = ((LocationGoalWithBugPlanning) navigation.goal).location;
+                	if (navigation.goal instanceof BendoverBugging && !((BendoverBugging)navigation.goal).isGoalAttainable()){
+                		navigation.changeToLocationGoal(goalLocation.subtract(controller.getLocation().directionTo(goalLocation)),true);
+                		System.out.println("changing goal");
+                	}
+                	navigation.moveOnce(false);
                 }
                 break;
             case Goal.placingTeleporter:
@@ -110,7 +115,7 @@ public class WoutPlayer extends AttackPlayer {
                     if(sensing.senseAlliedTowers().size() > 0) {
                         placeTower();
                     } else {
-                        navigation.moveOnce(false);
+                    	navigation.moveOnce(false);                    
                     }
                 }
                 break;
@@ -125,11 +130,26 @@ public class WoutPlayer extends AttackPlayer {
                     return;
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
-
+                if ((energon.isEnergonLow() && distance > 80) || controller.getEnergonLevel() < controller.getRobotType().maxEnergon()*.1) {
+                	ArrayList<RobotInfo> allied = sensing.senseAlliedRobotInfoInSensorRange();
+                	for(RobotInfo robotInfo : allied) {
+                		if (robotInfo.type.isBuilding() || robotInfo.type ==RobotType.WOUT){
+                			if (controller.getLocation().isAdjacentTo(robotInfo.location)){
+                				energon.transferFlux(robotInfo.location);
+                			}
+                			else{
+                				navigation.changeToLocationGoal(robotInfo.location, true);
+                			}
+                				
+                		}
+                	}
+                }
+                	
                 if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70 || (energon.isEnergonSortaLow() && distance > 36)) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
-                } else {
+                } 
+                else {
                     //p("collect flux goal");
                     navigation.changeToWoutCollectingFluxGoal(true);
                 }
@@ -215,7 +235,7 @@ public class WoutPlayer extends AttackPlayer {
                     if(robot != null) {
                         towerID = robot.getID();
                     } else {
-                        pa("cannot sense robot at " + location);
+                    	sensing.knownAlliedTowerLocations.remove(sensing.knownAlliedTowerIDs.remove(location.getX() + "," + location.getY()));
                     }
                 }
                 messaging.sendTowerBuildLocationRequest(towerID);

@@ -140,6 +140,8 @@ public abstract class BendoverBugging extends NavigationGoal {
      * Returns true if we can't see the goal or we can't ever get to the goal.
      */
     public boolean isGoalAttainable() {
+    	if (goal ==null)
+    		return true;
         if(terrain[goal.getX() % size][goal.getY() % size]) return false;
         if(!robotController.canSenseSquare(goal)) return true;
         if(isAirRobot) return true;
@@ -176,7 +178,8 @@ public abstract class BendoverBugging extends NavigationGoal {
         currentY = current.getY();
 
         if(!isGoalAttainable()) {
-            System.out.println("GOAL IS NOT ATTAINABLE. "+goal);
+            //System.out.println("GOAL IS NOT ATTAINABLE. "+goal);
+           	//goal isn't attainable
             return;
         }
 

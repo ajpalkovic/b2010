@@ -21,6 +21,8 @@ public class ArchonPlayer extends NovaPlayer {
     public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsSinceLastSpawn = 0, turnsWaitedForMove = 0, turnsSinceMessageForEnemyRobotsSent = 30, turnsSinceTowerStuffDone = 30, turnsLookingForTower = 0;
     boolean attacking;
     boolean attackingInitialized;
+    
+    
     public MapLocation closestEnemy;
     public MapLocation currentEnemy;
     public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
