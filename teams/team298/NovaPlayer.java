@@ -196,13 +196,6 @@ public class NovaPlayer extends Base {
     }
 
     /**
-     * Called when the direction in moveOnceTowardsLocation is calculated.
-     */
-    public boolean directionCalculatedCallback(Direction dir) {
-        return true;
-    }
-
-    /**
      * Callback when an enemy is spotted in the sense methods.
      * The MapData object contains the robots.
      * Return false to return from the calling method.

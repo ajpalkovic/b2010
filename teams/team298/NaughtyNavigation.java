@@ -573,7 +573,7 @@ public class NaughtyNavigation extends Base {
         public Direction previousDirection;
         public MapLocation closest, average;
         public int enemiesLastSeen;
-        public final int enemyTolerance = 20;
+        public final int enemyTolerance = 50;
         public int directionTolerance = 10, leaderTolerance = 40, archonLastSeen = 0;
         public ArchonPlayer archonPlayer;
 

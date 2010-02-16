@@ -6,10 +6,10 @@ import java.util.*;
 
 public abstract class AttackPlayer extends NovaPlayer {
 
-    public ArrayList<EnemyInfo> enemies, enemiesTemp;
+    public ArrayList<EnemyInfo> enemies = new ArrayList<EnemyInfo>(), enemiesTemp = new ArrayList<EnemyInfo>();
     public ArrayList<EnemyInfo> inRangeEnemies, inRangeWithoutTurningEnemies, outOfRangeEnemies, archonEnemies, outOfRangeArchonEnemies;
     public int noEnemiesCount = 0, maxDistanceAway = 3;
-    public boolean movingToAttack = false;
+    public boolean movingToAttack = false, enemyInSightCalled = false;
     public MapLocation attackLocation;
     public int range, minRange;
 
@@ -25,41 +25,28 @@ public abstract class AttackPlayer extends NovaPlayer {
     }
 
     /**
-     * This is called during moveOnceTowardsLocation.
-     * The idea is to keep the cannons from getting too far from the archons.
-     */
-    public boolean directionCalculatedCallback(Direction dir) {
-        if(!movingToAttack) {
-            return true;
-        }
-        MapLocation location = controller.getLocation().add(dir);
-        MapLocation[] archons = sensing.senseArchonLocations();
-        for(MapLocation archon : archons) {
-            if(location.isAdjacentTo(archon) || location.equals(archon)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * This method creates a single enemies list and stores it in enemies.
      * It simplifies caching enemy info for 10 turns, so that even if we do not see any new enemies for a bit, we might still try to attack there.
      */
     public void processEnemies() {
-        enemiesTemp = enemies;
-        enemies = new ArrayList<EnemyInfo>();
-
+        if(!enemyInSightCalled) {
+            enemiesTemp = enemies;
+            enemies = new ArrayList<EnemyInfo>();
+        }
+        enemyInSightCalled = false;
+        
         ArrayList<RobotInfo> enemiesInfo = sensing.senseEnemyRobotInfoInSensorRange();
+        if(enemiesInfo.size() > 0) {
+            noEnemiesCount = 0;
+        }
+        
         for(RobotInfo enemy : enemiesInfo) {
             enemies.add(new EnemyInfo(enemy));
         }
-        messaging.parseMessages();
 
         if(enemies.size() > 0) {
             // new enemies were found in range, lets use that info
             enemiesTemp = null;
-            noEnemiesCount = 0;
         } else {
             // no new enemy info was received, so stick with the old stuff
             if(noEnemiesCount < 10) {
@@ -126,6 +113,11 @@ public abstract class AttackPlayer extends NovaPlayer {
      * TODO: This 'logic' should be updated with the senseEnemyRobotInfo method instead.
      */
     public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
+        enemyInSightCalled = true;
+        enemiesTemp = enemies;
+        enemies = new ArrayList<EnemyInfo>();
+        noEnemiesCount = 0;
+        
         for(int c = 0; c < count; c++) {
             enemies.add(new EnemyInfo(locations[locationStart], ints[intStart], strings[stringStart]));
             locationStart++;

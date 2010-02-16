@@ -260,7 +260,7 @@ public class SporadicSpawning extends Base {
 
         public Hashtable<Integer, Integer> robotTable;
         public LinkedList<Integer> robotList;
-        public final int tolerance = 100;
+        public final int tolerance = 200;
 
         public AttackingSpawnMode() {
             super();
@@ -308,7 +308,7 @@ public class SporadicSpawning extends Base {
             }
 
 
-            if(mostWoutsTurn+100 > Clock.getRoundNum() || woutCount > mostWouts) {
+            if(mostWoutsTurn+tolerance > Clock.getRoundNum() || woutCount > mostWouts) {
                 mostWouts = woutCount;
                 mostWoutsTurn = Clock.getRoundNum();
             }
@@ -345,7 +345,7 @@ public class SporadicSpawning extends Base {
                 //p("Returning Wout");
                 return RobotType.WOUT;
             } else {
-                if(robotList.size() > 1.5*nearbyArchons || (robotList.size() > nearbyArchons*0.75 && chainerCount < nearbyArchons)) {
+                if(robotList.size() > 1.2*nearbyArchons || (robotList.size() > nearbyArchons*0.5 && chainerCount < nearbyArchons)) {
                     return RobotType.CHAINER;
                 }
                 return RobotType.WOUT;
