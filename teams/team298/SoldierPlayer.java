@@ -51,6 +51,7 @@ public class SoldierPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
+            messaging.sendClosestEnemyInSight();
             MapLocation enemyLocation = enemy.location;
 
             if(enemyLocation.distanceSquaredTo(controller.getLocation()) > 2) {

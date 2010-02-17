@@ -328,7 +328,6 @@ public class NaughtyNavigation extends Base {
         yieldMoving();
         try {
             if(controller.canMove(dir)) {
-
                 controller.moveForward();
                 controller.yield();
                 player.pathStepTakenCallback();

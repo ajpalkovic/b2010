@@ -12,7 +12,8 @@ public class MexicanMessaging extends Base {
     public ArrayList<String> messageStrings = new ArrayList<String>();
     public ArrayList<MapLocation> messageLocations = new ArrayList<MapLocation>();
     public SensationalSensing sensing;
-    private int messageDelay = 1;
+    public Message previousMessage = null;
+    
     public MexicanMessaging(NovaPlayer player) {
         super(player);
 
@@ -25,7 +26,7 @@ public class MexicanMessaging extends Base {
     }
     public boolean sendTowerPing(int robotID, MapLocation location) {
         //p("Send Tower Ping");
-    	return addMessage(BroadcastMessage.towerPing, BroadcastMessage.everyone, new int[]{robotID}, null, new MapLocation[]{location});
+    	return addMessage(new int[]{KEY1, KEY2, robot.getID(), BroadcastMessage.towerPing, BroadcastMessage.everyone, robotID}, null, new MapLocation[]{location});
     }
     /**
      * Each of these methods represent the public interface for sending messages.
@@ -35,44 +36,42 @@ public class MexicanMessaging extends Base {
      */
     public boolean sendTowerBuildLocationRequest(int recipientRobotID) {
         //p("Send Tower Build Location Request");
-        return addMessage(BroadcastMessage.towerBuildLocationRequest, recipientRobotID, null, null, null);
+        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.towerBuildLocationRequest, recipientRobotID}, null, null);
     }
 
     public boolean sendTowerBuildLocationResponse(MapLocation[] locations,int recepientID) {
         //p("Send Tower Build Location Response");
-        return addMessage(BroadcastMessage.towerBuildLocationResponse, recepientID, new int[] {locations.length}, null, locations);
+        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.towerBuildLocationResponse, recepientID, locations.length}, null, locations);
     }
-    public void setMessageDelay(int messageDelay) {
-    	this.messageDelay = messageDelay;
-    }
+
     public boolean sendMove(MapLocation location) {
         //p("Send Move");
-        return addMessage(BroadcastMessage.move, BroadcastMessage.everyone, null, null, new MapLocation[] {location});
+        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.move, BroadcastMessage.everyone}, null, new MapLocation[] {location});
     }
     public boolean sendLowEnergon(int amount) {
         //p("Send Low Energon"+amount);
-        int[] ints = new int[] {amount, player.isAirRobot ? 1 : 0};
+        int[] ints = new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.lowEnergon, BroadcastMessage.everyone, amount, player.isAirRobot ? 1 : 0};
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
-        return addMessage(BroadcastMessage.lowEnergon, BroadcastMessage.everyone, ints, null, locations);
+        return addMessage(ints, null, locations);
     }
 
     public boolean sendNewUnit() {
         //p("Send New Unit");
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
         String[] strings = {controller.getRobotType().toString()};
-        return addMessage(BroadcastMessage.newUnit, BroadcastMessage.everyone, null, strings, locations);
+        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.newUnit, BroadcastMessage.everyone}, strings, locations);
     }
 
     public boolean sendFollowRequest(MapLocation archonLocation, int recipientRobotId) {
         //p("Send Follow Request");
         MapLocation[] locations = new MapLocation[] {archonLocation};
-        return addMessage(BroadcastMessage.followRequest, recipientRobotId, null, null, locations);
+        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.followRequest, recipientRobotId}, null, locations);
     }
 
     public boolean sendClosestEnemyInSight() {
         RobotInfo enemy = player.navigation.findClosest(sensing.senseEnemyRobotInfoInSensorRange());
         if(enemy == null) return true;
-        return addMessage(BroadcastMessage.closestEnemyInSight, BroadcastMessage.everyone, new int[] {(int)enemy.energonLevel}, new String[] {enemy.type.toString()}, new MapLocation[] {enemy.location});
+        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.closestEnemyInSight, BroadcastMessage.everyone, (int)enemy.energonLevel}, new String[] {enemy.type.toString()}, new MapLocation[] {enemy.location});
     }
 
 
@@ -272,89 +271,74 @@ public class MexicanMessaging extends Base {
      * Copies the data into the arraylists.
      * If no message exists, then any previous message must have been sent, so all the data id old and can be removed.
      */
-    private boolean addMessage(int messageType, int recipientId, int[] ints, String[] strings, MapLocation[] locations) {
-        if(!controller.hasBroadcastMessage()) {
-            clearMessages();
-        }
-
-        int i = 0;
-        messageInts.add(messageType);
-        messageInts.add(recipientId);
-
-        if(ints != null) {
-            for(i = 0; i < ints.length; i++) {
-                messageInts.add(ints[i]);
+    private boolean addMessage(int[] ints, String[] strings, MapLocation[] locations) {
+        if(!controller.hasBroadcastMessage() || previousMessage == null) {
+            previousMessage = new Message();
+            previousMessage.ints = ints;
+            previousMessage.strings = strings;
+            previousMessage.locations = locations;
+            try {
+                controller.broadcast(previousMessage);
+            } catch (Exception e) {
+                pa("----Caught exception while sending message"+e);
             }
+            return true;
         }
-        if(strings != null) {
-            for(i = 0; strings != null && i < strings.length; i++) {
-                messageStrings.add(strings[i]);
+
+        controller.clearBroadcast();
+
+        Message newMessage = new Message();
+
+        int[] newInts = new int[ints.length-3+previousMessage.ints.length];
+        newInts[0] = KEY1;
+        newInts[1] = KEY2;
+        newInts[2] = robot.getID();
+        for(int c = 3; c < previousMessage.ints.length; c++) {
+            newInts[c] = previousMessage.ints[c];
+        }
+        int len = previousMessage.ints.length-3;
+        for(int c = 3; c < ints.length; c++) {
+            newInts[c+len] = ints[c];
+        }
+        previousMessage.ints = newInts;
+        
+        if(strings == null) {
+            newMessage.strings = previousMessage.strings;
+        } else if(previousMessage.strings == null) {
+            newMessage.strings = strings;
+        } else {
+            String[] newStrings = new String[previousMessage.strings.length + strings.length];
+            for(int c = 0; c < previousMessage.strings.length; c++) {
+                newStrings[c] = previousMessage.strings[c];
             }
-        }
-        if(locations != null) {
-            for(i = 0; i < locations.length; i++) {
-                messageLocations.add(locations[i]);
+            for(int c = 0; c < strings.length; c++) {
+                newStrings[c+previousMessage.strings.length] = strings[c];
             }
-        }
-        sendMessage();
-        return true;
-    }
-    	
-
-    /**
-     * This method copies all of the data from the arraylist of ints,strings,locations and puts them into a message object.
-     * @return
-     */
-    private boolean sendMessage() {
-        Message message = new Message();
-        message.ints = new int[messageInts.size() + 3];
-        message.ints[0] = KEY1;
-        message.ints[1] = KEY2;
-        message.ints[2] = robot.getID();
-        boolean good = true;
-
-        for(int i = 3; i < messageInts.size() + 3; i++) {
-            message.ints[i] = messageInts.get(i - 3);
+            newMessage.strings = newStrings;
         }
 
-        message.locations = new MapLocation[messageLocations.size()];
-        for(int i = 0; i < message.locations.length; i++) {
-            message.locations[i] = messageLocations.get(i);
+        if(locations == null) {
+            newMessage.locations = previousMessage.locations;
+        } else if(previousMessage.locations == null) {
+            newMessage.locations = locations;
+        } else {
+            MapLocation[] newLocations = new MapLocation[previousMessage.locations.length+locations.length];
+            for(int c = 0; c < previousMessage.locations.length; c++) {
+                newLocations[c] = previousMessage.locations[c];
+            }
+            for(int c = 0; c < locations.length; c++) {
+                newLocations[c+previousMessage.locations.length]  = locations[c];
+            }
+            newMessage.locations = newLocations;
         }
 
-        message.strings = new String[messageStrings.size()];
-        for(int i = 0; i < message.strings.length; i++) {
-            message.strings[i] = messageStrings.get(i);
-        }
-
+        previousMessage = newMessage;
         try {
-            if(controller.hasBroadcastMessage()) {
-                controller.clearBroadcast();
-            }
-
-            controller.broadcast(message);
-
-            good = true;
-        } catch(Exception e) {
-            e.printStackTrace();
-            pr("----Caught Exception in sendMessage.  message: " + message.toString() + " Exception: " + e.toString());
-            good = false;
+            controller.broadcast(newMessage);
+        } catch (Exception e) {
+            pa("----Caught exception while sending message"+e);
         }
-        return good;
-    }
-    private void doS(Message message) {
-    	if (message.locations!=null && message.locations.length > 0) {
-    		for (MapLocation l : message.locations)
-    			l.add(Direction.NORTH);
-    	}
-    	
-    }
-    /*
-     * send message methods
-     */
-    public void clearMessages() {
-        messageInts.clear();
-        messageStrings.clear();
-        messageLocations.clear();
+
+        return true;
     }
 }

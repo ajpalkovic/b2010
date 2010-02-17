@@ -338,7 +338,7 @@ public class ArchonPlayer extends NovaPlayer {
                 dir = l ? Direction.WEST : Direction.EAST;
             }
 
-            navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir).add(dir), true);
+            navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir), true);
             for(int c = 0; c < 1; c++) {
                 navigation.moveOnce(true);
             }

@@ -14,7 +14,6 @@ public class ChainerPlayer extends AttackPlayer {
     }
 
     public void step() {
-    	
         MapLocation location = sensing.senseClosestArchon();
         if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());
@@ -48,6 +47,7 @@ public class ChainerPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
+            messaging.sendClosestEnemyInSight();
             //p(enemy.toString());
             
             //if the closest enemy is out of range, lets just move towards them first
