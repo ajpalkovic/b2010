@@ -637,6 +637,8 @@ public class NaughtyNavigation extends Base {
         					continue;
         			if (r.location.isAdjacentTo(controller.getLocation()))
         				dirValues[index]++;
+        			if(r.type.isAirborne())
+        				dirValues[index]-=.5;
         			dirValues[index]++;        			
         		}
         	}
@@ -650,7 +652,7 @@ public class NaughtyNavigation extends Base {
     					if (j == (i+6)%8 || j == (i+2)%8 || j == (i+1)%8 || j == (i+7)%8 || i == j)
     						value+=dirValues[j];
     					else if (j == (i+4)%8)
-    						value+=dirValues[j]*2.5;
+    						value+=dirValues[j]*2+1;
     					else
     						value+=dirValues[j]*2;
     			}

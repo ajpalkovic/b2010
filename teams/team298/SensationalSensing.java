@@ -74,10 +74,10 @@ public class SensationalSensing extends Base {
     	if (badcount == 0)
     		return 1;
     	if (badcount < 3)
-    		return 1.5f;
-    	if (badcount < 6)
     		return 2;
-    	else return 3;
+    	if (badcount < 6)
+    		return 3;
+    	else return 5;
     }
     /**
      * Iteratres through each of the tiles in sensor range of the robot.
