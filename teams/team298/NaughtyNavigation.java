@@ -569,7 +569,7 @@ public class NaughtyNavigation extends Base {
     					if (j == (i+6)%8 || j == (i+2)%8 || j == (i+1)%8 || j == (i+7)%8 || i == j)
     						value+=dirValues[j];
     					else if (j == (i+4)%8)
-    						value+=dirValues[j]*2+1;
+    						value+=dirValues[j]*2.05;
     					else
     						value+=dirValues[j]*2;
     			}
@@ -579,18 +579,21 @@ public class NaughtyNavigation extends Base {
     					if (j == (i+7)%8 || j == i || j == (i+1)%8)
     						value+=dirValues[j];
     					else if (j == (i+4)%8)
-    						value+=dirValues[j]*2;
+    						value+=dirValues[j]*2.05;
     					else
     						value+=dirValues[j]*2;    					
     			}
-    			if (!map.onMap(controller.getLocation().add(dirs[i])))
-    			{
-    				value*=1.5;
-    			} else if (!map.onMap(controller.getLocation().add(dirs[i]).add(dirs[i]))){
-    				value*=1.3;
-    			} else if (!map.onMap(controller.getLocation().add(dirs[i]).add(dirs[i]).add(dirs[i])))
-    				value*=1.05;
-
+    			MapLocation p = controller.getLocation();
+    			int q = 0;
+    			if (!map.isVoid(p))
+    				q = 2;
+    			for (; q < 4; q++){
+    				p = p.add(dirs[i]);
+    				if (map.isVoid(p))
+    				{
+    					value*=1 + 1/(Math.pow(2,q)+1);
+    				} 
+    			}
     			if (value > min){
     				mini = i;
     				min = value;

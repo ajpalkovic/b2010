@@ -16,7 +16,9 @@ public class MapStore {
         mapType = new TerrainType[size][size];
         boolMap = new boolean[size][size];
     }
-
+    public boolean isVoid(MapLocation l){
+    	return (mapType[l.getX()%size][l.getY()%size]==TerrainType.VOID);
+    }
     public TerrainTile get(int x, int y) {
         return map[x % size][y % size];
     }
