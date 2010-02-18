@@ -207,7 +207,7 @@ public class NaughtyNavigation extends Base {
         if(dir == null) {
             return null;
         }
-        if(controller.canMove(dir) && map.onMap(controller.getLocation().add(dir))) {
+        if(controller.canMove(dir) && (sensing.getDangerFactor() > 1 || map.onMap(controller.getLocation().add(dir)))) {
             return dir;
         }
         Direction leftDir = dir, rightDir = dir;
@@ -541,45 +541,25 @@ public class NaughtyNavigation extends Base {
         public Direction findBestDirection() {
         	ArrayList<RobotInfo> robos = sensing.senseEnemyRobotInfoInSensorRange();
         	float[] dirValues = {0,0,0,0,0,0,0,0};//N,NE,E,SE,S,SW,W,NW
-        	int rightval, leftval;
-        	
+        	Direction[] dirs = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
         	for (RobotInfo r : robos) {
-        		if (r.type.canAttackAir()){
+        		if (r.type.canAttackAir() || r.type.isAirborne()){
         			int index = -1;
-        			switch(controller.getLocation().directionTo(r.location)){
-        				case NORTH:
-        					index = 0;
-        				break;
-        				case NORTH_EAST:
-        					index = 1;        					
-        				break;
-        				case EAST:
-        					index = 2;
-        				break;
-        				case SOUTH_EAST:
-        					index = 3;
-        				break;
-        				case SOUTH:
-        					index = 4;
-        				break;
-        				case SOUTH_WEST:
-        					index = 5;
-        				break;
-        				case WEST:
-        					index = 6;
-        				break;
-        				case NORTH_WEST:
-        					index = 7;
-        				break;
-        				case NONE:
-                            continue;
-        			}
+        			Direction d = controller.getLocation().directionTo(r.location);
+        				for (int i = 0; i < 8; i++){
+        					if (dirs[i] == d)
+        						index = i;
+        				}
+        				if (index == -1)
+        					continue;
         			if (r.location.isAdjacentTo(controller.getLocation()))
         				dirValues[index]++;
+        			if(r.type.isAirborne())
+        				dirValues[index]-=.5;
         			dirValues[index]++;        			
         		}
         	}
-        	System.out.println("\n" + dirValues[7] + " " + dirValues[0] + " " + dirValues[1] + " \n" + dirValues[6] + " A " + dirValues[2] + "\n" + dirValues[5] + " " + dirValues[4] + " " + dirValues[3]);
+        	//System.out.println("\n" + dirValues[7] + " " + dirValues[0] + " " + dirValues[1] + " \n" + dirValues[6] + " A " + dirValues[2] + "\n" + dirValues[5] + " " + dirValues[4] + " " + dirValues[3]);
         	float min = Integer.MIN_VALUE;
         	int mini=-1, value = 0;
     		for (int i = 0; i < 8; i++) {
@@ -589,7 +569,7 @@ public class NaughtyNavigation extends Base {
     					if (j == (i+6)%8 || j == (i+2)%8 || j == (i+1)%8 || j == (i+7)%8 || i == j)
     						value+=dirValues[j];
     					else if (j == (i+4)%8)
-    						value+=dirValues[j]*2.5;
+    						value+=dirValues[j]*2+1;
     					else
     						value+=dirValues[j]*2;
     			}
@@ -601,9 +581,15 @@ public class NaughtyNavigation extends Base {
     					else if (j == (i+4)%8)
     						value+=dirValues[j]*2.5;
     					else
-    						value+=dirValues[j]*2;
-    					
+    						value+=dirValues[j]*2;    					
     			}
+    			if (!map.onMap(controller.getLocation().add(dirs[i])))
+    			{
+    				value*=1.5;
+    			} else if (!map.onMap(controller.getLocation().add(dirs[i]).add(dirs[i]))){
+    				value*=1.3;
+    			} else if (!map.onMap(controller.getLocation().add(dirs[i]).add(dirs[i]).add(dirs[i])))
+    				value*=1.2;
     			if (value > min){
     				mini = i;
     				min = value;
@@ -612,33 +598,10 @@ public class NaughtyNavigation extends Base {
     		}
     		
         	
-        	switch (mini){
-        		case 0:
-        			pa("N");
-        			return Direction.NORTH;
-        		case 1:
-        			pa("NE");
-        			return Direction.NORTH_EAST;
-        		case 2:
-        			pa("E");
-        			return Direction.EAST;
-        		case 3:
-        			pa("SE");
-        			return Direction.SOUTH_EAST;
-        		case 4:
-        			pa("S");
-        			return Direction.SOUTH;
-        		case 5:
-        			pa("SW");
-        			return Direction.SOUTH_WEST;
-        		case 6:
-        			pa("W");
-        			return Direction.WEST;
-        		case 7:
-        			pa("NW");
-        			return Direction.NORTH_WEST;
-        	}
-    		return Direction.NONE;
+        	if (mini > 0 && mini < 8)
+        		return dirs[mini];
+        	else
+        		return Direction.NONE;
         }
         public Direction getDirection() {
             //p("GetDirection");

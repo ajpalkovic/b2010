@@ -74,6 +74,7 @@ public class FluxinFlux extends Base {
         RobotInfo info = null;
         try {
             robot = player.controller.senseGroundRobotAtLocation(woutLocation);
+            if(robot == null) return;
             info = player.controller.senseRobotInfo(robot);
         } catch(Exception e) {
             pa("----Caught exception in fluxUpWout " + e);

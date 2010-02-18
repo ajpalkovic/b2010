@@ -25,7 +25,7 @@ public class ArchonPlayer extends NovaPlayer {
     
     public MapLocation closestEnemy;
     public MapLocation currentEnemy;
-    public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
+    public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 3;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -37,14 +37,16 @@ public class ArchonPlayer extends NovaPlayer {
     public void step() {
         // reevaluate goal here?
         //sensing.senseAllTiles();
-
+    	if (sensing.getDangerFactor() >= 2)
+    		setGoal(Goal.collectingFlux);
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
                 navigation.changeToArchonNavigationGoal(true);
                 spawning.changeModeToAttacking();
                 flux.transferFluxBetweenArchons();
-
+                if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
+                	messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
                 //add a small delay to archon movement so the other dudes can keep up
@@ -272,7 +274,7 @@ public class ArchonPlayer extends NovaPlayer {
                 } catch (Exception e) {;}
                 if (sensing.knownAlliedTowerIDs == null)
                 	sensing.senseAlliedTowers();
-                if(robot == null) {
+                if(robot == null && sensing.knownAlliedTowerIDs != null) {
                 	int id = sensing.knownAlliedTowerIDs.remove(closest.getX() + "," + closest.getY());
                 	sensing.knownAlliedTowerLocations.remove(id);
                 	

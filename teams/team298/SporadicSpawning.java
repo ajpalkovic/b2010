@@ -75,7 +75,7 @@ public class SporadicSpawning extends Base {
      * Returns true if this archon can support the unit's energon requirements.
      */
     public boolean canSupportUnit(RobotType unit) {
-        if(controller.getEnergonLevel() < Math.min(unit.spawnCost() + 25, 74) || sensing.getDangerFactor() > 1.5) {
+        if(controller.getEnergonLevel() < Math.min(unit.spawnCost() + 25, 74) || sensing.getDangerFactor() > 2) {
             return false;
         }
 
