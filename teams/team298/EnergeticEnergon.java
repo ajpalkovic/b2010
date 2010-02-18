@@ -129,7 +129,7 @@ public class EnergeticEnergon extends Base {
                 if (maxTransfer > 10) {
                     if(controller.senseGroundRobotAtLocation(robot.location) == null) return null;
                     controller.transferFlux(maxTransfer, robot.location, RobotLevel.ON_GROUND);
-                    System.out.println("Transferred " + maxTransfer + " flux to a "+robot.type+"...");
+                    //System.out.println("Transferred " + maxTransfer + " flux to a "+robot.type+"...");
                 }
             }
         } catch (Exception e) {

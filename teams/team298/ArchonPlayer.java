@@ -181,10 +181,22 @@ public class ArchonPlayer extends NovaPlayer {
         }
     }
 
+    public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
+        if(idOfSendingArchon < archonLeader) {
+            archonLeader = idOfSendingArchon;
+            isLeader = false;
+        }
+
+        if(archonLeader == idOfSendingArchon) {
+            navigation.moveableDirectionGoal.updateArchonGoal(location, archonLeader);
+        }
+    }
+
     public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
         closestEnemySeen = Clock.getRoundNum();
         closestEnemy = navigation.findClosest(locations, locationStart);
     }
+    
     public void enemyInSight(MapLocation location, int energon, String type) {
         if(closestEnemy == null || controller.getLocation().distanceSquaredTo(location) < controller.getLocation().distanceSquaredTo(closestEnemy)) {
             closestEnemySeen = Clock.getRoundNum();

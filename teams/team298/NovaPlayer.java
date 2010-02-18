@@ -39,14 +39,6 @@ public class NovaPlayer extends Base {
         isAirRobot = controller.getRobotType() == RobotType.ARCHON;
         hasReceivedUniqueMsg = false;
 
-        messaging = new MexicanMessaging(this);
-        navigation = new NaughtyNavigation(this);
-        sensing = new SensationalSensing(this);
-        energon = new EnergeticEnergon(this);
-
-        messaging.sensing = sensing;
-        navigation.sensing = sensing;
-
         isArchon = isArchon(controller.getRobotType());
         isSoldier = isSoldier(controller.getRobotType());
         isChainer = isChainer(controller.getRobotType());
@@ -58,6 +50,14 @@ public class NovaPlayer extends Base {
 
         isTower = isAuraTower || isCommTower || isTeleporterTower;
         isRobot = !isTower;
+
+        messaging = new MexicanMessaging(this);
+        navigation = new NaughtyNavigation(this);
+        sensing = new SensationalSensing(this);
+        energon = new EnergeticEnergon(this);
+
+        messaging.sensing = sensing;
+        navigation.sensing = sensing;
     }
 
     public boolean isArchon(RobotType type) {
@@ -156,29 +156,16 @@ public class NovaPlayer extends Base {
      * CALLBACKS
      **************************************************************************/
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
-        if(isArchon) {
-            if(idOfSendingArchon < archonLeader) {
+        if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
+            if(archonLeader > 0 && idOfSendingArchon == archonLeader) {
+                hasReceivedUniqueMsg = true;
                 archonLeader = idOfSendingArchon;
-                isLeader = false;
-            }
 
-            if(archonLeader == idOfSendingArchon) {
-                if(navigation.followArchonGoal != null) {
-                    navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
+                if(!ignoreFollowRequest) {
+                    navigation.changeToFollowingArchonGoal(true);
                 }
-            }
-        } else {
-            if (idOfRecipient == robot.getID() || hasReceivedUniqueMsg) {
-                if(archonLeader > 0 && idOfSendingArchon == archonLeader) {
-                    hasReceivedUniqueMsg = true;
-                    archonLeader = idOfSendingArchon;
-                    if(!ignoreFollowRequest) {
-                        navigation.changeToFollowingArchonGoal(archonLeader, true);
-                    }
-                    if(navigation.followArchonGoal != null) {
-                        navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
-                    }
-                }
+
+                navigation.followArchonGoal.updateArchonGoal(location, archonLeader);
             }
         }
     }
