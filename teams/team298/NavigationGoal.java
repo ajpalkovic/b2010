@@ -20,5 +20,7 @@ public abstract class NavigationGoal {
     /**
      * This method should return true when the robot is at the goal.
      */
-    public abstract boolean done();
+    public boolean done() {
+        return false;
+    }
 }
