@@ -69,7 +69,6 @@ public class FluxinFlux extends Base {
     }
 
     public void fluxUpWout(MapLocation woutLocation) {
-
         Robot robot = null;
         RobotInfo info = null;
         try {
@@ -98,6 +97,11 @@ public class FluxinFlux extends Base {
 
     }
 
+    /**
+     * Attempts to transfer flux to nearby wouts and towers.
+     * If a tower is close that needs flux, the wout will attempt to go there.
+     * It does that by returning the RobotInfo object of that tower.
+     */
     public RobotInfo autoTransferFlux() {
         RobotInfo robot = null;
         ArrayList<RobotInfo> allied = sensing.senseAlliedRobotInfoInSensorRange();
@@ -145,6 +149,9 @@ public class FluxinFlux extends Base {
         return null;
     }
 
+    /**
+     * Returns true if a tower needs to be fluxed up.
+     */
     public boolean isFluxLow(RobotInfo info) {
         return info.flux < (towerFluxTransferMax / 2);
     }
