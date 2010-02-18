@@ -111,6 +111,7 @@ public class MexicanMessaging extends Base {
                 message.ints = ints;
                 message.locations = locations;
                 message.strings = strings;
+                previousMessage = message;
                 controller.broadcast(message);
                 player.enemyInSight(enemies);
             }
@@ -304,7 +305,7 @@ public class MexicanMessaging extends Base {
         for(int c = 3; c < ints.length; c++) {
             newInts[c+len] = ints[c];
         }
-        previousMessage.ints = newInts;
+        newMessage.ints = newInts;
         
         if(strings == null) {
             newMessage.strings = previousMessage.strings;
