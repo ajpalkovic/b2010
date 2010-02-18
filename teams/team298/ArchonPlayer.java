@@ -30,7 +30,7 @@ public class ArchonPlayer extends NovaPlayer {
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
-        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 5;
+        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 3;
         enemyLocations = new ArrayList<MapLocation>();
     }
 

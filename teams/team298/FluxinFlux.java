@@ -31,6 +31,7 @@ public class FluxinFlux extends Base {
                     int distance = location.distanceSquaredTo(controller.getLocation());
                     if(distance > 0 && distance < 3) {
                         Robot robot = controller.senseAirRobotAtLocation(location);
+                        if(robot == null) continue;
                         RobotInfo info = controller.senseRobotInfo(robot);
                         if(info.flux > flux) {
                             controller.transferFlux(flux, location, RobotLevel.IN_AIR);
