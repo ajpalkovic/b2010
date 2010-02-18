@@ -80,17 +80,17 @@ public class SensationalSensing extends Base {
     		}
     		
     		
-    	if (badcount == 0)
+    	if (badcount <= 1)
     		dangerFactor = 1;
-    	else if (badcount == 1)
-    		dangerFactor = 1.3f;
-    	else if (badcount == 2)
+    	else if (badcount < 2)
+    		dangerFactor = 1.5f;
+    	else if (badcount < 3)
     		dangerFactor = 2;
-    	else if (badcount < 5)
+    	else if (badcount < 4)
     		dangerFactor = 2.5f;
-    	else if (badcount < 7)
+    	else if (badcount < 6)
     		dangerFactor = 3;
-    	else dangerFactor = 5;
+    	else dangerFactor = 4;
     	dangerFactorSensed = Clock.getRoundNum();
     	return dangerFactor;
     }
