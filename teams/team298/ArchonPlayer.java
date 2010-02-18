@@ -42,9 +42,10 @@ public class ArchonPlayer extends NovaPlayer {
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
-                navigation.changeToMoveableDirectionGoal(true);
+                navigation.changeToArchonNavigationGoal(true);
                 spawning.changeModeToAttacking();
-                energon.transferFluxBetweenArchons();
+
+				flux.transferFluxBetweenArchons();
                 if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
                 	messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
@@ -84,7 +85,7 @@ public class ArchonPlayer extends NovaPlayer {
                             for (RobotInfo robot : robots){
                                 if (robot.type == RobotType.WOUT){
                                     if (robot.location.isAdjacentTo(controller.getLocation())){
-                                        energon.fluxUpWout(robot.location);
+                                        flux.fluxUpWout(robot.location);
                                         sensing.senseAlliedTeleporters();
                                         if (sensing.knownAlliedTowerLocations == null)
                                             sensing.senseAlliedTowers();
@@ -183,10 +184,24 @@ public class ArchonPlayer extends NovaPlayer {
         }
     }
 
+    public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
+        p("followRequestCallback "+idOfSendingArchon+" "+location);
+        if(idOfSendingArchon < archonLeader) {
+            archonLeader = idOfSendingArchon;
+            isLeader = false;
+        }
+
+        if(archonLeader == idOfSendingArchon) {
+            p("Updating");
+            navigation.archonNavigationGoal.updateArchonGoal(location, archonLeader);
+        }
+    }
+
     public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
         closestEnemySeen = Clock.getRoundNum();
         closestEnemy = navigation.findClosest(locations, locationStart);
     }
+    
     public void enemyInSight(MapLocation location, int energon, String type) {
         if(closestEnemy == null || controller.getLocation().distanceSquaredTo(location) < controller.getLocation().distanceSquaredTo(closestEnemy)) {
             closestEnemySeen = Clock.getRoundNum();
@@ -280,6 +295,7 @@ public class ArchonPlayer extends NovaPlayer {
         controller.setIndicatorString(2, towerSpawnFromLocation.toString());
         setGoal(Goal.placingTeleporter);
     }
+
     public void towerPingLocationCallback(MapLocation location, int robotID) {
     	sensing.senseAlliedTowerLocations();
 		if (!sensing.knownAlliedTowerLocations.containsKey(robotID)){
@@ -287,6 +303,7 @@ public class ArchonPlayer extends NovaPlayer {
 			sensing.knownAlliedTowerIDs.put(location.getX() + "," + location.getY(), robotID);
 		}
     }
+
     public void newUnit(int senderID, MapLocation location, String robotType) {
     	if (RobotType.valueOf(robotType).isBuilding()){    	
     		if (sensing.knownAlliedTowerLocations == null)
@@ -312,6 +329,8 @@ public class ArchonPlayer extends NovaPlayer {
         navigation.changeToDirectionGoal(dir, false);
         navigation.moveOnce(true);
         navigation.popGoal();
+
+        p("Spread Out");
 
         int x = controller.getLocation().getX();
         int y = controller.getLocation().getY();
@@ -341,9 +360,10 @@ public class ArchonPlayer extends NovaPlayer {
             }
 
             navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir), true);
-            for(int c = 0; c < 1; c++) {
+            for(int c = 0; c < 2; c++) {
                 navigation.moveOnce(true);
             }
+            p("Leader moved away");
         } else {
         }
 

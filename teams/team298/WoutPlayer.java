@@ -131,8 +131,8 @@ public class WoutPlayer extends AttackPlayer {
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
 
-                RobotInfo fluxTower = energon.autoTransferFlux();
-                if(energon.isEnergonLow() || energon.isFluxFull() || distance > 70 || (energon.isEnergonSortaLow() && distance > 36)) {
+                RobotInfo fluxTower = flux.autoTransferFlux();
+                if(energon.isEnergonLow() || flux.isFluxFull() || distance > 70 || (energon.isEnergonSortaLow() && distance > 36)) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
                 } 
@@ -142,9 +142,9 @@ public class WoutPlayer extends AttackPlayer {
                     navigation.changeToWoutCollectingFluxGoal(true);
                 }
 
-                if((energon.isEnergonLow() || energon.isFluxFull()) && distance < 3) {
+                if((energon.isEnergonLow() || flux.isFluxFull()) && distance < 3) {
                     //p("request");
-                    energon.transferFlux(location);
+                    flux.transferFlux(location);
                     energon.requestEnergonTransfer();
                     controller.yield();
                 } else {
