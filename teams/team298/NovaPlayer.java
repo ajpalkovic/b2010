@@ -22,6 +22,7 @@ public class NovaPlayer extends Base {
     public NaughtyNavigation navigation;
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
+    public FluxinFlux flux;
     public int turnsSinceEnergonSent = -1, turnsSinceEnergonProcessed = -1;
 
     public Team team;
@@ -55,6 +56,7 @@ public class NovaPlayer extends Base {
         navigation = new NaughtyNavigation(this);
         sensing = new SensationalSensing(this);
         energon = new EnergeticEnergon(this);
+        flux = new FluxinFlux(this);
 
         messaging.sensing = sensing;
         navigation.sensing = sensing;

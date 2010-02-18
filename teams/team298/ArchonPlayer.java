@@ -43,7 +43,7 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.collectingFlux:
                 navigation.changeToMoveableDirectionGoal(true);
                 spawning.changeModeToAttacking();
-                energon.transferFluxBetweenArchons();
+                flux.transferFluxBetweenArchons();
 
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
@@ -82,7 +82,7 @@ public class ArchonPlayer extends NovaPlayer {
                             for (RobotInfo robot : robots){
                                 if (robot.type == RobotType.WOUT){
                                     if (robot.location.isAdjacentTo(controller.getLocation())){
-                                        energon.fluxUpWout(robot.location);
+                                        flux.fluxUpWout(robot.location);
                                         sensing.senseAlliedTeleporters();
                                         if (sensing.knownAlliedTowerLocations == null)
                                             sensing.senseAlliedTowers();
