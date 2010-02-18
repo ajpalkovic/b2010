@@ -25,12 +25,12 @@ public class ArchonPlayer extends NovaPlayer {
     
     public MapLocation closestEnemy;
     public MapLocation currentEnemy;
-    public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
+    public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 3;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
         spawning = new SporadicSpawning(this);
-        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 5;
+        minMoveTurns = RobotType.ARCHON.moveDelayDiagonal() + 3;
         enemyLocations = new ArrayList<MapLocation>();
     }
 
@@ -44,8 +44,7 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.collectingFlux:
                 navigation.changeToArchonNavigationGoal(true);
                 spawning.changeModeToAttacking();
-
-				flux.transferFluxBetweenArchons();
+                flux.transferFluxBetweenArchons();
                 if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
                 	messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
@@ -209,6 +208,15 @@ public class ArchonPlayer extends NovaPlayer {
         }
     }
 
+    public void enemyInSight(ArrayList<RobotInfo> enemies) {
+        if(enemies == null || enemies.size() == 0) return;
+        RobotInfo closest = navigation.findClosest(enemies);
+        if(closestEnemy == null || controller.getLocation().distanceSquaredTo(closest.location) < controller.getLocation().distanceSquaredTo(closestEnemy)) {
+            closestEnemySeen = Clock.getRoundNum();
+            closestEnemy = closest.location;
+        }
+    }
+
     public void towerBuildLocationResponseCallback(MapLocation[] locations) {
         idealTowerSpawnLocations = locations;
     }
@@ -266,7 +274,7 @@ public class ArchonPlayer extends NovaPlayer {
                 } catch (Exception e) {;}
                 if (sensing.knownAlliedTowerIDs == null)
                 	sensing.senseAlliedTowers();
-                if(robot == null) {
+                if(robot == null && sensing.knownAlliedTowerIDs != null) {
                 	int id = sensing.knownAlliedTowerIDs.remove(closest.getX() + "," + closest.getY());
                 	sensing.knownAlliedTowerLocations.remove(id);
                 	
@@ -330,7 +338,7 @@ public class ArchonPlayer extends NovaPlayer {
         navigation.moveOnce(true);
         navigation.popGoal();
 
-        p("Spread Out");
+        //p("Spread Out");
 
         int x = controller.getLocation().getX();
         int y = controller.getLocation().getY();
@@ -361,7 +369,7 @@ public class ArchonPlayer extends NovaPlayer {
 
             navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir), true);
             navigation.moveOnce(true);
-            p("Leader moved away");
+            //p("Leader moved away");
         } else {
         }
 
