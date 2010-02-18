@@ -23,6 +23,8 @@ public class NovaPlayer extends Base {
     public SensationalSensing sensing;
     public EnergeticEnergon energon;
     public FluxinFlux flux;
+    public SporadicSpawning spawning;
+    public TenaciousTowers towers;
     public int turnsSinceEnergonSent = -1, turnsSinceEnergonProcessed = -1;
 
     public Team team;
