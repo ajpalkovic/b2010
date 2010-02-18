@@ -48,7 +48,7 @@ public class ArchonPlayer extends NovaPlayer {
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
                 //add a small delay to archon movement so the other dudes can keep up
-                if(attacking) {
+                if(attacking || navigation.archonNavigationGoal.distanceToLeader() > 25) {
                     navigation.moveOnce(false);
                 } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
                     int status = navigation.moveOnce(true);
@@ -182,14 +182,14 @@ public class ArchonPlayer extends NovaPlayer {
     }
 
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {
-        p("followRequestCallback "+idOfSendingArchon+" "+location);
+        //p("followRequestCallback "+idOfSendingArchon+" "+location);
         if(idOfSendingArchon < archonLeader) {
             archonLeader = idOfSendingArchon;
             isLeader = false;
         }
 
         if(archonLeader == idOfSendingArchon) {
-            p("Updating");
+            //p("Updating");
             navigation.archonNavigationGoal.updateArchonGoal(location, archonLeader);
         }
     }
@@ -357,9 +357,7 @@ public class ArchonPlayer extends NovaPlayer {
             }
 
             navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir), true);
-            for(int c = 0; c < 2; c++) {
-                navigation.moveOnce(true);
-            }
+            navigation.moveOnce(true);
             p("Leader moved away");
         } else {
         }

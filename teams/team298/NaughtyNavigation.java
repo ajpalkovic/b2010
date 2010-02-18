@@ -632,7 +632,7 @@ public class NaughtyNavigation extends Base {
     		return Direction.NONE;
         }
         public Direction getDirection() {
-            p("GetDirection");
+            //p("GetDirection");
             ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
             closest = null;
             average = null;
@@ -680,12 +680,12 @@ public class NaughtyNavigation extends Base {
                 optimizeDirection();
                 // TODO: Change this to get if archon is leader
                 if(player.isLeader) {
-                    p("isLeader");
+                    //p("isLeader");
                     previousDirection = getMoveableArchonDirection(controller.getDirection());
                     //p(previousDirection == null ? "NULL": previousDirection.toString());
                     return previousDirection;
                 } else {
-                    p("not isLeader"+archonDirection);
+                    //p("not isLeader"+archonDirection);
                     //p((archonDirection == null ? "NULL": archonDirection)+" "+(getMoveableDirection(archonDirection) == null ? "NULL": getMoveableDirection(archonDirection)));
                     return getMoveableDirection(archonDirection);
                 }
@@ -792,6 +792,10 @@ public class NaughtyNavigation extends Base {
         public Direction getDirection() {
             optimizeDirection();
             return getMoveableDirection(archonDirection);
+        }
+
+        public int distanceToLeader() {
+            return archonLocation == null ? 0 : controller.getLocation().distanceSquaredTo(archonLocation);
         }
 
         public void optimizeDirection() {
