@@ -20,7 +20,8 @@ public class SensationalSensing extends Base {
             alliedTowersSensed = Integer.MIN_VALUE,
             archonLocationsSensed = Integer.MIN_VALUE,
             nearestArchonSensed = Integer.MIN_VALUE,
-            alliedTowerLocationsSensed = Integer.MIN_VALUE;
+            alliedTowerLocationsSensed = Integer.MIN_VALUE,
+            dangerFactorSensed = Integer.MIN_VALUE;
     public Robot[] air, ground;
     public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots, alliedTowerInfo;
     public ArrayList<MapLocation> enemyLocations, alliedTowerLocations;
@@ -29,8 +30,9 @@ public class SensationalSensing extends Base {
     public MapLocation[] archonLocations;
     public MapLocation nearestArchon;
     public ArrayList<MapLocation> teleporterLocations = new ArrayList<MapLocation>();
-    public int oldDataTolerance = 0;
-
+    public int oldDataTolerance = 0; 
+    public float dangerFactor=1;
+    
     public SensationalSensing(NovaPlayer player) {
         super(player);
         map = player.map;
@@ -63,21 +65,34 @@ public class SensationalSensing extends Base {
         return tiles;
     }
     public float getDangerFactor(){
-    	int badcount = 0;
+    	if (dangerFactorSensed >= Clock.getRoundNum() - oldDataTolerance)
+    		return dangerFactor;
+    	
+    	float badcount = 0;
+    	
     	for (RobotInfo r : senseEnemyRobotInfoInSensorRange())
     		if (r.type.canAttackAir()){
     			badcount++;
     			if (r.location.isAdjacentTo(controller.getLocation()))
     				badcount++;
+    		} else if (r.type.isAirborne()) {
+    			badcount+=.5;
     		}
     		
+    		
     	if (badcount == 0)
-    		return 1;
-    	if (badcount < 3)
-    		return 2;
-    	if (badcount < 6)
-    		return 3;
-    	else return 5;
+    		dangerFactor = 1;
+    	else if (badcount == 1)
+    		dangerFactor = 1.3f;
+    	else if (badcount == 2)
+    		dangerFactor = 2;
+    	else if (badcount < 5)
+    		dangerFactor = 2.5f;
+    	else if (badcount < 7)
+    		dangerFactor = 3;
+    	else dangerFactor = 5;
+    	dangerFactorSensed = Clock.getRoundNum();
+    	return dangerFactor;
     }
     /**
      * Iteratres through each of the tiles in sensor range of the robot.
