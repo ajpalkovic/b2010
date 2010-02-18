@@ -78,7 +78,7 @@ public class SporadicSpawning extends Base {
         if(controller.getEnergonLevel() < Math.min(unit.spawnCost() + 25, 74)) {
             return false;
         }
-        if (sensing.getDangerFactor() > 2 && controller.getEnergonLevel() < unit.spawnCost() + 15 + 10*sensing.getDangerFactor();){
+        if (sensing.getDangerFactor() > 2 && controller.getEnergonLevel() < unit.spawnCost() + 15 + 10*sensing.getDangerFactor()){
         	return false;
         }
 
