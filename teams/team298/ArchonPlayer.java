@@ -37,14 +37,16 @@ public class ArchonPlayer extends NovaPlayer {
     public void step() {
         // reevaluate goal here?
         //sensing.senseAllTiles();
-
+    	if (sensing.getDangerFactor() >= 2)
+    		setGoal(Goal.collectingFlux);
         switch(currentGoal) {
             case Goal.idle:
             case Goal.collectingFlux:
                 navigation.changeToMoveableDirectionGoal(true);
                 spawning.changeModeToAttacking();
                 energon.transferFluxBetweenArchons();
-
+                if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
+                	messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
                 //add a small delay to archon movement so the other dudes can keep up

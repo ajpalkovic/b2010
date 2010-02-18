@@ -65,8 +65,12 @@ public class SensationalSensing extends Base {
     public float getDangerFactor(){
     	int badcount = 0;
     	for (RobotInfo r : senseEnemyRobotInfoInSensorRange())
-    		if (r.type.canAttackAir())
+    		if (r.type.canAttackAir()){
     			badcount++;
+    			if (r.location.isAdjacentTo(controller.getLocation()))
+    				badcount++;
+    		}
+    		
     	if (badcount == 0)
     		return 1;
     	if (badcount < 3)
