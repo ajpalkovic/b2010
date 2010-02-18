@@ -62,7 +62,19 @@ public class SensationalSensing extends Base {
 
         return tiles;
     }
-
+    public float getDangerFactor(){
+    	int badcount = 0;
+    	for (RobotInfo r : senseEnemyRobotInfoInSensorRange())
+    		if (r.type.canAttackAir())
+    			badcount++;
+    	if (badcount == 0)
+    		return 1;
+    	if (badcount < 3)
+    		return 1.5f;
+    	if (badcount < 6)
+    		return 2;
+    	else return 3;
+    }
     /**
      * Iteratres through each of the tiles in sensor range of the robot.
      * This probably isn't needed anymore though.
@@ -70,7 +82,7 @@ public class SensationalSensing extends Base {
     public void senseAllTiles() {
         senseTiles(getSensibleTiles());
     }
-
+   
     /**
      * This is used to sense the new tiles for robots with a 360 degree sensor angle.
      * Those robots pass in 3 int arrays representing the distance from the current robots location

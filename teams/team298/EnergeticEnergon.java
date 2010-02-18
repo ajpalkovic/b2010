@@ -246,7 +246,7 @@ public class EnergeticEnergon extends Base {
      */
     public void processEnergonTransferRequests() {
         double amount = controller.getEnergonLevel();
-        double maxToGive = amount - 10;
+        double maxToGive = amount - 10*sensing.getDangerFactor();
         if(maxToGive < 0) {
             requests.clear();
             return;

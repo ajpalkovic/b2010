@@ -288,8 +288,12 @@ public class MexicanMessaging extends Base {
         controller.clearBroadcast();
 
         Message newMessage = new Message();
-
-        int[] newInts = new int[ints.length-3+previousMessage.ints.length];
+        int[] newInts;
+        if (previousMessage.ints == null)
+        	previousMessage.ints = new int[0];
+        
+        newInts = new int[ints.length-3+previousMessage.ints.length];
+        
         newInts[0] = KEY1;
         newInts[1] = KEY2;
         newInts[2] = robot.getID();

@@ -654,62 +654,71 @@ public class NaughtyNavigation extends Base {
         				case NORTH_WEST:
         					index = 7;
         				break;
-                        default:
+        				case NONE:
                             continue;
         			}
-        			rightval = (index+1)%8;
-        			leftval = ((index-1)+8)%8;        			
-        			dirValues[index]++;
-        			dirValues[rightval] += .5;
-        			dirValues[leftval] += .5;
-        			dirValues[(index+4)%8] -= .5;
-        			for (int j = 0; j < 8; j++)
-        				if (j!=index)
-        					dirValues[j]--;
+        			if (r.location.isAdjacentTo(controller.getLocation()))
+        				dirValues[index]++;
+        			dirValues[index]++;        			
         		}
         	}
-        	//System.out.println("\n" + dirValues[7] + " " + dirValues[0] + " " + dirValues[1] + " \n" + dirValues[6] + " A " + dirValues[2] + "\n" + dirValues[5] + " " + dirValues[4] + " " + dirValues[3]);
-        	float min = Integer.MAX_VALUE;
-        	int mini=-1;
-        	for (int i = 0; i < 8; i++) {
-        		if (dirValues[i] < min){
-        			min = dirValues[i];
-        			mini = i;
-        		}
-        	}
-        	ArrayList<Integer> minindexs = new ArrayList<Integer>();
-        	minindexs.add(mini);
-        	int index = -1;
-    		float mincombo=Integer.MAX_VALUE;
-        	for (int i = 0; i < 8; i++){
-        			rightval = i+1;
-        			leftval = i-1;
-        			if (i == 0)
-        				leftval = 7;
-        			else if (i==7)
-        				rightval = 0;        		
-        			if (dirValues[i] + dirValues[rightval] + dirValues[leftval] < mincombo){
-        				mincombo = dirValues[i] + dirValues[rightval] + dirValues[leftval]; 
-        				index = i;
-        			}
-        	}
+        	System.out.println("\n" + dirValues[7] + " " + dirValues[0] + " " + dirValues[1] + " \n" + dirValues[6] + " A " + dirValues[2] + "\n" + dirValues[5] + " " + dirValues[4] + " " + dirValues[3]);
+        	float min = Integer.MIN_VALUE;
+        	int mini=-1, value = 0;
+    		for (int i = 0; i < 8; i++) {
+    			if (i%2==0){
+    				for (int j = 0; j < 8; j++)
+    					if (i!=j)
+    					if (j == (i+6)%8 || j == (i+2)%8 || j == (i+1)%8 || j == (i+7)%8 || i == j)
+    						value+=dirValues[j];
+    					else if (j == (i+4)%8)
+    						value+=dirValues[j]*2.5;
+    					else
+    						value+=dirValues[j]*2;
+    			}
+    			else {
+    				for (int j = 0; j < 8; j++)
+    					if(i!=j)
+    					if (j == (i+7)%8 || j == i || j == (i+1)%8)
+    						value+=dirValues[j];
+    					else if (j == (i+4)%8)
+    						value+=dirValues[j]*2.5;
+    					else
+    						value+=dirValues[j]*2;
+    					
+    			}
+    			if (value > min){
+    				mini = i;
+    				min = value;
+    			}
+    			value = 0;    						    			
+    		}
+    		
         	
-        	switch (index){
+        	switch (mini){
         		case 0:
+        			pa("N");
         			return Direction.NORTH;
         		case 1:
+        			pa("NE");
         			return Direction.NORTH_EAST;
         		case 2:
+        			pa("E");
         			return Direction.EAST;
         		case 3:
+        			pa("SE");
         			return Direction.SOUTH_EAST;
         		case 4:
+        			pa("S");
         			return Direction.SOUTH;
         		case 5:
+        			pa("SW");
         			return Direction.SOUTH_WEST;
         		case 6:
+        			pa("W");
         			return Direction.WEST;
         		case 7:
+        			pa("NW");
         			return Direction.NORTH_WEST;
         	}
     		return Direction.NONE;
