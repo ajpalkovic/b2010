@@ -120,7 +120,7 @@ public class WoutPlayer extends AttackPlayer {
         sensing.senseFlux(fluxDeltas);
     }
 
-    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit, int round) {
         if(isAirUnit == 1 && controller.getLocation().isAdjacentTo(location1)) {
             energon.transferEnergon(amount, location1, true);
         }

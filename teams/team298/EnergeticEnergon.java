@@ -25,9 +25,10 @@ public class EnergeticEnergon extends Base {
         sortaLowEnergonLevel = controller.getRobotType().maxEnergon() * .5;
     }
     
-    public void addRequest(MapLocation location, boolean isAirUnit, int amount) {
+    public void addRequest(MapLocation location, boolean isAirUnit, int amount, int round) {
+        if(round < Clock.getRoundNum()) return;
         if(location.distanceSquaredTo(controller.getLocation()) > 2) return;
-        requests.add(new EnergonTransferRequest(location, isAirUnit, amount));
+        requests.add(new EnergonTransferRequest(location, isAirUnit, amount, round));
     }
 
     /**
@@ -40,7 +41,7 @@ public class EnergeticEnergon extends Base {
             if(robot.location.distanceSquaredTo(controller.getLocation()) > 2) continue;
             int amount = calculateEnergonRequestAmount(robot);
             if(amount >= 1) {
-                requests.add(new EnergonTransferRequest(robot.location, false, amount));
+                requests.add(new EnergonTransferRequest(robot.location, false, amount, Integer.MAX_VALUE));
                 //p("adding request: "+requests.get(requests.size()-1).toString());
             }
         }
@@ -225,16 +226,19 @@ public class EnergeticEnergon extends Base {
         public MapLocation location, archonLocation;
         public boolean isAirUnit;
         public double amount;
+        public int round;
 
-        public EnergonTransferRequest(MapLocation location, boolean isAirUnit, int amount) {
+        public EnergonTransferRequest(MapLocation location, boolean isAirUnit, int amount, int round) {
             this.location = location;
             this.isAirUnit = isAirUnit;
             this.amount = amount;
+            this.round = round;
         }
 
         public EnergonTransferRequest(int amount, boolean isAirUnit) {
             this.isAirUnit = isAirUnit;
             this.amount = amount;
+            this.round = Integer.MAX_VALUE;
         }
 
         public String toString() {

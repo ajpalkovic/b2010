@@ -255,6 +255,6 @@ public class ArchonPlayer extends NovaPlayer {
         return true;
     }
 
-    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit, int round) {
     }
 }

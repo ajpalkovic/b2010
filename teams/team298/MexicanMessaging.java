@@ -50,7 +50,8 @@ public class MexicanMessaging extends Base {
     }
     public boolean sendLowEnergon(int amount) {
         //p("Send Low Energon"+amount);
-        int[] ints = new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.lowEnergon, BroadcastMessage.everyone, amount, player.isAirRobot ? 1 : 0};
+        int round = Clock.getRoundNum() + controller.getRoundsUntilMovementIdle();
+        int[] ints = new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.lowEnergon, BroadcastMessage.everyone, amount, player.isAirRobot ? 1 : 0, round};
         MapLocation[] locations = new MapLocation[] {controller.getLocation()};
         return addMessage(ints, null, locations);
     }
@@ -192,7 +193,7 @@ public class MexicanMessaging extends Base {
                         case BroadcastMessage.newUnit:
                             break;
                         case BroadcastMessage.lowEnergon:
-                            intIndex += 2;
+                            intIndex += 3;
                             locationIndex += 1;
                             break;
                         case BroadcastMessage.move:
@@ -231,8 +232,8 @@ public class MexicanMessaging extends Base {
                             player.newUnit(senderID, message.locations[locationIndex], message.strings[stringIndex]);
                             break;
                         case BroadcastMessage.lowEnergon:
-                            player.lowEnergonMessageCallback(message.locations[locationIndex], message.ints[intIndex + 1], message.ints[intIndex]);
-                            intIndex += 2;
+                            player.lowEnergonMessageCallback(message.locations[locationIndex], message.ints[intIndex], message.ints[intIndex + 1], message.ints[intIndex+2]);
+                            intIndex += 3;
                             locationIndex += 1;
                             break;
                         case BroadcastMessage.move:

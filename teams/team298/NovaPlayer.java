@@ -102,7 +102,7 @@ public class NovaPlayer extends Base {
 
             if(!isArchon && !isTower && turnsSinceEnergonSent < 0 && energon.isEnergonSortaLow()) {
                 messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
-                turnsSinceEnergonSent = 2;
+                turnsSinceEnergonSent = 1;
             }
             turnsSinceEnergonSent--;
 
@@ -115,7 +115,7 @@ public class NovaPlayer extends Base {
                 } else if(!isTower) {
                     energon.autoTransferEnergonBetweenUnits();
                 }
-                turnsSinceEnergonProcessed = 1;
+                turnsSinceEnergonProcessed = 0;
             }
             turnsSinceEnergonProcessed--;
             
@@ -182,8 +182,8 @@ public class NovaPlayer extends Base {
         }
     }
 
-    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
-        energon.addRequest(location1, isAirUnit == 1, amount);
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit, int round) {
+        energon.addRequest(location1, isAirUnit == 1, amount, round);
     }
 
     /**

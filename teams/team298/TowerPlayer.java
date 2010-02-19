@@ -191,4 +191,7 @@ public class TowerPlayer extends NovaPlayer {
     public void moveMessageCallback(MapLocation location) {
         
     }
+
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit, int round) {
+    }
 }
