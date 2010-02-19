@@ -155,35 +155,6 @@ public class EnergeticEnergon extends Base {
     }
 
     /**
-     * Performs all the steps to request an energon transfer.
-     * First, it calculates an amount of energon to request, enough so that the neither
-     * the reserve not level overflows.
-     *
-     * The robot then attempts to move adjacent to the closest archon.  However, if the
-     * archon moves while the robot is moving, the robot will try 2 more times to get adjacent
-     * to the robot.
-     */
-    public int requestEnergonTransfer() {
-        int amount = calculateEnergonRequestAmount();
-        if(amount == -1) {
-            return Status.success;
-        }
-
-        int tries = 3;
-        navigation.changeToArchonGoal(false);
-        do {
-            navigation.moveOnce(true);
-            tries--;
-        } while(tries > 0 && !navigation.goal.done());
-
-        messaging.sendLowEnergon(calculateEnergonRequestAmount());
-        controller.yield();
-
-        navigation.popGoal();
-        return Status.success;
-    }
-
-    /**
      * Transfers the specified amount of energon to the robot as long as the robot is adjacent to the
      * archon, and the amount of energon requested will not reduce the archon's energon level to
      * just 1 energon.

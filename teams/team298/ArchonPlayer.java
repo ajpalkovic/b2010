@@ -44,7 +44,7 @@ public class ArchonPlayer extends NovaPlayer {
                 spawning.changeModeToAttacking();
                 flux.transferFluxBetweenArchons();
                 if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
-                	messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
+                	messaging.sendLowEnergon();
                 attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
 
                 //add a small delay to archon movement so the other dudes can keep up
@@ -63,7 +63,7 @@ public class ArchonPlayer extends NovaPlayer {
                     else if(status == Status.success) {
                         turnsSinceLastSpawn = -1;
                         try {
-                            messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
+                            messaging.sendFollowRequest(controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
                         } catch(Exception e) {
                             pa("----Exception Caught in sendFollowRequest()");
                         }
@@ -82,12 +82,6 @@ public class ArchonPlayer extends NovaPlayer {
                     }
                 }
                 turnsSinceTowerStuffDone--;
-
-                if(turnsSinceMessageForEnemyRobotsSent < 0) {
-                    messaging.sendMessageForEnemyRobots();
-                    turnsSinceMessageForEnemyRobotsSent = 1;
-                }
-                turnsSinceMessageForEnemyRobotsSent--;
 
                 moveTurns++;
                 break;
@@ -173,6 +167,7 @@ public class ArchonPlayer extends NovaPlayer {
         sensing.senseAllTiles();
         team = controller.getTeam();
         senseArchonNumber();
+        cacheId = archonNumber;
 
         //spread out so we dont group up
         MapLocation center = navigation.findAverage(sensing.senseArchonLocations());
@@ -251,7 +246,7 @@ public class ArchonPlayer extends NovaPlayer {
 
     public boolean pathStepTakenCallback() {
         senseNewTiles();
-        messaging.sendFollowRequest(controller.getLocation(), BroadcastMessage.everyone);
+        messaging.sendFollowRequest(BroadcastMessage.everyone);
         return true;
     }
 

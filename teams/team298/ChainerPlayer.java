@@ -28,8 +28,7 @@ public class ChainerPlayer extends AttackPlayer {
             navigation.changeToArchonGoal(true);
             ignoreFollowRequest = true;
             if(distance < 3) {
-                energon.requestEnergonTransfer();
-                controller.yield();
+                messaging.sendLowEnergon();
             } else {
                 navigation.moveOnce(false);
             }
@@ -47,7 +46,6 @@ public class ChainerPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
-            messaging.sendClosestEnemyInSight();
             //p(enemy.toString());
             
             //if the closest enemy is out of range, lets just move towards them first

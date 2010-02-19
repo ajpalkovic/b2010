@@ -32,8 +32,7 @@ public class SoldierPlayer extends AttackPlayer {
             navigation.changeToArchonGoal(true);
             ignoreFollowRequest = true;
             if(distance < 3) {
-                energon.requestEnergonTransfer();
-                controller.yield();
+                messaging.sendLowEnergon();
             } else {
                 navigation.moveOnce(false);
             }
@@ -51,7 +50,6 @@ public class SoldierPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
-            messaging.sendClosestEnemyInSight();
             MapLocation enemyLocation = enemy.location;
 
             if(enemyLocation.distanceSquaredTo(controller.getLocation()) > 2) {

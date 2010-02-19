@@ -101,12 +101,6 @@ public class NovaPlayer extends Base {
             messaging.parseMessages();
             //printBytecode(t, b, "Parse Messages: ");
 
-            if(!isArchon && !isTower && turnsSinceEnergonSent < 0 && energon.isEnergonSortaLow()) {
-                messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
-                turnsSinceEnergonSent = 1;
-            }
-            turnsSinceEnergonSent--;
-
             if(turnsSinceEnergonProcessed < 0) {
                 if(isArchon) {
                     //b = Clock.getBytecodeNum();
@@ -121,6 +115,14 @@ public class NovaPlayer extends Base {
             turnsSinceEnergonProcessed--;
             
             step();
+
+            if(!isArchon && !isTower && turnsSinceEnergonSent < 0 && energon.isEnergonSortaLow()) {
+                messaging.sendLowEnergon();
+                turnsSinceEnergonSent = 1;
+            }
+            turnsSinceEnergonSent--;
+
+            messaging.doSend();
 
             if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
                 controller.yield();
@@ -149,7 +151,7 @@ public class NovaPlayer extends Base {
     public void setGoal(int goal) {
         currentGoal = goal;
         controller.setIndicatorString(1, Goal.toString(goal));
-        pr("Changin goal to: " + Goal.toString(goal));
+        //p("Changin goal to: " + Goal.toString(goal));
     }
 
     /**
