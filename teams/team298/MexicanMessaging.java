@@ -23,100 +23,237 @@ public class MexicanMessaging extends Base {
             KEY1 = KEY2;
             KEY2 = tmp;
         }
+
+        sendEnemies = player.isArchon;
+        sendClosestEnemy = !player.isTower && !sendEnemies;
     }
-    public boolean sendTowerPing(int robotID, MapLocation location) {
-        //p("Send Tower Ping");
-    	return addMessage(new int[]{KEY1, KEY2, robot.getID(), BroadcastMessage.towerPing, BroadcastMessage.everyone, robotID}, null, new MapLocation[]{location});
-    }
-    /**
-     * Each of these methods represent the public interface for sending messages.
-     * All they have to do is call addMessage and pass it some data.
-     * The first two parameters are the message type (from BroadcastMessage.*) and the recipient id (BroadcastMessage.everyone for everyone)
-     * Add message accepts an array of ints, strings, and MapLocations which will be sent along with the message.
-     */
-    public boolean sendTowerBuildLocationRequest(int recipientRobotID) {
-        //p("Send Tower Build Location Request");
-        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.towerBuildLocationRequest, recipientRobotID}, null, null);
+    
+    public boolean sendTowerPing, sendTowerBuildLocationRequest, sendTowerBuildLocationResponse, sendMove, sendLowEnergon, sendFollowRequest, sendNewUnit, sendClosestEnemy, sendEnemies;
+
+    public int towerPingRobotId;
+    public MapLocation towerPingLocation;
+
+    public int towerBuildLocationRequestRecipientId;
+
+    public MapLocation[] towerBuildLocationResponseLocations;
+    public int towerBuildLocationResponseRecipientId;
+
+    public MapLocation moveLocation;
+
+    public int followRequestRecipientId;
+
+    public void sendTowerPing(int robotID, MapLocation location) {
+        towerPingLocation = location;
+        towerPingRobotId = robotID;
+        sendTowerPing = true;
     }
 
-    public boolean sendTowerBuildLocationResponse(MapLocation[] locations,int recepientID) {
-        //p("Send Tower Build Location Response");
-        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.towerBuildLocationResponse, recepientID, locations.length}, null, locations);
+    public void sendTowerBuildLocationRequest(int recipientRobotID) {
+        towerBuildLocationRequestRecipientId = recipientRobotID;
+        sendTowerBuildLocationRequest = true;
     }
 
-    public boolean sendMove(MapLocation location) {
-        //p("Send Move");
-        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.move, BroadcastMessage.everyone}, null, new MapLocation[] {location});
-    }
-    public boolean sendLowEnergon(int amount) {
-        //p("Send Low Energon"+amount);
-        int[] ints = new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.lowEnergon, BroadcastMessage.everyone, amount, player.isAirRobot ? 1 : 0};
-        MapLocation[] locations = new MapLocation[] {controller.getLocation()};
-        return addMessage(ints, null, locations);
+    public void sendTowerBuildLocationResponse(MapLocation[] locations,int recipientID) {
+        towerBuildLocationResponseLocations = locations;
+        towerBuildLocationResponseRecipientId = recipientID;
+        sendTowerBuildLocationResponse = true;
     }
 
-    public boolean sendNewUnit() {
-        //p("Send New Unit");
-        MapLocation[] locations = new MapLocation[] {controller.getLocation()};
-        String[] strings = {controller.getRobotType().toString()};
-        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.newUnit, BroadcastMessage.everyone}, strings, locations);
+    public void sendMove(MapLocation location) {
+        moveLocation = location;
+        sendMove = true;
+    }
+    public void sendLowEnergon() {
+        sendLowEnergon = true;
     }
 
-    public boolean sendFollowRequest(MapLocation archonLocation, int recipientRobotId) {
-        //p("Send Follow Request");
-        MapLocation[] locations = new MapLocation[] {archonLocation};
-        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.followRequest, recipientRobotId}, null, locations);
+    public void sendNewUnit() {
+        sendNewUnit = true;
     }
 
-    public boolean sendClosestEnemyInSight() {
-        RobotInfo enemy = player.navigation.findClosest(sensing.senseEnemyRobotInfoInSensorRange());
-        if(enemy == null) return true;
-        return addMessage(new int[] {KEY1, KEY2, robot.getID(), BroadcastMessage.closestEnemyInSight, BroadcastMessage.everyone, (int)enemy.energonLevel}, new String[] {enemy.type.toString()}, new MapLocation[] {enemy.location});
+    public void sendFollowRequest(int recipientRobotId) {
+        sendFollowRequest = true;
+        followRequestRecipientId = recipientRobotId;
     }
 
-
-    /**
-     * This method sends enemyInSight message broadcast for all enemies in sight
-     */
-    public void sendMessageForEnemyRobots() {
-        //p("Send Message For Enemy Robots");
-        try {
-            if(controller.hasBroadcastMessage()) {
-                controller.yield();
-            }
-
-            ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
+    public void doSend() {
+        int b = Clock.getBytecodeNum(), r = Clock.getRoundNum();
+        if(!player.isTower && !player.isArchon) {
+            sendLowEnergon = sendLowEnergon || player.energon.isEnergonLow();
+        }
         
-            if(enemies.size() > 0) {
-                MapLocation[] locations = new MapLocation[enemies.size()];
-                int[] ints = new int[enemies.size()+6];
-                String[] strings = new String[enemies.size()];
+        if(!(sendTowerPing || sendTowerBuildLocationRequest || sendTowerBuildLocationResponse || sendMove || sendLowEnergon || sendFollowRequest || sendNewUnit || sendClosestEnemy || sendEnemies)) return;
+
+        int intLength = 3, stringLength = 0, locationLength = 0;
+        int intIndex = 3, stringIndex = 0, locationIndex = 0;
+        int[] ints = null;
+        String[] strings = null;
+        MapLocation[] locations = null;
+        RobotInfo enemy = null;
+
+        if(sendTowerPing) {
+            intLength += 3;
+            locationLength++;
+        }
+        if(sendTowerBuildLocationRequest) {
+            intLength += 2;
+        }
+        if(sendTowerBuildLocationResponse) {
+            intLength += 3;
+            locationLength += towerBuildLocationResponseLocations.length;
+        }
+        if(sendMove) {
+            intLength += 2;
+            locationLength++;
+        }
+        if(sendLowEnergon) {
+            intLength += 5;
+            locationLength++;
+        }
+        if(sendFollowRequest) {
+            intLength += 2;
+            locationLength++;
+        }
+        if(sendNewUnit) {
+            stringLength++;
+            locationLength++;
+            intLength += 2;
+        }
+        if(sendClosestEnemy && player.cacheId % 2 == 0) {
+            enemy = player.navigation.findClosest(sensing.senseEnemyRobotInfoInSensorRange());
+            if(enemy != null) {
+                intLength += 3;
+                stringLength++;
+                locationLength++;
+            }
+        }
+        if(sendEnemies && player.cacheId % 2 == 0) {
+            player.cacheId += 2;
+            int count = sensing.senseEnemyRobotInfoInSensorRange().size();
+            if(count > 0) {
+                intLength += count+1+2;
+                stringLength += count;
+                locationLength += count;
+            }
+        }
+
+        if(intLength == 3) return;
+
+        ints = new int[intLength];
+        if(stringLength > 0) {
+            strings = new String[stringLength];
+        }
+        if(locationLength > 0) {
+            locations = new MapLocation[locationLength];
+        }
+
+        ints[0] = KEY1;
+        ints[1] = KEY2;
+        ints[2] = robot.getID();
+
+        if(sendTowerPing) {
+            //p("ping");
+            ints[intIndex++] = BroadcastMessage.towerPing;
+            ints[intIndex++] = BroadcastMessage.everyone;
+            ints[intIndex++] = towerPingRobotId;
+            locations[locationIndex++] = towerPingLocation;
+        }
+        if(sendTowerBuildLocationRequest) {
+            //p("build request");
+            ints[intIndex++] = BroadcastMessage.towerBuildLocationRequest;
+            ints[intIndex++] = towerBuildLocationRequestRecipientId;
+        }
+        if(sendTowerBuildLocationResponse) {
+            //p("build response");
+            ints[intIndex++] = BroadcastMessage.towerBuildLocationResponse;
+            ints[intIndex++] = towerBuildLocationResponseRecipientId;
+            ints[intIndex++] = towerBuildLocationResponseLocations.length;
+
+            for(int c = 0; c < towerBuildLocationResponseLocations.length; c++) {
+                locations[locationIndex++] = towerBuildLocationResponseLocations[c];
+            }
+        }
+        if(sendMove) {
+            //p("move");
+            ints[intIndex++] = BroadcastMessage.move;
+            ints[intIndex++] = BroadcastMessage.everyone;
+            locations[locationIndex++] = moveLocation;
+        }
+        if(sendLowEnergon) {
+            //p("low energon");
+            int amount = player.energon.calculateEnergonRequestAmount();
+            int round = Clock.getRoundNum() + controller.getRoundsUntilMovementIdle();
+            ints[intIndex++] = BroadcastMessage.lowEnergon;
+            ints[intIndex++] = BroadcastMessage.everyone;
+            ints[intIndex++] = amount;
+            ints[intIndex++] = player.isAirRobot ? 1 : 0;
+            ints[intIndex++] = round;
+            locations[locationIndex++] = controller.getLocation();
+        }
+        if(sendFollowRequest) {
+            //p("follow");
+            ints[intIndex++] = BroadcastMessage.followRequest;
+            ints[intIndex++] = followRequestRecipientId;
+            locations[locationIndex++] = controller.getLocation();
+        }
+        if(sendNewUnit) {
+            //p("new unit");
+            ints[intIndex++] = BroadcastMessage.newUnit;
+            ints[intIndex++] = BroadcastMessage.everyone;
+            strings[stringIndex++] = controller.getRobotType().toString();
+            locations[locationIndex++] = controller.getLocation();
+        }
+        if(sendClosestEnemy && player.cacheId % 2 == 0) {
+            if(enemy != null) {
+                //p("closest");
+                ints[intIndex++] = BroadcastMessage.closestEnemyInSight;
+                ints[intIndex++] = BroadcastMessage.everyone;
+                ints[intIndex++] = (int)enemy.energonLevel;
+                strings[stringIndex++] = enemy.type.toString();
+                locations[locationIndex++] = enemy.location;
+            }
+        }
+        if(sendEnemies && player.cacheId % 2 == 0) {
+            ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
+            int count = enemies.size();
+            if(count > 0) {
+                //p("send enemies");
+                ints[intIndex++] = BroadcastMessage.enemyInSight;
+                ints[intIndex++] = BroadcastMessage.everyone;
+                ints[intIndex++] = count;
 
                 RobotInfo robot = null;
 
-                ints[0] = KEY1;
-                ints[1] = KEY2;
-                ints[2] = player.robot.getID();
-                ints[3] = BroadcastMessage.enemyInSight;
-                ints[4] = BroadcastMessage.everyone;
-                ints[5] = locations.length;
-                for(int c = 0; c < locations.length; c++) {
+                for(int c = 0; c < count; c++) {
                     robot = enemies.get(c);
-                    locations[c] = robot.location;
-                    ints[c+6] = (int)robot.energonLevel;
-                    strings[c] = robot.type.toString();
+                    locations[locationIndex++] = robot.location;
+                    ints[intIndex++] = (int)robot.energonLevel;
+                    strings[stringIndex++] = robot.type.toString();
                 }
-
-                Message message = new Message();
-                message.ints = ints;
-                message.locations = locations;
-                message.strings = strings;
-                previousMessage = message;
-                controller.broadcast(message);
-                player.enemyInSight(enemies);
             }
+        }
+
+        Message message = new Message();
+        message.ints = ints;
+        message.strings = strings;
+        message.locations = locations;
+
+        //if(player.isArchon) printBytecode(r, b, "Messaging: ");
+
+        if(controller.hasBroadcastMessage()) {
+            controller.yield();
+        }
+
+        try {
+            controller.broadcast(message);
         } catch (Exception e) {
-            pa("----Caught exception in sendMessageForEnemyRobots "+e.toString());
+            pa("----Caught exception in doSend"+e);
+        }
+
+        sendTowerPing = sendTowerBuildLocationRequest = sendTowerBuildLocationResponse = sendMove = sendLowEnergon = sendFollowRequest = sendNewUnit = false;
+
+        if(!((ints.length == intIndex) && (strings == null || strings.length == stringIndex) && (locations == null || locations.length == locationIndex))) {
+            System.out.println("WTF! THE MESSAGING INDECES DONT MATCH.");
         }
     }
 
@@ -160,6 +297,7 @@ public class MexicanMessaging extends Base {
         if(message != null) {
             //is it ours?
             if(message.ints == null || message.ints.length < 3 || message.ints[0] != KEY1 || message.ints[1] != KEY2) {
+                //pa("Bad Keys");
             	return;
             }
 
@@ -192,7 +330,7 @@ public class MexicanMessaging extends Base {
                         case BroadcastMessage.newUnit:
                             break;
                         case BroadcastMessage.lowEnergon:
-                            intIndex += 2;
+                            intIndex += 3;
                             locationIndex += 1;
                             break;
                         case BroadcastMessage.move:
@@ -209,6 +347,8 @@ public class MexicanMessaging extends Base {
                             locationIndex += message.ints[intIndex];
                             intIndex++;
                             break;
+                        default:
+                            //pa("Bad Message");
                     }
                 } else {
                     // this message is ours
@@ -231,8 +371,8 @@ public class MexicanMessaging extends Base {
                             player.newUnit(senderID, message.locations[locationIndex], message.strings[stringIndex]);
                             break;
                         case BroadcastMessage.lowEnergon:
-                            player.lowEnergonMessageCallback(message.locations[locationIndex], message.ints[intIndex + 1], message.ints[intIndex]);
-                            intIndex += 2;
+                            player.lowEnergonMessageCallback(message.locations[locationIndex], message.ints[intIndex], message.ints[intIndex + 1], message.ints[intIndex+2]);
+                            intIndex += 3;
                             locationIndex += 1;
                             break;
                         case BroadcastMessage.move:

@@ -211,13 +211,13 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public ArrayList<MapLocation> senseAlliedTeleporters() {
-        if(alliedTeleportersSensed < Clock.getRoundNum() - oldDataTolerance) {
+        if(alliedTeleportersSensed < player.cacheId) {
             try {
                 List<MapLocation> loc = Arrays.asList(controller.senseAlliedTeleporters());
                 if(!loc.isEmpty()) {
                 	teleporterLocations.addAll(loc);
                 }
-                alliedTeleportersSensed = Clock.getRoundNum();
+                alliedTeleportersSensed = player.cacheId;
             } catch(Exception e) {
             }
         }
@@ -229,7 +229,7 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public ArrayList<RobotInfo> senseEnemyRobotInfoInSensorRange() {
-        if(enemyInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(enemyInfoSensed >= player.cacheId) {
             return enemyRobots;
         }
 
@@ -249,7 +249,7 @@ public class SensationalSensing extends Base {
             }
         }
 
-        enemyInfoSensed = Clock.getRoundNum();
+        enemyInfoSensed = player.cacheId;
         return enemyRobots;
     }
 
@@ -258,7 +258,7 @@ public class SensationalSensing extends Base {
      */
     public ArrayList<RobotInfo> senseAlliedTowers() {
 
-        if(alliedTowersSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(alliedTowersSensed >= player.cacheId) {
             return alliedTowerInfo;
         }
 
@@ -271,7 +271,7 @@ public class SensationalSensing extends Base {
             }
         }
 
-        alliedTowersSensed = Clock.getRoundNum();
+        alliedTowersSensed = player.cacheId;
         return alliedTowerInfo;
     }
 
@@ -279,7 +279,7 @@ public class SensationalSensing extends Base {
      * Returns an arraylist of all of the allied towers that are in range.
      */
     public ArrayList<MapLocation> senseAlliedTowerLocations() {
-        if(alliedTowerLocationsSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(alliedTowerLocationsSensed >= player.cacheId) {
             return alliedTowerLocations;
         }
         
@@ -293,7 +293,7 @@ public class SensationalSensing extends Base {
                 	knownAlliedTowerIDs.put(robot.location.getX() + "," + robot.location.getY(), robot.id);
                 }
             }        
-        alliedTowerLocationsSensed = Clock.getRoundNum();
+        alliedTowerLocationsSensed = player.cacheId;
         return alliedTowerLocations;
     }
 
@@ -302,7 +302,7 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public ArrayList<RobotInfo> senseAlliedRobotInfoInSensorRange() {
-        if(alliedInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(alliedInfoSensed >= player.cacheId) {
             return alliedRobots;
         }
 
@@ -315,7 +315,7 @@ public class SensationalSensing extends Base {
             }
         }
 
-        alliedInfoSensed = Clock.getRoundNum();
+        alliedInfoSensed = player.cacheId;
         return alliedRobots;
     }
 
@@ -324,7 +324,7 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public ArrayList<MapLocation> senseEnemyRobotLocations() {
-        if(enemyLocationSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(enemyLocationSensed >= player.cacheId) {
             return enemyLocations;
         }
 
@@ -334,7 +334,7 @@ public class SensationalSensing extends Base {
             enemyLocations.add(r.location);
         }
 
-        enemyLocationSensed = Clock.getRoundNum();
+        enemyLocationSensed = player.cacheId;
         return enemyLocations;
     }
 
@@ -343,11 +343,11 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public MapLocation[] senseArchonLocations() {
-        if(archonLocationsSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(archonLocationsSensed >= player.cacheId) {
             return archonLocations;
         }
         archonLocations = controller.senseAlliedArchons();
-        archonLocationsSensed = Clock.getRoundNum();
+        archonLocationsSensed = player.cacheId;
         return archonLocations;
     }
 
@@ -356,13 +356,13 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public MapLocation senseClosestArchon() {
-        if(nearestArchonSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(nearestArchonSensed >= player.cacheId) {
             return nearestArchon;
         }
         
         senseArchonLocations();
         nearestArchon = navigation.findClosest(archonLocations);
-        nearestArchonSensed = Clock.getRoundNum();
+        nearestArchonSensed = player.cacheId;
         return nearestArchon;
     }
 
@@ -372,13 +372,13 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public Robot[] senseAirRobots() {
-        if(airSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(airSensed >= player.cacheId) {
             return air;
         }
 
         try {
             air = controller.senseNearbyAirRobots();
-            airSensed = Clock.getRoundNum();
+            airSensed = player.cacheId;
         } catch(Exception e) {
             System.out.println("----Caught Exception in getAirRobots.  Exception: " + e.toString());
         }
@@ -391,13 +391,13 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public Robot[] senseGroundRobots() {
-        if(groundSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(groundSensed >= player.cacheId) {
             return ground;
         }
 
         try {
             ground = controller.senseNearbyGroundRobots();
-            groundSensed = Clock.getRoundNum();
+            groundSensed = player.cacheId;
         } catch(Exception e) {
             System.out.println("----Caught Exception in getGroundRobots.  Exception: " + e.toString());
         }
@@ -410,7 +410,7 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public ArrayList<RobotInfo> senseAirRobotInfo() {
-        if(airInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(airInfoSensed >= player.cacheId) {
             return airInfo;
         }
 
@@ -425,7 +425,7 @@ public class SensationalSensing extends Base {
                 System.out.println("----Caught Exception in getAirRobotInfo.  Exception: " + e.toString());
             }
         }
-        airInfoSensed = Clock.getRoundNum();
+        airInfoSensed = player.cacheId;
         return airInfo;
     }
 
@@ -435,7 +435,7 @@ public class SensationalSensing extends Base {
      * The results are cached for two turns to save bytecodes.
      */
     public ArrayList<RobotInfo> senseGroundRobotInfo() {
-        if(groundInfoSensed >= Clock.getRoundNum() - oldDataTolerance) {
+        if(groundInfoSensed >= player.cacheId) {
             return groundInfo;
         }
 
@@ -450,7 +450,7 @@ public class SensationalSensing extends Base {
                 System.out.println("----Caught Exception in getGroundRobotInfo.  Exception: " + e.toString());
             }
         }
-        groundInfoSensed = Clock.getRoundNum();
+        groundInfoSensed = player.cacheId;
         return groundInfo;
     }
 }

@@ -28,16 +28,6 @@ public class Base {
         pa(message+count);
     }
 
-    public void pr(String s) {
-        if(false) {
-            return;
-        }
-
-        if(controller.getRobot().getID() == 111) {
-            System.out.println(s);
-        }
-    }
-
     /**
      * This is the same as System.out.println
      */

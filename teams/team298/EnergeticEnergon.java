@@ -25,9 +25,10 @@ public class EnergeticEnergon extends Base {
         sortaLowEnergonLevel = controller.getRobotType().maxEnergon() * .5;
     }
     
-    public void addRequest(MapLocation location, boolean isAirUnit, int amount) {
+    public void addRequest(MapLocation location, boolean isAirUnit, int amount, int round) {
+        if(round < Clock.getRoundNum()) return;
         if(location.distanceSquaredTo(controller.getLocation()) > 2) return;
-        requests.add(new EnergonTransferRequest(location, isAirUnit, amount));
+        requests.add(new EnergonTransferRequest(location, isAirUnit, amount, round));
     }
 
     /**
@@ -40,7 +41,7 @@ public class EnergeticEnergon extends Base {
             if(robot.location.distanceSquaredTo(controller.getLocation()) > 2) continue;
             int amount = calculateEnergonRequestAmount(robot);
             if(amount >= 1) {
-                requests.add(new EnergonTransferRequest(robot.location, false, amount));
+                requests.add(new EnergonTransferRequest(robot.location, false, amount, Integer.MAX_VALUE));
                 //p("adding request: "+requests.get(requests.size()-1).toString());
             }
         }
@@ -154,35 +155,6 @@ public class EnergeticEnergon extends Base {
     }
 
     /**
-     * Performs all the steps to request an energon transfer.
-     * First, it calculates an amount of energon to request, enough so that the neither
-     * the reserve not level overflows.
-     *
-     * The robot then attempts to move adjacent to the closest archon.  However, if the
-     * archon moves while the robot is moving, the robot will try 2 more times to get adjacent
-     * to the robot.
-     */
-    public int requestEnergonTransfer() {
-        int amount = calculateEnergonRequestAmount();
-        if(amount == -1) {
-            return Status.success;
-        }
-
-        int tries = 3;
-        navigation.changeToArchonGoal(false);
-        do {
-            navigation.moveOnce(true);
-            tries--;
-        } while(tries > 0 && !navigation.goal.done());
-
-        messaging.sendLowEnergon(calculateEnergonRequestAmount());
-        controller.yield();
-
-        navigation.popGoal();
-        return Status.success;
-    }
-
-    /**
      * Transfers the specified amount of energon to the robot as long as the robot is adjacent to the
      * archon, and the amount of energon requested will not reduce the archon's energon level to
      * just 1 energon.
@@ -225,16 +197,19 @@ public class EnergeticEnergon extends Base {
         public MapLocation location, archonLocation;
         public boolean isAirUnit;
         public double amount;
+        public int round;
 
-        public EnergonTransferRequest(MapLocation location, boolean isAirUnit, int amount) {
+        public EnergonTransferRequest(MapLocation location, boolean isAirUnit, int amount, int round) {
             this.location = location;
             this.isAirUnit = isAirUnit;
             this.amount = amount;
+            this.round = round;
         }
 
         public EnergonTransferRequest(int amount, boolean isAirUnit) {
             this.isAirUnit = isAirUnit;
             this.amount = amount;
+            this.round = Integer.MAX_VALUE;
         }
 
         public String toString() {

@@ -43,12 +43,11 @@ public class ArchonPlayer extends NovaPlayer {
                 navigation.changeToArchonNavigationGoal(true);
             	spawning.changeModeToAttacking();
                 flux.transferFluxBetweenArchons();
-                if (energon.isEnergonSortaLow() && sensing.getDangerFactor() > 1)
-                	messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
-                attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || sensing.getDangerFactor()>1;
-                
-
-                //add a small delay to archon movement so the other dudes can keep up
+   
+                if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
+                	messaging.sendLowEnergon();
+                attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum() || sensing.getDangerFactor() > 1;
+               //add a small delay to archon movement so the other dudes can keep up
                 if(attacking || navigation.archonNavigationGoal.distanceToLeader() > 25) {
                     navigation.moveOnce(false);
                 } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
@@ -64,7 +63,7 @@ public class ArchonPlayer extends NovaPlayer {
                     else if(status == Status.success) {
                         turnsSinceLastSpawn = -1;
                         try {
-                            messaging.sendFollowRequest(controller.getLocation(), controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
+                            messaging.sendFollowRequest(controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
                         } catch(Exception e) {
                             pa("----Exception Caught in sendFollowRequest()");
                         }
@@ -83,12 +82,6 @@ public class ArchonPlayer extends NovaPlayer {
                     }
                 }
                 turnsSinceTowerStuffDone--;
-
-                if(turnsSinceMessageForEnemyRobotsSent < 0) {
-                    messaging.sendMessageForEnemyRobots();
-                    turnsSinceMessageForEnemyRobotsSent = 1;
-                }
-                turnsSinceMessageForEnemyRobotsSent--;
 
                 moveTurns++;
                 break;
@@ -174,6 +167,7 @@ public class ArchonPlayer extends NovaPlayer {
         sensing.senseAllTiles();
         team = controller.getTeam();
         senseArchonNumber();
+        cacheId = archonNumber;
 
         //spread out so we dont group up
         MapLocation center = navigation.findAverage(sensing.senseArchonLocations());
@@ -252,10 +246,10 @@ public class ArchonPlayer extends NovaPlayer {
 
     public boolean pathStepTakenCallback() {
         senseNewTiles();
-        messaging.sendFollowRequest(controller.getLocation(), BroadcastMessage.everyone);
+        messaging.sendFollowRequest(BroadcastMessage.everyone);
         return true;
     }
 
-    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit, int round) {
     }
 }

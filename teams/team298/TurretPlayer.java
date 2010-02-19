@@ -27,8 +27,7 @@ public class TurretPlayer extends AttackPlayer {
             navigation.changeToArchonGoal(true);
             ignoreFollowRequest = true;
             if(distance < 3) {
-                energon.requestEnergonTransfer();
-                controller.yield();
+                messaging.sendLowEnergon();
             } else {
                 navigation.moveOnce(false);
             }

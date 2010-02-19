@@ -17,6 +17,7 @@ public class NovaPlayer extends Base {
     public boolean isLeader = false;
     public boolean hasReceivedUniqueMsg, ignoreFollowRequest = false;
     public int turnsSinceEnemiesSeen = 0;
+    public int cacheId = 0;
 
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
@@ -100,12 +101,6 @@ public class NovaPlayer extends Base {
             messaging.parseMessages();
             //printBytecode(t, b, "Parse Messages: ");
 
-            if(!isArchon && !isTower && turnsSinceEnergonSent < 0 && energon.isEnergonSortaLow()) {
-                messaging.sendLowEnergon(energon.calculateEnergonRequestAmount());
-                turnsSinceEnergonSent = 2;
-            }
-            turnsSinceEnergonSent--;
-
             if(turnsSinceEnergonProcessed < 0) {
                 if(isArchon) {
                     //b = Clock.getBytecodeNum();
@@ -115,15 +110,25 @@ public class NovaPlayer extends Base {
                 } else if(!isTower) {
                     energon.autoTransferEnergonBetweenUnits();
                 }
-                turnsSinceEnergonProcessed = 1;
+                turnsSinceEnergonProcessed = 0;
             }
             turnsSinceEnergonProcessed--;
             
             step();
 
+            if(!isArchon && !isTower && turnsSinceEnergonSent < 0 && energon.isEnergonSortaLow()) {
+                messaging.sendLowEnergon();
+                turnsSinceEnergonSent = 1;
+            }
+            turnsSinceEnergonSent--;
+
+            messaging.doSend();
+
             if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
                 controller.yield();
             }
+
+            cacheId++;
         }
     }
 
@@ -146,7 +151,7 @@ public class NovaPlayer extends Base {
     public void setGoal(int goal) {
         currentGoal = goal;
         controller.setIndicatorString(1, Goal.toString(goal));
-        pr("Changin goal to: " + Goal.toString(goal));
+        //p("Changin goal to: " + Goal.toString(goal));
     }
 
     /**
@@ -182,8 +187,8 @@ public class NovaPlayer extends Base {
         }
     }
 
-    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit) {
-        energon.addRequest(location1, isAirUnit == 1, amount);
+    public void lowEnergonMessageCallback(MapLocation location1, int amount, int isAirUnit, int round) {
+        energon.addRequest(location1, isAirUnit == 1, amount, round);
     }
 
     /**
