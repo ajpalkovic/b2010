@@ -17,6 +17,7 @@ public class NovaPlayer extends Base {
     public boolean isLeader = false;
     public boolean hasReceivedUniqueMsg, ignoreFollowRequest = false;
     public int turnsSinceEnemiesSeen = 0;
+    public int cacheId = 0;
 
     public MexicanMessaging messaging;
     public NaughtyNavigation navigation;
@@ -124,6 +125,8 @@ public class NovaPlayer extends Base {
             if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
                 controller.yield();
             }
+
+            cacheId++;
         }
     }
 
