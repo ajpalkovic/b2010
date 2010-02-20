@@ -1,8 +1,11 @@
 package team298;
 
 import battlecode.common.*;
+import battlecode.common.TerrainTile.TerrainType;
 import static battlecode.common.GameConstants.*;
 import java.util.*;
+
+import team298.Base.Goal;
 
 public class NaughtyNavigation extends Base {
 
@@ -677,7 +680,7 @@ public class NaughtyNavigation extends Base {
                 // TODO: Change this to get if archon is leader
                 if(player.isLeader) {
                     //p("isLeader");
-                    previousDirection = getMoveableArchonDirection(controller.getDirection());
+                    previousDirection = getMoveableArchonDirection(getLeaderDirection());
                     //p(previousDirection == null ? "NULL": previousDirection.toString());
                     return previousDirection;
                 } else {
@@ -686,6 +689,36 @@ public class NaughtyNavigation extends Base {
                     return getMoveableDirection(archonDirection);
                 }
             }
+        }
+        public Direction getLeaderDirection(){
+        	Direction dir = controller.getDirection();
+            int x = controller.getLocation().getX();
+            int y = controller.getLocation().getY();
+            
+
+            TerrainTile top = controller.senseTerrainTile(new MapLocation(x, y-6));
+            TerrainTile bottom = controller.senseTerrainTile(new MapLocation(x, y+6));
+            TerrainTile right = controller.senseTerrainTile(new MapLocation(x+6, y));
+            TerrainTile left = controller.senseTerrainTile(new MapLocation(x-6, y));
+
+            boolean t = top.getType() != TerrainType.OFF_MAP;
+            boolean b = bottom.getType() != TerrainType.OFF_MAP;
+            boolean l = left.getType() != TerrainType.OFF_MAP;
+            boolean r = right.getType() != TerrainType.OFF_MAP;
+
+                if(t) {
+                    if(l) dir = Direction.NORTH_WEST;
+                    else if(r) dir = Direction.NORTH_EAST;
+                    else dir = Direction.NORTH;
+                } else if(b) {
+                    if(l) dir = Direction.SOUTH_WEST;
+                    else if(r) dir = Direction.SOUTH_WEST;
+                    else dir = Direction.SOUTH;
+                } else {
+                    dir = l ? Direction.WEST : Direction.EAST;
+                }
+
+        	return dir;
         }
     }
 
