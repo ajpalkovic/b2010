@@ -21,7 +21,7 @@ public class ArchonPlayer extends NovaPlayer {
     
     public MapLocation closestEnemy;
     public MapLocation currentEnemy;
-    public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 3;
+    public int closestEnemySeen=Integer.MIN_VALUE, closestEnemyTolerance = 10;
 
     public ArchonPlayer(RobotController controller) {
         super(controller);
@@ -33,44 +33,46 @@ public class ArchonPlayer extends NovaPlayer {
     }
 
     public void step() {
-        // reevaluate goal here?
-        //sensing.senseAllTiles();
     	if (sensing.getDangerFactor() >= 2)
     		setGoal(Goal.collectingFlux);
+
+        spawning.changeModeToAttacking();
+        flux.transferFluxBetweenArchons();
+
+        if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
+            messaging.sendLowEnergon();
+        attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum();
+
+        if(currentGoal == Goal.collectingFlux) {
+            navigation.changeToArchonNavigationGoal(true);
+
+           //add a small delay to archon movement so the other dudes can keep up
+            if(attacking || navigation.archonNavigationGoal.distanceToLeader() > 25) {
+                navigation.moveOnce(false);
+            } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
+                int status = navigation.moveOnce(true);
+                //p("Status: "+status);
+                if(status == Status.success) moveTurns = 0;
+            }
+            moveTurns++;
+        }
+
+        if(turnsSinceLastSpawn > 2) {
+            int status = spawning.spawnRobot();
+            if(status == Status.cannotSupportUnit) turnsSinceLastSpawn = -1;
+            else if(status == Status.success) {
+                turnsSinceLastSpawn = -1;
+                try {
+                    messaging.sendFollowRequest(controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
+                } catch(Exception e) {
+                    pa("----Exception Caught in sendFollowRequest()");
+                }
+            }
+        }
+        turnsSinceLastSpawn++;
+
         switch(currentGoal) {
-            case Goal.idle:
             case Goal.collectingFlux:
-                navigation.changeToArchonNavigationGoal(true);
-            	spawning.changeModeToAttacking();
-                flux.transferFluxBetweenArchons();
-   
-                if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
-                	messaging.sendLowEnergon();
-                attacking = sensing.senseEnemyRobotInfoInSensorRange().size() > 1 || closestEnemySeen+closestEnemyTolerance > Clock.getRoundNum() || sensing.getDangerFactor() > 1;
-               //add a small delay to archon movement so the other dudes can keep up
-                if(attacking || navigation.archonNavigationGoal.distanceToLeader() > 25) {
-                    navigation.moveOnce(false);
-                } else if((moveTurns >= minMoveTurns && controller.getRoundsUntilMovementIdle() == 0)) {
-                    int status = navigation.moveOnce(true);
-                    //p("Status: "+status);
-                    if(status == Status.success) moveTurns = 0;
-                }
-
-                //try to spawn a new dude every turn
-                if(turnsSinceLastSpawn > 2) {
-                    int status = spawning.spawnRobot();
-                    if(status == Status.cannotSupportUnit) turnsSinceLastSpawn = -1;
-                    else if(status == Status.success) {
-                        turnsSinceLastSpawn = -1;
-                        try {
-                            messaging.sendFollowRequest(controller.senseGroundRobotAtLocation(spawning.spawnLocation).getID());
-                        } catch(Exception e) {
-                            pa("----Exception Caught in sendFollowRequest()");
-                        }
-                    }
-                }
-                turnsSinceLastSpawn++;
-
                 if(turnsSinceTowerStuffDone < 0) {
                     //try to spawn a tower every turn
                     sensing.senseAlliedTeleporters();
@@ -83,7 +85,6 @@ public class ArchonPlayer extends NovaPlayer {
                 }
                 turnsSinceTowerStuffDone--;
 
-                moveTurns++;
                 break;
             case Goal.askingForTowerLocation:
                 towers.askForTowerLocation();
@@ -94,6 +95,7 @@ public class ArchonPlayer extends NovaPlayer {
             case Goal.placingTeleporter:
                 towers.placeTeleporter();
                 break;
+            case Goal.idle:
             case Goal.attackingEnemyArchons:
                 setGoal(Goal.collectingFlux);
                 break;

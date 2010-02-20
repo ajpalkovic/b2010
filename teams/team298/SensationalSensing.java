@@ -70,14 +70,17 @@ public class SensationalSensing extends Base {
     	
     	float badcount = 0;
     	
-    	for (RobotInfo r : senseEnemyRobotInfoInSensorRange())
+    	for (RobotInfo r : senseEnemyRobotInfoInSensorRange()) {
+            if(r.type == RobotType.WOUT) continue;
+
     		if (r.type.canAttackAir()){
     			badcount++;
     			if (r.location.isAdjacentTo(controller.getLocation()))
     				badcount++;
-    		} else if (r.type.isAirborne()) {
+    		}/* else if (r.type.isAirborne()) {
     			badcount+=.5;
-    		}
+    		}*/
+        }
     		
     		
     	if (badcount <= 1)
