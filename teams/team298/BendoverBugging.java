@@ -54,6 +54,7 @@ public abstract class BendoverBugging extends NavigationGoal {
                 path[index - 1] = newGoal;
                 return getNextPathDirection(false);
             } else {
+                //System.out.println("Recalculate: "+goal);
                 planPath();
                 return getNextPathDirection(false);
             }

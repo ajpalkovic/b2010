@@ -69,9 +69,10 @@ public class WoutPlayer extends AttackPlayer {
                     return;
                 }
                 int distance = location.distanceSquaredTo(controller.getLocation());
+                double maxDistance = Math.pow(controller.getEnergonLevel() / (controller.getRobotType().energonUpkeep() + 0.05) / controller.getRobotType().moveDelayOrthogonal(), 2);
 
                 RobotInfo fluxTower = flux.autoTransferFlux();
-                if(energon.isEnergonLow() || flux.isFluxFull() || distance > 70 || (energon.isEnergonSortaLow() && distance > 36)) {
+                if(energon.isEnergonLow() || flux.isFluxFull() || distance > maxDistance || (energon.isEnergonSortaLow() && distance > 36)) {
                     //p("Archon Goal");
                     navigation.changeToArchonGoal(true);
                 } else if(fluxTower != null) {

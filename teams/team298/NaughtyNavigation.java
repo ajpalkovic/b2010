@@ -48,6 +48,8 @@ public class NaughtyNavigation extends Base {
     }
 
     public MapLocation findAverage(MapLocation[] locations) {
+        if(locations.length == 0) return null;
+        
         int xVal = 0, yVal = 0;
         for(MapLocation location : locations) {
             xVal += location.getX();
@@ -154,6 +156,7 @@ public class NaughtyNavigation extends Base {
         }
 
         while(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() != 0) {
+            //p("yield in faceDirection");
             controller.yield();
         }
 
@@ -624,55 +627,87 @@ public class NaughtyNavigation extends Base {
     			value = 0;    						    			
     		}
     		
-        	System.out.println(mini);
+        	//System.out.println(mini);
         	if (mini > 0 && mini < 8)
         		return dirs[mini];
         	else
         		return Direction.NONE;
         }
+
         public Direction getDirection() {
             //p("GetDirection");
             ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
             closest = null;
+            MapLocation closestArchon = null;
             average = null;
+            int x = 0, y = 0, count = 0;
+
+            //find the enemy center, closest attacker, and closest enemy archon
             if(enemies.size() > 0) {
                 enemiesLastSeen = Clock.getRoundNum();
                 closest = null;
                 RobotType type;
-                int x = 0, y = 0, count = 0;
                 MapLocation location = controller.getLocation();
-                int minDistance = Integer.MAX_VALUE, distance;
+                int minDistance = Integer.MAX_VALUE, distance, minArchonDistance = Integer.MAX_VALUE;
                 for(RobotInfo robot : enemies) {
                     type = robot.type;
-                    if(type.isBuilding() || type == RobotType.ARCHON || type == RobotType.WOUT) continue;
+                    distance = location.distanceSquaredTo(robot.location);
+                    if(type == RobotType.ARCHON && distance < minArchonDistance) {
+                        minArchonDistance = distance;
+                        closestArchon = robot.location;
+                        continue;
+                    } else if(type.isBuilding() || type == RobotType.WOUT) continue;
                     count++;
                     x += robot.location.getX();
                     y += robot.location.getY();
-                    if(closest == null || location.distanceSquaredTo(robot.location) < minDistance) {
+                    if(closest == null || distance < minDistance) {
                         closest = robot.location;
                         minDistance = location.distanceSquaredTo(robot.location);
                     }
                 }
-                average = new MapLocation(x, y);
-            } 
-            
+                if(count > 0) {
+                    x /= count;
+                    y /= count;
+                    average = new MapLocation(x, y);
+                }
+            }
+
+            //use old data if nobody is in sensor range
             if(closest == null && archonPlayer.closestEnemySeen + archonPlayer.closestEnemyTolerance > Clock.getRoundNum()) {
                 closest = archonPlayer.closestEnemy;
             }
-
+            
+            MapLocation archonCenter = findAverage(sensing.senseArchonLocations());
+            int archonDistance = controller.getLocation().distanceSquaredTo(archonCenter);
             if(closest != null) {
                 int distance = closest.distanceSquaredTo(controller.getLocation());
-                //p(closest.toString()+" "+distance);
-                if(distance >= 14 && distance <= 16) {
-                    return null;
-                } else if(distance > 16 && sensing.getDangerFactor() < 3) {
-                    if(average != null) {
-                        return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(average));
-                    }
-                    return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closest));
-                } else {
-                    return getMoveableArchonDirection(findBestDirection());
+                if(distance > 8 && archonDistance > 25) {
+                    return getMoveableDirection(controller.getLocation().directionTo(archonCenter));
                 }
+                
+                if(count > 2 || closestArchon == null) {
+                    //p(closest.toString()+" "+distance);
+                    if(distance >= 14 && distance <= 16) {
+                        return null;
+                    } else if(distance > 16 && sensing.getDangerFactor() < 3) {
+                        if(average != null) {
+                            return previousDirection = getMoveableDirection(controller.getLocation().directionTo(average));
+                        }
+                        return previousDirection = getMoveableDirection(controller.getLocation().directionTo(closest));
+                    } else {
+                        return getMoveableArchonDirection(findBestDirection());
+                    }
+                } else {
+                    if(distance < 4) {
+                        return getMoveableArchonDirection(findBestDirection());
+                    } else {
+                        return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closestArchon));
+                    }
+                }
+            } else if(closestArchon != null) {
+                return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closestArchon));
+            } else if(archonDistance > 25) {
+                return getMoveableDirection(controller.getLocation().directionTo(archonCenter));
             } else if(enemiesLastSeen + enemyTolerance > Clock.getRoundNum()) {
                 return previousDirection;
             } else {
@@ -824,6 +859,7 @@ public class NaughtyNavigation extends Base {
         }
 
         public int distanceToLeader() {
+            //return controller.getLocation().distanceSquaredTo(findAverage(sensing.senseArchonLocations()));
             return archonLocation == null ? 0 : controller.getLocation().distanceSquaredTo(archonLocation);
         }
 

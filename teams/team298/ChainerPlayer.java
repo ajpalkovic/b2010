@@ -13,20 +13,48 @@ public class ChainerPlayer extends AttackPlayer {
         range = 16;
     }
 
+    public boolean tryImmediateAttack(EnemyInfo enemy) {
+        MapLocation enemyLocation = enemy.location;
+        int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
+
+        if(controller.getRoundsUntilAttackIdle() > 0 || enemyDistance > 16) return false;
+        if(!controller.canAttackSquare(enemyLocation)) {
+            if(controller.getRoundsUntilMovementIdle() <= 1) {
+                navigation.faceLocation(enemyLocation);
+            } else {
+                return false;
+            }
+        }
+
+        enemyLocation = getChainerAttackLocation(enemy, true);
+        if(enemyLocation == null) return false;
+        if(!controller.canAttackSquare(enemyLocation)) return false;
+
+        return executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND) == Status.success;
+    }
+
+    public void tryMove(MapLocation enemyLocation) {
+        //navigation.changeToLocationGoal(enemyLocation, false);
+        navigation.changeToDirectionGoal(navigation.getMoveableDirection(controller.getLocation().directionTo(enemyLocation)), false);
+        navigation.moveOnce(true);
+        navigation.popGoal();
+    }
+
     public void step() {
         MapLocation location = sensing.senseClosestArchon();
+        navigation.changeToArchonGoal(true);
         if(location == null) return;
         int distance = location.distanceSquaredTo(controller.getLocation());
         boolean canMove = true;
 
-        //if the robot goes to get energon, then we need to save the followArchon goal for later
-        if(prevGoal != null) prevGoal = navigation.goal;
-
+        //double maxDistance = Math.max(20, Math.pow(controller.getEnergonLevel() / controller.getRobotType().energonUpkeep() / controller.getRobotType().moveDelayOrthogonal(), 2));
+        //p(maxDistance+"");
+        double maxDistance = 34;
 
         //always check if we got enough juice to go another round, if u know what i mean
-        if(energon.isEnergonLow() || distance > 34) {
-            navigation.changeToArchonGoal(true);
-            ignoreFollowRequest = true;
+        if(energon.isEnergonLow() || distance > maxDistance) {
+            //navigation.changeToArchonGoal(true);
+            //ignoreFollowRequest = true;
             if(distance < 3) {
                 messaging.sendLowEnergon();
             } else {
@@ -35,9 +63,9 @@ public class ChainerPlayer extends AttackPlayer {
             canMove = false;
         } else {
             //restore the follow request goal
-            if(prevGoal != null) navigation.goal = prevGoal;
-            prevGoal = null;
-            ignoreFollowRequest = false;
+            //if(prevGoal != null) navigation.goal = prevGoal;
+            //prevGoal = null;
+            //ignoreFollowRequest = false;
         }
 
         //find any enemey to attack.  mode.getEnemeyToAttack could return an out of range enemy too
@@ -46,35 +74,52 @@ public class ChainerPlayer extends AttackPlayer {
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
-            //p(enemy.toString());
+            MapLocation enemyLocation = enemy.location;
+            int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
+
+            boolean good = tryImmediateAttack(enemy);
+            
+            if(canMove && enemy.distance > 2 && (good || controller.getRoundsUntilMovementIdle() == 0 || controller.getRoundsUntilAttackIdle() > controller.getRoundsUntilMovementIdle())) {
+                tryMove(enemyLocation);
+            }
+
+            if(good) return;
+
+            //p(enemy.toString()+" "+enemyDistance);
             
             //if the closest enemy is out of range, lets just move towards them first
-            int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
             if(enemyDistance > 16) {
-                navigation.changeToDirectionGoal(navigation.getMoveableDirection(controller.getLocation().directionTo(enemy.location)), false);
-                navigation.moveOnce(false);
-                navigation.popGoal();
+                //p("Too far");
+                if(canMove && controller.getRoundsUntilMovementIdle() <= 1) {
+                    tryMove(enemyLocation);
+                }
                 return;
             }
 
-            int t = Clock.getRoundNum(), b = Clock.getBytecodeNum();
-            MapLocation enemyLocation = enemy.location;
-            if(!controller.canAttackSquare(enemyLocation)) navigation.faceLocation(enemyLocation);
+            if(!controller.canAttackSquare(enemyLocation)) {
+                //p("Face location");
+                navigation.faceLocation(enemyLocation);
+            }
 
-            enemyLocation = getChainerAttackLocation(enemy);
+            enemyLocation = getChainerAttackLocation(enemy, false);
             //we werent able to find a location in range that wouldnt hit our dudes as well
             if(enemyLocation == null) return;
-            if(!controller.canAttackSquare(enemyLocation)) navigation.faceLocation(enemyLocation);
+            //p("Attack location: "+enemyLocation);
+            if(!controller.canAttackSquare(enemyLocation)) {
+                //p("face location 2");
+                navigation.faceLocation(enemyLocation);
+            }
             
-            if(!controller.canAttackSquare(enemyLocation) && canMove) {
-                navigation.changeToLocationGoal(enemyLocation, false);
-                navigation.moveOnce(false);
-                navigation.popGoal();
+            if(!controller.canAttackSquare(enemyLocation)) {
+                //p("cant attack");
+                if(canMove && controller.getRoundsUntilMovementIdle() <= 1) {
+                    tryMove(enemyLocation);
+                }
                 return;
             }
+            //p("execute attack");
             int status = executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
-            //if(status == Status.success) p("take that bitch");
-            processEnemies();
+            //p("attack: "+status);
             attackLocation = enemyLocation;
         } else {
             //navigation.changeToMoveableDirectionGoal(true);
@@ -82,9 +127,9 @@ public class ChainerPlayer extends AttackPlayer {
         }
     }
 
-    public int getEnemyCount(ArrayList<RobotInfo> enemies, MapLocation location, boolean inAir) {
+    public int getEnemyCount(ArrayList<EnemyInfo> enemies, MapLocation location, boolean inAir) {
         int enemiesHit = 0;
-        for(RobotInfo e : enemies) {
+        for(EnemyInfo e : enemies) {
             if(inAir == (e.type == RobotType.ARCHON)) {
                 if(e.location.distanceSquaredTo(location) <= 2) {
                     enemiesHit++;
@@ -118,8 +163,7 @@ public class ChainerPlayer extends AttackPlayer {
         return alliesHit;
     }
 
-    public MapLocation getChainerAttackLocation(EnemyInfo enemy) {
-        ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
+    public MapLocation getChainerAttackLocation(EnemyInfo enemy, boolean noTurn) {
         ArrayList<RobotInfo> allies = sensing.senseAlliedRobotInfoInSensorRange();
         MapLocation[] archons = sensing.senseArchonLocations();
 
@@ -127,12 +171,13 @@ public class ChainerPlayer extends AttackPlayer {
 
         MapLocation best = null, location = enemy.location;
         int alliesHit = Integer.MAX_VALUE, enemiesHit = Integer.MIN_VALUE;
-        int minAlliesHit = Integer.MAX_VALUE, minEnemiesHit = Integer.MIN_VALUE;
+        int minAlliesHit = Integer.MAX_VALUE, minEnemiesHit = Integer.MIN_VALUE, minDistance = Integer.MAX_VALUE, distance;
 
         alliesHit = getAllyCount(allies, archons, location, inAir);
         if(alliesHit <= 1) {
             minEnemiesHit = getEnemyCount(enemies, location, inAir);
             minAlliesHit = alliesHit;
+            minDistance = location.distanceSquaredTo(controller.getLocation());
             best = location;
         }
 
@@ -141,7 +186,9 @@ public class ChainerPlayer extends AttackPlayer {
             for(int y = -1; y <= 1; y++) {
                 if(x == 0 && y == 0) continue;
                 location = new MapLocation(enemy.location.getX()+x, enemy.location.getY()+y);
-                if(location.distanceSquaredTo(controller.getLocation()) > 9) continue;
+                if(noTurn && !controller.canAttackSquare(location)) continue;
+                distance = location.distanceSquaredTo(controller.getLocation());
+                if(distance > 9) continue;
                 
                 alliesHit = getAllyCount(allies, archons, location, inAir);
                 if(alliesHit > 1) continue;
@@ -152,7 +199,7 @@ public class ChainerPlayer extends AttackPlayer {
                     minAlliesHit = alliesHit;
                     minEnemiesHit = enemiesHit;
                 } else if(alliesHit == minAlliesHit) {
-                    if(enemiesHit > minEnemiesHit) {
+                    if(enemiesHit > minEnemiesHit || distance < minDistance) {
                         best = location;
                         minAlliesHit = alliesHit;
                         minEnemiesHit = enemiesHit;

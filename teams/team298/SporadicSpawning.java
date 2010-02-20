@@ -78,9 +78,9 @@ public class SporadicSpawning extends Base {
         if(controller.getEnergonLevel() < Math.min(unit.spawnCost() + 25, 74)) {
             return false;
         }
-        if (sensing.getDangerFactor() > 2 && controller.getEnergonLevel() < unit.spawnCost() + 15 + 10*sensing.getDangerFactor()){
+        /*if (sensing.getDangerFactor() > 2 && controller.getEnergonLevel() < unit.spawnCost() + 15 + 10*sensing.getDangerFactor()){
         	return false;
-        }
+        }*/
 
         ArrayList<RobotInfo> air = sensing.senseAirRobotInfo(), ground = sensing.senseAlliedRobotInfoInSensorRange();
         double energonCost = 0;
@@ -157,7 +157,7 @@ public class SporadicSpawning extends Base {
      * If a robot gets in the way when the archon attempts to execute the spawn, it will recursively call the method.
      */
     private int spawnRobot(RobotType robot) {
-        if(controller.getEnergonLevel() < robot.spawnCost() + 10) {
+        if(controller.getEnergonLevel() < robot.spawnCost() + 20) {
             return Status.notEnoughEnergon;
         }
 
@@ -173,11 +173,13 @@ public class SporadicSpawning extends Base {
 
         //check the 8 tiles around me for a spawn location
         try {
-            if(navigation.isLocationFree(controller.getLocation().add(controller.getDirection()), isAirUnit)) {
+            MapLocation location = controller.getLocation().add(controller.getDirection());
+            if(navigation.isLocationFree(location, isAirUnit)) {
                 previousSpawnType = robot;
                 controller.spawn(robot);
                 //p("Spawned "+robot);
                 controller.yield();
+                energon.transferEnergon(10, location, isAirUnit);
 
                 // send data
             } else {
@@ -336,19 +338,19 @@ public class SporadicSpawning extends Base {
                     return RobotType.SOLDIER;
                 }
 
-                if(chainerCount < 1.5*nearbyArchons) {
+                if(chainerCount < 2*nearbyArchons) {
                     return RobotType.CHAINER;
                 }
 
                 //p(woutCount+" "+sum+" "+average+" "+index);
-                if(robotList.size() > 1.5*nearbyArchons) {
+                if(robotList.size() > nearbyArchons) {
                     //p("Returning Chainer");
                     return RobotType.CHAINER;
                 }
                 //p("Returning Wout");
                 return RobotType.WOUT;
             } else {
-                if(robotList.size() > 1.2*nearbyArchons || (robotList.size() > nearbyArchons*0.5 && chainerCount < nearbyArchons)) {
+                if(robotList.size() >= nearbyArchons || (robotList.size() > nearbyArchons*0.5 && chainerCount < nearbyArchons)) {
                     return RobotType.CHAINER;
                 }
                 return RobotType.WOUT;

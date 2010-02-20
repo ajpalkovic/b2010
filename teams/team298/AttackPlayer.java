@@ -8,7 +8,7 @@ public abstract class AttackPlayer extends NovaPlayer {
 
     public ArrayList<EnemyInfo> enemies = new ArrayList<EnemyInfo>(), enemiesTemp = new ArrayList<EnemyInfo>();
     public ArrayList<EnemyInfo> inRangeEnemies, inRangeWithoutTurningEnemies, outOfRangeEnemies, archonEnemies, outOfRangeArchonEnemies;
-    public int noEnemiesCount = 0, maxDistanceAway = 3;
+    public int noEnemiesCount = 0;
     public boolean movingToAttack = false, enemyInSightCalled = false;
     public MapLocation attackLocation;
     public int range, minRange;
@@ -49,7 +49,7 @@ public abstract class AttackPlayer extends NovaPlayer {
             enemiesTemp = null;
         } else {
             // no new enemy info was received, so stick with the old stuff
-            if(noEnemiesCount < 10) {
+            if(noEnemiesCount < 4) {
                 enemies = enemiesTemp;
                 noEnemiesCount++;
             } else {
@@ -58,18 +58,6 @@ public abstract class AttackPlayer extends NovaPlayer {
                 noEnemiesCount = 0;
             }
         }
-    }
-
-    /**
-     * This method moves the robot one location towards the nearest enemy.
-     * It should only be called if there are no inrange enemies.
-     */
-    public void moveToAttack() {
-        movingToAttack = true;
-        navigation.changeToLocationGoal(mode.getEnemyToAttack().location, false);
-        navigation.moveOnce(false);
-        navigation.popGoal();
-        movingToAttack = false;
     }
 
     /**
@@ -91,7 +79,9 @@ public abstract class AttackPlayer extends NovaPlayer {
             EnemyInfo current = enemies.get(c);
 
             if(current.type == RobotType.ARCHON) {
-                if(current.distance <= range && current.distance >= minRange) {
+                if(controller.canAttackSquare(current.location)) {
+                    inRangeWithoutTurningEnemies.add(current);
+                } else if(current.distance <= range && current.distance >= minRange) {
                     archonEnemies.add(current);
                 } else {
                     outOfRangeArchonEnemies.add(current);
