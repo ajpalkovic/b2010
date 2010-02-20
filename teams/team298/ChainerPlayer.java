@@ -40,17 +40,36 @@ public class ChainerPlayer extends AttackPlayer {
             ignoreFollowRequest = false;
         }
 
+        canMove = canMove && controller.getRoundsUntilMovementIdle() <= 1;
+
         //find any enemey to attack.  mode.getEnemeyToAttack could return an out of range enemy too
         processEnemies();
         sortEnemies();
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
-            //p(enemy.toString());
+            if(canMove && controller.getRoundsUntilAttackIdle() > 1) {
+                if(enemy.distance > 4) {
+                    Direction dir = navigation.getMoveableDirection(controller.getLocation().directionTo(enemy.location));
+                    if(dir == null) return;
+                    if(controller.getDirection() != dir) {
+                        navigation.faceDirection(dir);
+                        return;
+                    }
+                    navigation.changeToDirectionGoal(dir, false);
+                    navigation.moveOnce(true);
+                    navigation.popGoal();
+                }
+            }
+
+            MapLocation enemyLocation = enemy.location;
+            int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
+
+            p(enemy.toString()+" "+enemyDistance);
             
             //if the closest enemy is out of range, lets just move towards them first
-            int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
             if(enemyDistance > 16) {
+                p("Too far");
                 navigation.changeToDirectionGoal(navigation.getMoveableDirection(controller.getLocation().directionTo(enemy.location)), false);
                 navigation.moveOnce(false);
                 navigation.popGoal();
@@ -58,21 +77,32 @@ public class ChainerPlayer extends AttackPlayer {
             }
 
             int t = Clock.getRoundNum(), b = Clock.getBytecodeNum();
-            MapLocation enemyLocation = enemy.location;
-            if(!controller.canAttackSquare(enemyLocation)) navigation.faceLocation(enemyLocation);
+            if(!controller.canAttackSquare(enemyLocation)) {
+                p("Face location");
+                p(""+navigation.faceLocation(enemyLocation));
+            }
 
-            enemyLocation = getChainerAttackLocation(enemy);
+            enemyLocation = getChainerAttackLocation(enemy, false);
             //we werent able to find a location in range that wouldnt hit our dudes as well
             if(enemyLocation == null) return;
-            if(!controller.canAttackSquare(enemyLocation)) navigation.faceLocation(enemyLocation);
+            p("Attack location: "+enemyLocation);
+            if(!controller.canAttackSquare(enemyLocation)) {
+                p("face location 2");
+                p(""+navigation.faceLocation(enemyLocation));
+            }
             
-            if(!controller.canAttackSquare(enemyLocation) && canMove) {
-                navigation.changeToLocationGoal(enemyLocation, false);
-                navigation.moveOnce(false);
-                navigation.popGoal();
+            if(!controller.canAttackSquare(enemyLocation)) {
+                p("cant attack");
+                if(canMove) {
+                    navigation.changeToLocationGoal(enemyLocation, false);
+                    navigation.moveOnce(false);
+                    navigation.popGoal();
+                }
                 return;
             }
+            p("execute attack");
             int status = executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
+            p("attack: "+status);
             //if(status == Status.success) p("take that bitch");
             processEnemies();
             attackLocation = enemyLocation;
@@ -118,7 +148,7 @@ public class ChainerPlayer extends AttackPlayer {
         return alliesHit;
     }
 
-    public MapLocation getChainerAttackLocation(EnemyInfo enemy) {
+    public MapLocation getChainerAttackLocation(EnemyInfo enemy, boolean noTurn) {
         ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
         ArrayList<RobotInfo> allies = sensing.senseAlliedRobotInfoInSensorRange();
         MapLocation[] archons = sensing.senseArchonLocations();
@@ -127,12 +157,13 @@ public class ChainerPlayer extends AttackPlayer {
 
         MapLocation best = null, location = enemy.location;
         int alliesHit = Integer.MAX_VALUE, enemiesHit = Integer.MIN_VALUE;
-        int minAlliesHit = Integer.MAX_VALUE, minEnemiesHit = Integer.MIN_VALUE;
+        int minAlliesHit = Integer.MAX_VALUE, minEnemiesHit = Integer.MIN_VALUE, minDistance = Integer.MAX_VALUE, distance;
 
         alliesHit = getAllyCount(allies, archons, location, inAir);
         if(alliesHit <= 1) {
             minEnemiesHit = getEnemyCount(enemies, location, inAir);
             minAlliesHit = alliesHit;
+            minDistance = location.distanceSquaredTo(controller.getLocation());
             best = location;
         }
 
@@ -141,7 +172,9 @@ public class ChainerPlayer extends AttackPlayer {
             for(int y = -1; y <= 1; y++) {
                 if(x == 0 && y == 0) continue;
                 location = new MapLocation(enemy.location.getX()+x, enemy.location.getY()+y);
-                if(location.distanceSquaredTo(controller.getLocation()) > 9) continue;
+                if(noTurn && !controller.canAttackSquare(location)) continue;
+                distance = location.distanceSquaredTo(controller.getLocation());
+                if(distance > 9) continue;
                 
                 alliesHit = getAllyCount(allies, archons, location, inAir);
                 if(alliesHit > 1) continue;
@@ -152,7 +185,7 @@ public class ChainerPlayer extends AttackPlayer {
                     minAlliesHit = alliesHit;
                     minEnemiesHit = enemiesHit;
                 } else if(alliesHit == minAlliesHit) {
-                    if(enemiesHit > minEnemiesHit) {
+                    if(enemiesHit > minEnemiesHit || distance < minDistance) {
                         best = location;
                         minAlliesHit = alliesHit;
                         minEnemiesHit = enemiesHit;

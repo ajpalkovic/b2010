@@ -269,6 +269,7 @@ public class SporadicSpawning extends Base {
         }
 
         public RobotType getNextRobotSpawnType() {
+            if(true) return RobotType.CHAINER;
             ArrayList<RobotInfo> robots = sensing.senseGroundRobotInfo();
             int round = Clock.getRoundNum(), id, result;
             chainerCount = 0;
@@ -333,19 +334,19 @@ public class SporadicSpawning extends Base {
                     return RobotType.SOLDIER;
                 }
 
-                if(chainerCount < 1.5*nearbyArchons) {
+                if(chainerCount < 2*nearbyArchons) {
                     return RobotType.CHAINER;
                 }
 
                 //p(woutCount+" "+sum+" "+average+" "+index);
-                if(robotList.size() > 1.5*nearbyArchons) {
+                if(robotList.size() > nearbyArchons) {
                     //p("Returning Chainer");
                     return RobotType.CHAINER;
                 }
                 //p("Returning Wout");
                 return RobotType.WOUT;
             } else {
-                if(robotList.size() > 1.2*nearbyArchons || (robotList.size() > nearbyArchons*0.5 && chainerCount < nearbyArchons)) {
+                if(robotList.size() > nearbyArchons || (robotList.size() > nearbyArchons*0.5 && chainerCount < nearbyArchons)) {
                     return RobotType.CHAINER;
                 }
                 return RobotType.WOUT;

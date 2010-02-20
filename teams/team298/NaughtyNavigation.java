@@ -151,6 +151,7 @@ public class NaughtyNavigation extends Base {
         }
 
         while(controller.hasActionSet() || controller.getRoundsUntilMovementIdle() != 0) {
+            p("yield in faceDirection");
             controller.yield();
         }
 

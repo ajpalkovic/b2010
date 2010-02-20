@@ -91,7 +91,9 @@ public abstract class AttackPlayer extends NovaPlayer {
             EnemyInfo current = enemies.get(c);
 
             if(current.type == RobotType.ARCHON) {
-                if(current.distance <= range && current.distance >= minRange) {
+                if(controller.canAttackSquare(current.location)) {
+                    inRangeWithoutTurningEnemies.add(current);
+                } else if(current.distance <= range && current.distance >= minRange) {
                     archonEnemies.add(current);
                 } else {
                     outOfRangeArchonEnemies.add(current);
