@@ -543,15 +543,28 @@ public class NaughtyNavigation extends Base {
         	ArrayList<RobotInfo> robos = sensing.senseEnemyRobotInfoInSensorRange();
         	float[] dirValues = {0,0,0,0,0,0,0,0};//N,NE,E,SE,S,SW,W,NW
         	Direction[] dirs = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+        	float oppositeWeight = 2.05f;
+        	MapLocation us = controller.getLocation();
+        	if (map.isVoid(us))
+        		oppositeWeight+=.5;
+        	for (int i = 0; i < 8; i++) {
+        		if (map.get(us.add(dirs[i]))==TerrainTile.OFF_MAP){
+        			dirValues[i] = Integer.MIN_VALUE;
+        		}
+        	}
         	for (RobotInfo r : robos) {
         		if (r.type.canAttackAir() || r.type.isAirborne()){
         			int index = -1;
         			Direction d = controller.getLocation().directionTo(r.location);
+        				
         				for (int i = 0; i < 8; i++){
-        					if (dirs[i] == d)
+        					if (dirs[i] == d){
         						index = i;
+        						break;
+        					}
         				}
-        				if (index == -1)
+        				
+        				if (index == -1 || dirValues[index] < 0)
         					continue;
         			if (r.location.isAdjacentTo(controller.getLocation()))
         				dirValues[index]++;
@@ -562,35 +575,46 @@ public class NaughtyNavigation extends Base {
         	}
         	//System.out.println("\n" + dirValues[7] + " " + dirValues[0] + " " + dirValues[1] + " \n" + dirValues[6] + " A " + dirValues[2] + "\n" + dirValues[5] + " " + dirValues[4] + " " + dirValues[3]);
         	float min = Integer.MIN_VALUE;
-        	int mini=-1, value = 0;
+        	int mini=-1;
+        	float value = 0;
     		for (int i = 0; i < 8; i++) {
+    			if (dirValues[i] < 0)
+    				continue;
+    			else
     			if (i%2==0){
     				for (int j = 0; j < 8; j++)
-    					if (i!=j)
-    					if (j == (i+6)%8 || j == (i+2)%8 || j == (i+1)%8 || j == (i+7)%8 || i == j)
+    					if (i==j || dirValues[j] < 0)
+    						continue;
+    					else if (j == (i+6)%8 || j == (i+2)%8 || j == (i+1)%8 || j == (i+7)%8 || i == j)
     						value+=dirValues[j];
     					else if (j == (i+4)%8)
-    						value+=dirValues[j]*2+1;
+    						value+=dirValues[j]*oppositeWeight;
     					else
     						value+=dirValues[j]*2;
     			}
     			else {
     				for (int j = 0; j < 8; j++)
-    					if(i!=j)
-    					if (j == (i+7)%8 || j == i || j == (i+1)%8)
+    				if (i==j || dirValues[j] < 0)
+    					continue;    				
+    				else if (j == (i+7)%8 || j == i || j == (i+1)%8)
     						value+=dirValues[j];
     					else if (j == (i+4)%8)
-    						value+=dirValues[j]*2.5;
+    						value+=dirValues[j]*oppositeWeight;
     					else
     						value+=dirValues[j]*2;    					
     			}
-    			if (!map.onMap(controller.getLocation().add(dirs[i])))
-    			{
-    				value*=1.5;
-    			} else if (!map.onMap(controller.getLocation().add(dirs[i]).add(dirs[i]))){
-    				value*=1.3;
-    			} else if (!map.onMap(controller.getLocation().add(dirs[i]).add(dirs[i]).add(dirs[i])))
-    				value*=1.2;
+    			MapLocation p = controller.getLocation();
+    			int q = 0;
+    			if (map.isVoid(p))
+    				q = 3;
+    			for (; q < 4; q++){
+    				p = p.add(dirs[i]);
+    				if (map.isVoid(p))
+    				{
+    					value*=1 + 1/(Math.pow(2,q)+1);
+    				} 
+    			}
+    			//System.out.print(value + " ");
     			if (value > min){
     				mini = i;
     				min = value;
@@ -598,7 +622,7 @@ public class NaughtyNavigation extends Base {
     			value = 0;    						    			
     		}
     		
-        	
+        	System.out.println(mini);
         	if (mini > 0 && mini < 8)
         		return dirs[mini];
         	else
@@ -639,7 +663,7 @@ public class NaughtyNavigation extends Base {
                 //p(closest.toString()+" "+distance);
                 if(distance >= 14 && distance <= 16) {
                     return null;
-                } else if(distance > 16) {
+                } else if(distance > 16 && sensing.getDangerFactor() < 3) {
                     if(average != null) {
                         return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(average));
                     }

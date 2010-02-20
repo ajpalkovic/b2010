@@ -28,7 +28,7 @@ public class SoldierPlayer extends AttackPlayer {
 
 
         //always check if we got enough juice to go another round, if u know what i mean
-        if(energon.isEnergonLow() || distance > 34) {
+        if(energon.isEnergonLow() || distance > 48) {
             navigation.changeToArchonGoal(true);
             ignoreFollowRequest = true;
             if(distance < 3) {
