@@ -18,8 +18,13 @@ public class ChainerPlayer extends AttackPlayer {
         int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
 
         if(controller.getRoundsUntilAttackIdle() > 0 || enemyDistance > 16) return false;
+        
+        enemyLocation = getChainerAttackLocation(enemy, false);
+        if(enemyLocation == null) return false;
+
         if(!controller.canAttackSquare(enemyLocation)) {
             if(controller.getRoundsUntilMovementIdle() <= 1) {
+                if(debug) p("face location tryImmediate");
                 navigation.faceLocation(enemyLocation);
             } else {
                 return false;
@@ -30,6 +35,7 @@ public class ChainerPlayer extends AttackPlayer {
         if(enemyLocation == null) return false;
         if(!controller.canAttackSquare(enemyLocation)) return false;
 
+        if(debug) p("execute attack called"+enemyLocation);
         return executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND) == Status.success;
     }
 
@@ -53,6 +59,7 @@ public class ChainerPlayer extends AttackPlayer {
 
         //always check if we got enough juice to go another round, if u know what i mean
         if(energon.isEnergonLow() || distance > maxDistance) {
+            if(debug) p("Archon too far / low energon");
             //navigation.changeToArchonGoal(true);
             //ignoreFollowRequest = true;
             if(distance < 3) {
@@ -70,56 +77,65 @@ public class ChainerPlayer extends AttackPlayer {
 
         //find any enemey to attack.  mode.getEnemeyToAttack could return an out of range enemy too
         processEnemies();
-        sortEnemies();
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
             MapLocation enemyLocation = enemy.location;
             int enemyDistance = controller.getLocation().distanceSquaredTo(enemy.location);
 
+            if(debug) p(enemy.toString()+" "+enemyDistance);
+            if(debug) p(controller.hasActionSet()+" "+controller.getRoundsUntilAttackIdle()+" "+controller.getRoundsUntilMovementIdle());
+            
             boolean good = tryImmediateAttack(enemy);
+            if(debug) p("result: "+good);
+            if(debug) p(controller.hasActionSet()+" "+controller.getRoundsUntilAttackIdle()+" "+controller.getRoundsUntilMovementIdle());
             
             if(canMove && enemy.distance > 2 && (good || controller.getRoundsUntilMovementIdle() == 0 || controller.getRoundsUntilAttackIdle() > controller.getRoundsUntilMovementIdle())) {
+                if(debug) p("try move");
                 tryMove(enemyLocation);
+                if(debug) p(controller.hasActionSet()+" "+controller.getRoundsUntilAttackIdle()+" "+controller.getRoundsUntilMovementIdle());
             }
 
             if(good) return;
-
-            //p(enemy.toString()+" "+enemyDistance);
             
             //if the closest enemy is out of range, lets just move towards them first
             if(enemyDistance > 16) {
-                //p("Too far");
+                if(debug) p("Too far");
                 if(canMove && controller.getRoundsUntilMovementIdle() <= 1) {
+                    if(debug) p("try move 2");
                     tryMove(enemyLocation);
                 }
                 return;
             }
 
             if(!controller.canAttackSquare(enemyLocation)) {
-                //p("Face location");
+                if(debug) p("Face location");
                 navigation.faceLocation(enemyLocation);
+                if(debug) p(controller.hasActionSet()+" "+controller.getRoundsUntilAttackIdle()+" "+controller.getRoundsUntilMovementIdle());
             }
 
             enemyLocation = getChainerAttackLocation(enemy, false);
             //we werent able to find a location in range that wouldnt hit our dudes as well
             if(enemyLocation == null) return;
-            //p("Attack location: "+enemyLocation);
+            if(debug) p("Attack location: "+enemyLocation);
             if(!controller.canAttackSquare(enemyLocation)) {
-                //p("face location 2");
+                if(debug) p("face location 2");
                 navigation.faceLocation(enemyLocation);
+                if(debug) p(controller.hasActionSet()+" "+controller.getRoundsUntilAttackIdle()+" "+controller.getRoundsUntilMovementIdle());
             }
             
             if(!controller.canAttackSquare(enemyLocation)) {
-                //p("cant attack");
+                if(debug) p("cant attack");
                 if(canMove && controller.getRoundsUntilMovementIdle() <= 1) {
+                    if(debug) p("try move 3");
                     tryMove(enemyLocation);
                 }
                 return;
             }
-            //p("execute attack");
+            if(debug) p("execute attack");
+            if(debug) p(controller.hasActionSet()+" "+controller.getRoundsUntilAttackIdle()+" "+controller.getRoundsUntilMovementIdle());
             int status = executeAttack(enemyLocation, enemy.type.isAirborne() ? RobotLevel.IN_AIR : RobotLevel.ON_GROUND);
-            //p("attack: "+status);
+            if(debug) p("attack: "+status);
             attackLocation = enemyLocation;
         } else {
             //navigation.changeToMoveableDirectionGoal(true);
@@ -127,9 +143,9 @@ public class ChainerPlayer extends AttackPlayer {
         }
     }
 
-    public int getEnemyCount(ArrayList<EnemyInfo> enemies, MapLocation location, boolean inAir) {
+    public int getEnemyCount(ArrayList<RobotInfo> enemies, MapLocation location, boolean inAir) {
         int enemiesHit = 0;
-        for(EnemyInfo e : enemies) {
+        for(RobotInfo e : enemies) {
             if(inAir == (e.type == RobotType.ARCHON)) {
                 if(e.location.distanceSquaredTo(location) <= 2) {
                     enemiesHit++;
@@ -165,6 +181,7 @@ public class ChainerPlayer extends AttackPlayer {
 
     public MapLocation getChainerAttackLocation(EnemyInfo enemy, boolean noTurn) {
         ArrayList<RobotInfo> allies = sensing.senseAlliedRobotInfoInSensorRange();
+        ArrayList<RobotInfo> enemies = sensing.senseEnemyRobotInfoInSensorRange();
         MapLocation[] archons = sensing.senseArchonLocations();
 
         boolean inAir = enemy.type == RobotType.ARCHON;

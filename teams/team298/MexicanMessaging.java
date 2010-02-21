@@ -13,6 +13,7 @@ public class MexicanMessaging extends Base {
     public ArrayList<MapLocation> messageLocations = new ArrayList<MapLocation>();
     public SensationalSensing sensing;
     public Message previousMessage = null;
+    public int turnsSinceClosestEnemySent = 0;
     
     public MexicanMessaging(NovaPlayer player) {
         super(player);
@@ -81,8 +82,11 @@ public class MexicanMessaging extends Base {
         if(!player.isTower && !player.isArchon) {
             sendLowEnergon = sendLowEnergon || player.energon.isEnergonLow();
         }
+
+        boolean doSend = sendClosestEnemy && (turnsSinceClosestEnemySent < 0 || (sendTowerPing || sendTowerBuildLocationRequest || sendTowerBuildLocationResponse || sendMove || sendLowEnergon || sendFollowRequest || sendNewUnit));
+        turnsSinceClosestEnemySent--;
         
-        if(!(sendTowerPing || sendTowerBuildLocationRequest || sendTowerBuildLocationResponse || sendMove || sendLowEnergon || sendFollowRequest || sendNewUnit || sendClosestEnemy || sendEnemies)) return;
+        if(!(sendTowerPing || sendTowerBuildLocationRequest || sendTowerBuildLocationResponse || sendMove || sendLowEnergon || sendFollowRequest || sendNewUnit || doSend || sendEnemies)) return;
 
         int intLength = 3, stringLength = 0, locationLength = 0;
         int intIndex = 3, stringIndex = 0, locationIndex = 0;
@@ -119,12 +123,13 @@ public class MexicanMessaging extends Base {
             locationLength++;
             intLength += 2;
         }
-        if(sendClosestEnemy && player.cacheId % 2 == 0) {
+        if(doSend) {
             enemy = player.navigation.findClosest(sensing.senseEnemyRobotInfoInSensorRange());
             if(enemy != null) {
                 intLength += 3;
                 stringLength++;
                 locationLength++;
+                turnsSinceClosestEnemySent = 5;
             }
         }
         if(sendEnemies && player.cacheId % 2 == 0) {
@@ -203,7 +208,7 @@ public class MexicanMessaging extends Base {
             strings[stringIndex++] = controller.getRobotType().toString();
             locations[locationIndex++] = controller.getLocation();
         }
-        if(sendClosestEnemy && player.cacheId % 2 == 0) {
+        if(doSend) {
             if(enemy != null) {
                 //p("closest");
                 ints[intIndex++] = BroadcastMessage.closestEnemyInSight;
@@ -211,6 +216,7 @@ public class MexicanMessaging extends Base {
                 ints[intIndex++] = (int)enemy.energonLevel;
                 strings[stringIndex++] = enemy.type.toString();
                 locations[locationIndex++] = enemy.location;
+                turnsSinceClosestEnemySent = 5;
             }
         }
         if(sendEnemies && player.cacheId % 2 == 0) {

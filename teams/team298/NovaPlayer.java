@@ -33,6 +33,8 @@ public class NovaPlayer extends Base {
     public boolean isAirRobot;
     public boolean isArchon, isSoldier, isChainer, isTurret, isWout, isAuraTower, isCommTower, isTeleporterTower, isTower, isRobot;
 
+    public static final boolean debug = false;
+
     public NovaPlayer(RobotController controller) {
         super(controller);
         map = new MapStore();
@@ -97,18 +99,20 @@ public class NovaPlayer extends Base {
             int startTurn = Clock.getRoundNum();
             controller.setIndicatorString(0, controller.getLocation().toString());
 
-            //int b = Clock.getBytecodeNum(), t = Clock.getRoundNum();
+            beginTurn();
+
+            int b = Clock.getBytecodeNum(), t = Clock.getRoundNum();
             messaging.parseMessages();
-            //printBytecode(t, b, "Parse Messages: ");
+            if(debug) printBytecode(t, b, "Parse Messages: ");
 
             if(turnsSinceEnergonProcessed < 0) {
                 if(isArchon) {
-                    //b = Clock.getBytecodeNum();
-                    //t = Clock.getRoundNum();
                     energon.processEnergonTransferRequests();
-                    //printBytecode(t, b, "Process energon: ");
                 } else if(!isTower) {
+                    b = Clock.getBytecodeNum();
+                    t = Clock.getRoundNum();
                     energon.autoTransferEnergonBetweenUnits();
+                    if(debug) printBytecode(t, b, "Process energon: ");
                 }
                 turnsSinceEnergonProcessed = 0;
             }
@@ -122,14 +126,22 @@ public class NovaPlayer extends Base {
             }
             turnsSinceEnergonSent--;
 
+            b = Clock.getBytecodeNum();
+            t = Clock.getRoundNum();
             messaging.doSend();
+            if(debug) printBytecode(t, b, "Process messages: ");
 
             if(startTurn == Clock.getRoundNum() || controller.hasActionSet()) {
+                if(debug) p("yield");
                 controller.yield();
             }
 
             cacheId++;
         }
+    }
+
+    public void beginTurn() {
+        
     }
 
     /**

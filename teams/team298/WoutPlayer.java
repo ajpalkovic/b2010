@@ -93,7 +93,6 @@ public class WoutPlayer extends AttackPlayer {
                 //messaging.sendMessageForEnemyRobots();
 
                 processEnemies();
-                sortEnemies();
                 EnemyInfo enemy = mode.getEnemyToAttack();
 
                 if(enemy != null) {
@@ -109,6 +108,9 @@ public class WoutPlayer extends AttackPlayer {
     }
 
     public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
+    }
+
+    public void enemyInSight(MapLocation location, int energon, String type) {
     }
 
     public void followRequestMessageCallback(MapLocation location, int idOfSendingArchon, int idOfRecipient) {

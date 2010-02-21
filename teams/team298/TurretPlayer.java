@@ -41,7 +41,6 @@ public class TurretPlayer extends AttackPlayer {
 
         //find any enemey to attack.  mode.getEnemeyToAttack could return an out of range enemy too
         processEnemies();
-        sortEnemies();
         EnemyInfo enemy = mode.getEnemyToAttack();
 
         if(enemy != null) {
