@@ -6,10 +6,10 @@ import java.util.*;
 
 public abstract class AttackPlayer extends NovaPlayer {
 
-    public ArrayList<EnemyInfo> enemies = new ArrayList<EnemyInfo>(), enemiesTemp = new ArrayList<EnemyInfo>();
-    public ArrayList<EnemyInfo> inRangeEnemies, inRangeWithoutTurningEnemies, outOfRangeEnemies, archonEnemies, outOfRangeArchonEnemies;
-    public int noEnemiesCount = 0;
-    public boolean movingToAttack = false, enemyInSightCalled = false;
+    public ArrayList<EnemyInfo> inRangeEnemies = new ArrayList<EnemyInfo>(), inRangeWithoutTurningEnemies = new ArrayList<EnemyInfo>(), outOfRangeEnemies = new ArrayList<EnemyInfo>(), archonEnemies = new ArrayList<EnemyInfo>(), outOfRangeArchonEnemies = new ArrayList<EnemyInfo>();
+    public ArrayList<EnemyInfo> inRangeEnemiesTemp = new ArrayList<EnemyInfo>(), inRangeWithoutTurningEnemiesTemp = new ArrayList<EnemyInfo>(), outOfRangeEnemiesTemp = new ArrayList<EnemyInfo>(), archonEnemiesTemp = new ArrayList<EnemyInfo>(), outOfRangeArchonEnemiesTemp = new ArrayList<EnemyInfo>();
+    public int noEnemiesCount = 0, seenEnemies = 0;
+    public boolean movingToAttack = false, enemyInSightCalled = false, haveInRangeEnemy;
     public MapLocation attackLocation;
     public int range, minRange;
 
@@ -17,11 +17,35 @@ public abstract class AttackPlayer extends NovaPlayer {
 
     public AttackPlayer(RobotController controller) {
         super(controller);
-        enemies = new ArrayList<EnemyInfo>();
         mode = new DefaultAttackMode();
 
         range = controller.getRobotType().attackRadiusMaxSquared();
         minRange = controller.getRobotType().attackRadiusMinSquared();
+    }
+
+    public void beginTurn() {
+        inRangeEnemiesTemp = inRangeEnemies;
+        inRangeWithoutTurningEnemiesTemp = inRangeWithoutTurningEnemies;
+        outOfRangeEnemiesTemp = outOfRangeEnemies;
+        archonEnemiesTemp = archonEnemies;
+        outOfRangeArchonEnemiesTemp = outOfRangeArchonEnemies;
+
+        inRangeEnemies = new ArrayList<EnemyInfo>();
+        inRangeWithoutTurningEnemies = new ArrayList<EnemyInfo>();
+        outOfRangeEnemies = new ArrayList<EnemyInfo>();
+        archonEnemies = new ArrayList<EnemyInfo>();
+        outOfRangeArchonEnemies = new ArrayList<EnemyInfo>();
+
+        seenEnemies = 0;
+        haveInRangeEnemy = false;
+        
+        ArrayList<RobotInfo> enemiesInfo = sensing.senseEnemyRobotInfoInSensorRange();
+        if(enemiesInfo.size() > 0) {
+            noEnemiesCount = 0;
+        }
+        for(RobotInfo robot : enemiesInfo) {
+            sortEnemy(robot);
+        }
     }
 
     /**
@@ -29,33 +53,15 @@ public abstract class AttackPlayer extends NovaPlayer {
      * It simplifies caching enemy info for 10 turns, so that even if we do not see any new enemies for a bit, we might still try to attack there.
      */
     public void processEnemies() {
-        if(!enemyInSightCalled) {
-            enemiesTemp = enemies;
-            enemies = new ArrayList<EnemyInfo>();
-        }
-        enemyInSightCalled = false;
-        
-        ArrayList<RobotInfo> enemiesInfo = sensing.senseEnemyRobotInfoInSensorRange();
-        if(enemiesInfo.size() > 0) {
-            noEnemiesCount = 0;
-        }
-        
-        for(RobotInfo enemy : enemiesInfo) {
-            enemies.add(new EnemyInfo(enemy));
-        }
-
-        if(enemies.size() > 0) {
-            // new enemies were found in range, lets use that info
-            enemiesTemp = null;
-        } else {
+        if(seenEnemies == 0) {
             // no new enemy info was received, so stick with the old stuff
             if(noEnemiesCount < 4) {
-                enemies = enemiesTemp;
+                inRangeEnemies = inRangeEnemiesTemp;
+                inRangeWithoutTurningEnemies = inRangeWithoutTurningEnemiesTemp;
+                outOfRangeEnemies = outOfRangeEnemiesTemp;
+                archonEnemies = archonEnemiesTemp;
+                outOfRangeArchonEnemies = outOfRangeArchonEnemiesTemp;
                 noEnemiesCount++;
-            } else {
-                enemies.clear();
-                enemiesTemp.clear();
-                noEnemiesCount = 0;
             }
         }
     }
@@ -68,86 +74,74 @@ public abstract class AttackPlayer extends NovaPlayer {
      *
      * The enemies are also sorted by archon vs. not-archon.  Sometimes archons are harder to kill.
      */
-    public void sortEnemies() {
-        inRangeEnemies = new ArrayList<EnemyInfo>();
-        inRangeWithoutTurningEnemies = new ArrayList<EnemyInfo>();
-        outOfRangeEnemies = new ArrayList<EnemyInfo>();
-        archonEnemies = new ArrayList<EnemyInfo>();
-        outOfRangeArchonEnemies = new ArrayList<EnemyInfo>();
+    public void sortEnemy(RobotInfo robot) {
+        EnemyInfo current = new EnemyInfo(robot);
+        sortEnemy(current);
+    }
 
-        for(int c = 0; c < enemies.size(); c++) {
-            EnemyInfo current = enemies.get(c);
-
-            if(current.type == RobotType.ARCHON) {
-                if(controller.canAttackSquare(current.location)) {
-                    inRangeWithoutTurningEnemies.add(current);
-                } else if(current.distance <= range && current.distance >= minRange) {
-                    archonEnemies.add(current);
-                } else {
-                    outOfRangeArchonEnemies.add(current);
-                }
-            } else if(current.distance > range || current.distance < minRange) {
-                outOfRangeEnemies.add(current);
+    public void sortEnemy(EnemyInfo current) {
+        seenEnemies++;
+        if(current.type == RobotType.ARCHON) {
+            if(controller.canAttackSquare(current.location)) {
+                inRangeWithoutTurningEnemies.add(current);
+                haveInRangeEnemy = true;
+            } else if(current.distance <= range && current.distance >= minRange) {
+                archonEnemies.add(current);
+                haveInRangeEnemy = true;
             } else {
-                if(controller.canAttackSquare(current.location)) {
-                    inRangeWithoutTurningEnemies.add(current);
-                } else {
-                    inRangeEnemies.add(current);
-                }
+                outOfRangeArchonEnemies.add(current);
+            }
+        } else if(current.distance > range || current.distance < minRange) {
+            outOfRangeEnemies.add(current);
+        } else {
+            if(controller.canAttackSquare(current.location)) {
+                inRangeWithoutTurningEnemies.add(current);
+                haveInRangeEnemy = true;
+            } else {
+                inRangeEnemies.add(current);
+                haveInRangeEnemy = true;
             }
         }
     }
 
     public void enemyInSight(MapLocation[] locations, int[] ints, String[] strings, int locationStart, int intStart, int stringStart, int count) {
-        if(!enemyInSightCalled) {
-            enemiesTemp = enemies;
-            enemies = new ArrayList<EnemyInfo>();
-        }
-        enemyInSightCalled = true;
         noEnemiesCount = 0;
 
-        for(int c = 0; c < count; c++) {
-            enemies.add(new EnemyInfo(locations[locationStart], ints[intStart], strings[stringStart]));
-            locationStart++;
-            intStart++;
-            stringStart++;
+        if(!haveInRangeEnemy) {
+            for(int c = 0; c < count; c++) {
+                sortEnemy(new EnemyInfo(locations[locationStart], ints[intStart], strings[stringStart]));
+                locationStart++;
+                intStart++;
+                stringStart++;
+            }
         }
     }
     public void enemyInSight(MapLocation location, int energon, String type) {
-        if(!enemyInSightCalled) {
-            enemiesTemp = enemies;
-            enemies = new ArrayList<EnemyInfo>();
-        }
-        enemyInSightCalled = true;
         noEnemiesCount = 0;
-
-        enemies.add(new EnemyInfo(location, energon, type));
+        if(!haveInRangeEnemy) {
+            sortEnemy(new EnemyInfo(location, energon, type));
+        }
     }
 
     class EnemyInfo {
 
         public MapLocation location;
-        public int id, distance, value;
+        public int distance, value;
         public double energon;
         public RobotType type;
-        public RobotInfo info;
 
         public EnemyInfo(RobotInfo info) {
             location = info.location;
-            id = -1;
             type = info.type;
             energon = info.energonLevel;
             distance = controller.getLocation().distanceSquaredTo(location);
-            this.info = info;
             value = (int) energon * distance;
             if(this.type == RobotType.ARCHON) value /= 5;
         }
 
         public EnemyInfo(MapLocation location, int energonLevel, String type) {
             this.location = location;
-            this.id = -1;
             this.type = RobotType.valueOf(type);
-            this.info = null;
             this.energon = energonLevel;
             distance = controller.getLocation().distanceSquaredTo(location);
             value = (int) energon * distance;
@@ -179,9 +173,9 @@ public abstract class AttackPlayer extends NovaPlayer {
         }
 
         try {
-            if(level == RobotLevel.ON_GROUND && controller.canAttackGround()) {
+            if(level == RobotLevel.ON_GROUND) {
                 controller.attackGround(location);
-            } else if(level == RobotLevel.IN_AIR && controller.canAttackAir()) {
+            } else if(level == RobotLevel.IN_AIR) {
                 controller.attackAir(location);
             }
             controller.yield();
@@ -240,15 +234,12 @@ public abstract class AttackPlayer extends NovaPlayer {
          * It will first attack in range enemies, and then it will attack archons.
          */
         public EnemyInfo getEnemyToAttack() {
-            if(enemies.size() == 0) {
-                return null;
-            }
-
             if(inRangeWithoutTurningEnemies.size() > 0) return getCheapestEnemy(inRangeWithoutTurningEnemies);
             if(archonEnemies.size() > 0) return getCheapestEnemy(archonEnemies);
             if(inRangeEnemies.size() > 0) return getCheapestEnemy(inRangeEnemies);
             if(outOfRangeEnemies.size() > 0) return getCheapestEnemy(outOfRangeEnemies);
-            return getCheapestEnemy(outOfRangeArchonEnemies);
+            if(outOfRangeArchonEnemies.size() > 0) return getCheapestEnemy(outOfRangeArchonEnemies);
+            return null;
         }
     }
 
@@ -258,15 +249,12 @@ public abstract class AttackPlayer extends NovaPlayer {
          * It will first attack in range enemies, and then it will attack archons.
          */
         public EnemyInfo getEnemyToAttack() {
-            if(enemies.size() == 0) {
-                return null;
-            }
-
             if(archonEnemies.size() > 0) return getCheapestEnemy(archonEnemies);
             if(inRangeWithoutTurningEnemies.size() > 0) return getCheapestEnemy(inRangeWithoutTurningEnemies);
             if(outOfRangeArchonEnemies.size() > 0) return getCheapestEnemy(outOfRangeArchonEnemies);
             if(inRangeEnemies.size() > 0) return getCheapestEnemy(inRangeEnemies);
-            return getCheapestEnemy(outOfRangeEnemies);
+            if(outOfRangeEnemies.size() > 0) return getCheapestEnemy(outOfRangeEnemies);
+            return null;
         }
     }
 }
