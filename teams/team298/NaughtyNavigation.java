@@ -682,7 +682,13 @@ public class NaughtyNavigation extends Base {
             if(closest != null) {
                 int distance = closest.distanceSquaredTo(controller.getLocation());
                 if(distance > 8 && archonDistance > 25) {
-                    return getMoveableDirection(controller.getLocation().directionTo(archonCenter));
+                    Direction dir = player.controller.getLocation().directionTo(closest);
+                    ArrayList<MapLocation> allies = sensing.senseAlliedTowerLocations();
+                    for (MapLocation loc : allies){
+                    	if (player.controller.getLocation().directionTo(loc) == dir && player.controller.getLocation().distanceSquaredTo(loc) < 15){
+                            return getMoveableArchonDirection(controller.getLocation().directionTo(archonCenter));
+                    	}
+                    }
                 }
                 
                 if(count > 2 || closestArchon == null) {
@@ -782,7 +788,7 @@ public class NaughtyNavigation extends Base {
                 MapLocation closest = findClosest(enemies);
                 int distance = closest.distanceSquaredTo(controller.getLocation());
                 if(distance < 15) {
-                    return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
+                	return getMoveableArchonDirection(closest.directionTo(controller.getLocation()));
                 } else {
                     return getMoveableArchonDirection(controller.getLocation().directionTo(closest));
                 }
