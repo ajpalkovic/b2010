@@ -24,7 +24,7 @@ public class SensationalSensing extends Base {
             dangerFactorSensed = Integer.MIN_VALUE;
     public Robot[] air, ground;
     public ArrayList<RobotInfo> airInfo, groundInfo, enemyRobots, alliedRobots, alliedTowerInfo;
-    public ArrayList<MapLocation> enemyLocations, alliedTowerLocations;
+    public ArrayList<MapLocation> enemyLocations, alliedTowerLocations, enemyTowerLocations = new ArrayList<MapLocation>();
     public HashMap<Integer, MapLocation> knownAlliedTowerLocations = new HashMap<Integer, MapLocation>();
     public HashMap<String, Integer> knownAlliedTowerIDs = new HashMap<String, Integer>();
     public MapLocation[] archonLocations;
@@ -77,11 +77,14 @@ public class SensationalSensing extends Base {
     			badcount++;
     			if (r.location.isAdjacentTo(controller.getLocation()))
     				badcount++;
-    		}/* else if (r.type.isAirborne()) {
-    			badcount+=.5;
-    		}*/
+    		} else if (r.type.isAirborne()) {
+    			badcount+=.05;
+    		}
         }
-    		
+    	if (player.energon.isEnergonLow())
+    		badcount+=.5;
+    	else if (player.energon.isEnergonSortaLow())
+    		badcount+=.25;
     		
     	if (badcount <= 1)
     		dangerFactor = 1;
@@ -335,6 +338,9 @@ public class SensationalSensing extends Base {
         enemyLocations = new ArrayList<MapLocation>();
         for(RobotInfo r : enemyRobots) {
             enemyLocations.add(r.location);
+            if (r.type.isBuilding())
+            	if (!enemyTowerLocations.contains(r.location))
+            		enemyTowerLocations.add(r.location);
         }
 
         enemyLocationSensed = player.cacheId;

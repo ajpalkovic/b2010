@@ -35,8 +35,7 @@ public class ArchonPlayer extends NovaPlayer {
     public void step() {
     	if (sensing.getDangerFactor() >= 2)
     		setGoal(Goal.collectingFlux);
-
-        spawning.changeModeToAttacking();
+    	spawning.changeModeToAttacking();
         flux.transferFluxBetweenArchons();
 
         if (energon.isEnergonLow() && sensing.getDangerFactor() > 1)
@@ -57,7 +56,7 @@ public class ArchonPlayer extends NovaPlayer {
             moveTurns++;
         }
 
-        if(turnsSinceLastSpawn > 2) {
+        if(turnsSinceLastSpawn > 2 && Clock.getRoundNum() > 100) {
             int status = spawning.spawnRobot();
             if(status == Status.cannotSupportUnit) turnsSinceLastSpawn = -1;
             else if(status == Status.success) {
@@ -70,7 +69,9 @@ public class ArchonPlayer extends NovaPlayer {
             }
         }
         turnsSinceLastSpawn++;
-
+        if (attacking) {
+        	setGoal(Goal.collectingFlux);
+        }
         switch(currentGoal) {
             case Goal.collectingFlux:
                 if(turnsSinceTowerStuffDone < 0) {
@@ -185,29 +186,61 @@ public class ArchonPlayer extends NovaPlayer {
         
         setGoal(Goal.attackingEnemyArchons);
         if(archonNumber == 1) {
-            TerrainTile top = controller.senseTerrainTile(new MapLocation(x, y-6));
-            TerrainTile bottom = controller.senseTerrainTile(new MapLocation(x, y+6));
-            TerrainTile right = controller.senseTerrainTile(new MapLocation(x+6, y));
-            TerrainTile left = controller.senseTerrainTile(new MapLocation(x-6, y));
-
-            boolean t = top.getType() != TerrainType.OFF_MAP;
-            boolean b = bottom.getType() != TerrainType.OFF_MAP;
-            boolean l = left.getType() != TerrainType.OFF_MAP;
-            boolean r = right.getType() != TerrainType.OFF_MAP;
-
-            if(t) {
-                if(l) dir = Direction.NORTH_WEST;
-                else if(r) dir = Direction.NORTH_EAST;
-                else dir = Direction.NORTH;
-            } else if(b) {
-                if(l) dir = Direction.SOUTH_WEST;
-                else if(r) dir = Direction.SOUTH_WEST;
-                else dir = Direction.SOUTH;
-            } else {
-                dir = l ? Direction.WEST : Direction.EAST;
+        	
+            int dcounter = 6;
+        	TerrainTile top = null;
+            TerrainTile bottom = null;
+            TerrainTile right = null;
+            TerrainTile left = null;
+            while (top == null && dcounter >= 0){
+            	sensing.senseTile(x,y-dcounter);
+            	top = controller.senseTerrainTile(new MapLocation(x, y-dcounter));                              
+            	dcounter--;
             }
-
-            navigation.changeToLocationGoal(controller.getLocation().add(dir).add(dir), true);
+            dcounter = 6;
+            while (bottom == null && dcounter >= 0){
+            	sensing.senseTile(x,y-dcounter);
+            	bottom = controller.senseTerrainTile(new MapLocation(x, y+dcounter));
+            	dcounter--;
+            }
+            dcounter = 6;
+            while (right == null && dcounter >= 0){
+            	sensing.senseTile(x+dcounter,y);
+            	right = controller.senseTerrainTile(new MapLocation(x+dcounter, y));
+            	dcounter--;
+            }
+            dcounter = 6;
+            while (left == null && dcounter >= 0){
+            	sensing.senseTile(x-dcounter,y);
+            	left = controller.senseTerrainTile(new MapLocation(x-dcounter, y));
+            	dcounter--;
+            }
+            boolean t = top != null && top.getType() == TerrainType.OFF_MAP;
+            boolean b = bottom != null && bottom.getType() == TerrainType.OFF_MAP;
+            boolean l = left != null && left.getType() == TerrainType.OFF_MAP;
+            boolean r = right != null && right.getType() == TerrainType.OFF_MAP;
+            if (!t && !b && !l && !r)
+            	dir = Direction.SOUTH_EAST;
+            else if(b) {
+                if(r) dir = Direction.NORTH_WEST;
+                else if(l) dir = Direction.NORTH_EAST;
+                else dir = Direction.NORTH;
+            } else if(t) {
+                if(r) dir = Direction.SOUTH_WEST;
+                else if(l) dir = Direction.SOUTH_EAST;
+                else dir = Direction.SOUTH;
+            } 
+            else{
+                dir = r ? Direction.WEST : Direction.EAST;
+            }
+            pa(dir.toString());
+            try{
+            controller.setDirection(dir);
+            } catch (Exception e){
+            	pa("----Caught Exception in setting direction in boot. Exception: " + e.getMessage());
+            }
+            
+            navigation.changeToDirectionGoal(dir, false);
             navigation.moveOnce(true);
             //p("Leader moved away");
         } else {

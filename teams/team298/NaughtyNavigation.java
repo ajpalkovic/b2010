@@ -548,20 +548,22 @@ public class NaughtyNavigation extends Base {
         	ArrayList<RobotInfo> robos = sensing.senseEnemyRobotInfoInSensorRange();
         	float[] dirValues = {0,0,0,0,0,0,0,0};//N,NE,E,SE,S,SW,W,NW
         	Direction[] dirs = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-        	float oppositeWeight = 2.05f;
+        	float oppositeWeight = 2.05f, twoWeight = 2f;
         	MapLocation us = controller.getLocation();
-        	if (map.isVoid(us))
-        		oppositeWeight+=.5;
+        	if (map.isVoid(us)){
+        		oppositeWeight+=.2;
+        		twoWeight += .1;
+        	}
         	for (int i = 0; i < 8; i++) {
         		if (map.get(us.add(dirs[i]))==TerrainTile.OFF_MAP){
         			dirValues[i] = Integer.MIN_VALUE;
-        		}
+        		} else if (map.get(us.add(dirs[i]).add(dirs[i])) == TerrainTile.OFF_MAP)
+        			dirValues[i] += .3;
         	}
         	for (RobotInfo r : robos) {
         		if (r.type.canAttackAir() || r.type.isAirborne()){
         			int index = -1;
-        			Direction d = controller.getLocation().directionTo(r.location);
-        				
+        			Direction d = controller.getLocation().directionTo(r.location);        				
         				for (int i = 0; i < 8; i++){
         					if (dirs[i] == d){
         						index = i;
@@ -574,14 +576,15 @@ public class NaughtyNavigation extends Base {
         			if (r.location.isAdjacentTo(controller.getLocation()))
         				dirValues[index]++;
         			if(r.type.isAirborne())
-        				dirValues[index]-=.5;
+        				dirValues[index]-=.7;
         			dirValues[index]++;        			
         		}
         	}
-        	//System.out.println("\n" + dirValues[7] + " " + dirValues[0] + " " + dirValues[1] + " \n" + dirValues[6] + " A " + dirValues[2] + "\n" + dirValues[5] + " " + dirValues[4] + " " + dirValues[3]);
+        	
         	float min = Integer.MIN_VALUE;
         	int mini=-1;
         	float value = 0;
+        	float[] newVal = new float[8];
     		for (int i = 0; i < 8; i++) {
     			if (dirValues[i] < 0)
     				continue;
@@ -595,7 +598,7 @@ public class NaughtyNavigation extends Base {
     					else if (j == (i+4)%8)
     						value+=dirValues[j]*oppositeWeight;
     					else
-    						value+=dirValues[j]*2;
+    						value+=dirValues[j]*twoWeight;
     			}
     			else {
     				for (int j = 0; j < 8; j++)
@@ -606,7 +609,7 @@ public class NaughtyNavigation extends Base {
     					else if (j == (i+4)%8)
     						value+=dirValues[j]*oppositeWeight;
     					else
-    						value+=dirValues[j]*2;    					
+    						value+=dirValues[j]*twoWeight;    					
     			}
     			MapLocation p = controller.getLocation();
     			int q = 0;
@@ -616,22 +619,38 @@ public class NaughtyNavigation extends Base {
     				p = p.add(dirs[i]);
     				if (map.isVoid(p))
     				{
-    					value*=1 + 1/(Math.pow(2,q)+1);
+    					value*=(1 + 1/(Math.pow(2,q+2)));
     				} 
     			}
+    			newVal[i] = value;
     			//System.out.print(value + " ");
-    			if (value > min){
-    				mini = i;
-    				min = value;
-    			}
+    			//System.out.println("\n" + newVal[7] + " " + newVal[0] + " " + newVal[1] + " \n" + newVal[6] + " A " + newVal[2] + "\n" + newVal[5] + " " + newVal[4] + " " + newVal[3]);
+            		
     			value = 0;    						    			
     		}
+    		ArrayList<RobotInfo> allies = sensing.senseAlliedRobotInfoInSensorRange();
+    		for (RobotInfo r : allies) {
+    			Direction d = controller.getLocation().directionTo(r.location);
+				int index = 0;
+				for (int i = 0; i < 8; i++){
+					if (dirs[i] == d){
+						index = i;
+						break;
+					}
+				}
+				newVal[index] += 1/(1+controller.getLocation().distanceSquaredTo(r.location));
+    		}
+    		for (int i =0; i < 8; i++)
+    			if (newVal[i] > min){
+    				mini = i;
+    				min = newVal[i];
+    			}
     		
         	//System.out.println(mini);
         	if (mini > 0 && mini < 8)
         		return dirs[mini];
         	else
-        		return Direction.NONE;
+        		return Direction.NORTH;
         }
 
         public Direction getDirection() {
@@ -681,30 +700,32 @@ public class NaughtyNavigation extends Base {
             int archonDistance = controller.getLocation().distanceSquaredTo(archonCenter);
             if(closest != null) {
                 int distance = closest.distanceSquaredTo(controller.getLocation());
-                if(distance > 8 && archonDistance > 25) {
-                    Direction dir = player.controller.getLocation().directionTo(closest);
-                    ArrayList<MapLocation> allies = sensing.senseAlliedTowerLocations();
-                    for (MapLocation loc : allies){
-                    	if (player.controller.getLocation().directionTo(loc) == dir && player.controller.getLocation().distanceSquaredTo(loc) < 15){
-                            return getMoveableArchonDirection(controller.getLocation().directionTo(archonCenter));
-                    	}
-                    }
+                
+                if(distance > 8 && archonDistance > 18) {
+                    return getMoveableDirection(controller.getLocation().directionTo(archonCenter));
+
                 }
                 
                 if(count > 2 || closestArchon == null) {
-                    //p(closest.toString()+" "+distance);
+                	//p(closest.toString()+" "+distance);
                     if(distance >= 14 && distance <= 16) {
                         return null;
-                    } else if(distance > 16 && sensing.getDangerFactor() < 3) {
+                    } else if(distance > 16 && sensing.getDangerFactor() <= 2) {
                         if(average != null) {
-                            return previousDirection = getMoveableDirection(controller.getLocation().directionTo(average));
+                            ArrayList<MapLocation> allies = sensing.senseAlliedTowerLocations();
+                            for (MapLocation loc : allies){
+                            	if ((player.controller.getLocation().directionTo(loc) == player.controller.getLocation().directionTo(closest) && player.controller.getLocation().distanceSquaredTo(loc) < 15) ||  player.controller.getLocation().distanceSquaredTo(loc) == 0){
+                                    return getMoveableArchonDirection(controller.getLocation().directionTo(average));
+                            	}
+                            }
+                        	return previousDirection = getMoveableDirection(findBestDirection());
                         }
                         return previousDirection = getMoveableDirection(controller.getLocation().directionTo(closest));
                     } else {
                         return getMoveableArchonDirection(findBestDirection());
                     }
                 } else {
-                    if(distance < 4) {
+                    if(distance < 5) {
                         return getMoveableArchonDirection(findBestDirection());
                     } else {
                         return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closestArchon));
@@ -712,54 +733,86 @@ public class NaughtyNavigation extends Base {
                 }
             } else if(closestArchon != null) {
                 return previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(closestArchon));
-            } else if(archonDistance > 25) {
-                return getMoveableDirection(controller.getLocation().directionTo(archonCenter));
-            } else if(enemiesLastSeen + enemyTolerance > Clock.getRoundNum()) {
+            }else if(archonDistance > 18) {
+                return getMoveableArchonDirection(controller.getLocation().directionTo(archonCenter));
+            } else if(player.isLeader) {
+                //p("isLeader");
+                return(getLeaderDirection());
+            }
+             else if(enemiesLastSeen + enemyTolerance > Clock.getRoundNum()) {
                 return previousDirection;
             } else {
                 optimizeDirection();
-                // TODO: Change this to get if archon is leader
-                if(player.isLeader) {
-                    //p("isLeader");
-                    previousDirection = getMoveableArchonDirection(getLeaderDirection());
-                    //p(previousDirection == null ? "NULL": previousDirection.toString());
-                    return previousDirection;
-                } else {
-                    //p("not isLeader"+archonDirection);
-                    //p((archonDirection == null ? "NULL": archonDirection)+" "+(getMoveableDirection(archonDirection) == null ? "NULL": getMoveableDirection(archonDirection)));
-                    return getMoveableDirection(archonDirection);
-                }
-            }
+                return getMoveableArchonDirection(controller.getLocation().directionTo(archonCenter));
+           }
         }
         public Direction getLeaderDirection(){
-        	Direction dir = controller.getDirection();
-            int x = controller.getLocation().getX();
-            int y = controller.getLocation().getY();
+        	Direction dir;
+        	int x = controller.getLocation().getX(), y = controller.getLocation().getY();
+            int dcounter = 6;
+        	TerrainTile top = null;
+            TerrainTile bottom = null;
+            TerrainTile right = null;
+            TerrainTile left = null;
+            while (top == null && dcounter > 0){
+            	top = controller.senseTerrainTile(new MapLocation(x, y-dcounter));                              
+            	dcounter--;
+            }
+            dcounter = 6;
+            while (bottom == null && dcounter > 0){
+            	bottom = controller.senseTerrainTile(new MapLocation(x, y+dcounter));
+            	dcounter--;
+            }
+            dcounter = 6;
+            while (right == null && dcounter > 0){
+            	right = controller.senseTerrainTile(new MapLocation(x+dcounter, y));
+            	dcounter--;
+            }
+            dcounter = 6;
+            while (left == null && dcounter > 0){
+            	left = controller.senseTerrainTile(new MapLocation(x-dcounter, y));
+            	dcounter--;
+            }
+            boolean t = top != null && top.getType() == TerrainType.OFF_MAP;
+            boolean b = bottom != null && bottom.getType() == TerrainType.OFF_MAP;
+            boolean l = left != null && left.getType() == TerrainType.OFF_MAP;
+            boolean r = right != null && right.getType() == TerrainType.OFF_MAP;
+            if (!t && !b && !l && !r)
+            	dir = previousDirection;
+            else if(b) {
+                if(r) dir = Direction.NORTH_WEST;
+                else if(l) dir = Direction.NORTH_EAST;
+                else dir = Direction.NORTH;
+            } else if(t) {
+                if(r) dir = Direction.SOUTH_WEST;
+                else if(l) dir = Direction.SOUTH_EAST;
+                else dir = Direction.SOUTH;
+            } 
+            else{
+                dir = r ? Direction.WEST : Direction.EAST;
+            }
             
-
-            TerrainTile top = controller.senseTerrainTile(new MapLocation(x, y-6));
-            TerrainTile bottom = controller.senseTerrainTile(new MapLocation(x, y+6));
-            TerrainTile right = controller.senseTerrainTile(new MapLocation(x+6, y));
-            TerrainTile left = controller.senseTerrainTile(new MapLocation(x-6, y));
-
-            boolean t = top.getType() != TerrainType.OFF_MAP;
-            boolean b = bottom.getType() != TerrainType.OFF_MAP;
-            boolean l = left.getType() != TerrainType.OFF_MAP;
-            boolean r = right.getType() != TerrainType.OFF_MAP;
-
-                if(t) {
-                    if(l) dir = Direction.NORTH_WEST;
-                    else if(r) dir = Direction.NORTH_EAST;
-                    else dir = Direction.NORTH;
-                } else if(b) {
-                    if(l) dir = Direction.SOUTH_WEST;
-                    else if(r) dir = Direction.SOUTH_WEST;
-                    else dir = Direction.SOUTH;
-                } else {
-                    dir = l ? Direction.WEST : Direction.EAST;
-                }
-
-        	return dir;
+            p(dir == null ? "NULL": dir.toString());
+            
+            if (dir == null || dir == previousDirection){
+            	if (player.sensing.enemyTowerLocations.size() > 0){
+            		MapLocation close = findClosest(player.sensing.enemyTowerLocations);
+            		if (controller.getLocation().distanceSquaredTo(close) <= 25)                			
+            			try{
+            				player.controller.senseGroundRobotAtLocation(close);                			
+            			} 	catch (Exception e){
+            				sensing.enemyTowerLocations.remove(close);
+            				previousDirection = getMoveableArchonDirection(previousDirection);
+            			}
+            		else
+            			previousDirection = getMoveableArchonDirection(controller.getLocation().directionTo(close));	
+            	} else 
+            		previousDirection = getMoveableArchonDirection(dir);
+            		
+            }                	
+            else
+            	previousDirection = getMoveableArchonDirection(dir);
+            return previousDirection;
         }
     }
 

@@ -15,7 +15,7 @@ public class TenaciousTowers extends Base {
     public FluxinFlux flux;
     public MapLocation towerSpawnFromLocation, towerSpawnLocation;
     public MapLocation[] idealTowerSpawnLocations;
-    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsWaitedForMove = 0, turnsLookingForTower = 0;
+    public int turnsWaitedForTowerSpawnLocationMessage = 0, turnsWaitedForMove = 0, turnsLookingForTower = 0, turnsGivingWoutFlux = 0;
 
     public TenaciousTowers(NovaPlayer player) {
         super(player);
@@ -42,6 +42,13 @@ public class TenaciousTowers extends Base {
                             MapLocation loc = navigation.findClosest(new ArrayList<MapLocation>(sensing.knownAlliedTowerLocations.values()));
                             messaging.sendTowerPing(sensing.knownAlliedTowerIDs.get(loc.getX() + "," + loc.getY()), loc);
                         }
+                    } else {
+                    	if (turnsGivingWoutFlux > 5){
+                    		turnsGivingWoutFlux = 0;
+                    		placeTeleporter();
+                    	}
+                    		
+                    	turnsGivingWoutFlux++;
                     }
                 }
             }
@@ -97,9 +104,7 @@ public class TenaciousTowers extends Base {
     public void moveToTowerSpawnLocation() {
         if(navigation.goal.done()) {
             navigation.faceLocation(towerSpawnLocation);
-            if(controller.getLocation().directionTo(towerSpawnLocation).isDiagonal()) {
-                navigation.moveOnce(false);
-            }
+            
             if(navigation.isLocationFree(towerSpawnLocation, false)) {
                 if(spawning.spawnTower(RobotType.AURA) != Status.success) {
                     placeTower();
@@ -113,8 +118,7 @@ public class TenaciousTowers extends Base {
                     messaging.sendMove(towerSpawnLocation);
                     turnsWaitedForMove++;
                 }
-            }
-
+            }            
         } else {
             if(player.isWout) {
                 MapLocation goalLocation = navigation.locationGoalWithBugPlanning.location;
@@ -178,6 +182,10 @@ public class TenaciousTowers extends Base {
         if(towers.size() > 0) {
             //we remember that there used to be a tower here, so lets try going there.  once we get there, we can ask again
             MapLocation closest = navigation.findClosest(towers);
+            if (player.isArchon && controller.getLocation().distanceSquaredTo(closest) > 50){
+            	doTowerStuff(true);            	
+            	return;
+            }
             if(controller.canSenseSquare(closest) && closest != null) {
                 if(player.isWout) {
                     double distance = Math.abs(controller.getLocation().getX() - closest.getX()) + Math.abs(controller.getLocation().getY() - closest.getY());
